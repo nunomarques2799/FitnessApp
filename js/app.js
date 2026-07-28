@@ -88,10 +88,11 @@
       const restante = Math.max(0, (s.timer.fim - Date.now()) / 1000);
       const pct = Math.max(0, Math.min(100, (1 - restante / s.timer.total) * 100));
       const fim = restante <= 0;
+      const nome = s.timer.titulo || 'Descanso';
       if (!slot.querySelector('.timer')) {
-        slot.innerHTML = `<div class="timer ${fim ? 'timer--fim' : ''}" role="timer" aria-label="Tempo de descanso">
+        slot.innerHTML = `<div class="timer ${fim ? 'timer--fim' : ''}" role="timer" aria-label="${UI.esc(nome)}">
           <span class="timer__v num" data-v>${UI.mmss(restante)}</span>
-          <span class="timer__l" data-l>${fim ? 'Descanso terminado' : 'Descanso'}</span>
+          <span class="timer__l" data-l>${UI.esc(fim ? nome + ' — acabou' : nome)}</span>
           <button type="button" class="btn-icone" data-add aria-label="Adicionar 30 segundos">${UI.icone('mais', 20)}</button>
           <button type="button" class="btn-icone" data-parar aria-label="Terminar descanso">${UI.icone('fechar', 22)}</button>
         </div>`;
@@ -106,7 +107,7 @@
       barra.style.setProperty('--pct', pct + '%');
       barra.classList.toggle('timer--fim', fim);
       barra.querySelector('[data-v]').textContent = UI.mmss(restante);
-      barra.querySelector('[data-l]').textContent = fim ? 'Descanso terminado' : 'Descanso';
+      barra.querySelector('[data-l]').textContent = fim ? nome + ' — acabou' : nome;
       if (!tickTimer) tickTimer = setInterval(tick, 1000);
       return;
     }
@@ -141,8 +142,8 @@
     desenharBarraInferior();
   }
 
-  function iniciarDescanso(segundos, etiqueta) {
-    Store.state.timer = { fim: Date.now() + segundos * 1000, total: segundos, etiqueta: etiqueta || '' };
+  function iniciarDescanso(segundos, titulo) {
+    Store.state.timer = { fim: Date.now() + segundos * 1000, total: segundos, titulo: titulo || 'Descanso' };
     avisouFim = false;
     Store.guardar();
     desenharBarraInferior();
@@ -171,6 +172,7 @@
   function arrancar() {
     Store.carregar();
     aplicarTema();
+    Anatomia.injectar();
     nav();
     global.addEventListener('hashchange', render);
     global.addEventListener('scroll', () => {

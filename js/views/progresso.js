@@ -24,7 +24,7 @@ window.Vistas = window.Vistas || {};
           accao: 'Começar a treinar'
         });
       }
-      return resumo() + graficoSemanal() + distribuicao() + topExercicios() + recordesRecentes();
+      return resumo() + graficoSemanal() + condicaoFisica() + distribuicao() + topExercicios() + recordesRecentes();
     },
 
     montar(raiz) {
@@ -32,6 +32,8 @@ window.Vistas = window.Vistas || {};
       if (b) return b.addEventListener('click', () => App.ir('hoje'));
 
       raiz.addEventListener('click', e => {
+        const det = e.target.closest('[data-detalhe]');
+        if (det) return Comp.detalhes(det.dataset.detalhe);
         const m = e.target.closest('[data-metrica]');
         if (m) {
           metrica = m.dataset.metrica;
@@ -108,8 +110,32 @@ window.Vistas = window.Vistas || {};
         </div>
       </div>
       <div class="filtros mt3" role="group" aria-label="Período">
-        ${[4, 8, 12, 26].map(n => `<button type="button" class="filtro" data-semanas="${n}" aria-pressed="${semanas === n}">${n} sem.</button>`).join('')}
+        ${[4, 8, 12, 26].map(n => `<button type="button" class="filtro" data-semanas="${n}" aria-pressed="${semanas === n}">${n} semanas</button>`).join('')}
       </div>
+    </section>`;
+  }
+
+  function condicaoFisica() {
+    const limite = Store.D.maisDias(Store.D.hoje(), -29);
+    const treinos = Store.state.treinos.filter(t => t.data >= limite);
+    const acc = treinos.reduce((a, t) => {
+      const c = Store.trabalhoCardio(t);
+      a.metros += c.metros; a.calorias += c.calorias; a.segundos += c.segundos; a.series += c.series;
+      return a;
+    }, { metros: 0, calorias: 0, segundos: 0, series: 0 });
+    const circuitos = treinos.filter(t => t.tipo === 'circuito').length;
+    if (!acc.series && !circuitos) return '';
+
+    return `<section class="seccao">
+      <div class="seccao__cab"><h2 class="seccao__tit">Condição física · 30 dias</h2></div>
+      <div class="stats">
+        ${Comp.stat(circuitos, circuitos === 1 ? 'circuito' : 'circuitos')}
+        ${Comp.stat(UI.fmt(acc.metros / 1000, acc.metros >= 10000 ? 0 : 1), 'distância', 'km')}
+        ${Comp.stat(UI.fmt(Math.round(acc.segundos / 60), 0), 'minutos a mexer')}
+        ${acc.calorias ? Comp.stat(UI.fmt(acc.calorias, 0), 'calorias na máquina') : Comp.stat(acc.series, 'estações')}
+      </div>
+      <p class="campo__ajuda">Só conta o trabalho de condição física: corrida, máquinas de cardio,
+        saltos e movimentos balísticos. A musculação está nos blocos acima.</p>
     </section>`;
   }
 
@@ -120,7 +146,7 @@ window.Vistas = window.Vistas || {};
       const alvo = Store.alvoDe(k) * 4;              // alvo mensal
       const sets = Math.round(s30[k] * 10) / 10;
       return {
-        key: k, nome: m.name, curto: m.curto, zona: m.zona, alvo, sets,
+        key: k, nome: m.name, zona: m.zona, alvo, sets,
         dias: null, estado: sets === 0 ? 'nunca' : sets >= alvo ? 'pronto' : sets >= alvo * 0.6 ? 'recuperar' : 'atraso',
         pct: Math.min(1, sets / alvo)
       };
@@ -176,25 +202,22 @@ window.Vistas = window.Vistas || {};
     Store.state.treinos.slice(0, 40).forEach(t => t.entradas.forEach(e => ids.add(e.exId)));
     const lista = [...ids].map(id => {
       const r = Store.recordes(id);
-      return r && r.peso ? { id, r } : null;
-    }).filter(Boolean)
+      return r && r.peso ? { id, r, ex: Store.exercicio(id) } : null;
+    }).filter(x => x && x.ex)
       .sort((a, b) => b.r.peso.data.localeCompare(a.r.peso.data))
       .slice(0, 8);
     if (!lista.length) return '';
 
     return `<section class="seccao">
       <div class="seccao__cab"><h2 class="seccao__tit">Recordes recentes</h2></div>
-      <div class="lista">${lista.map(({ id, r }) => {
-        const ex = Store.exercicio(id);
-        return `<button type="button" class="lista__i" data-ex="${id}">
+      <div class="lista">${lista.map(({ id, r, ex }) => `<button type="button" class="lista__i" data-ex="${id}">
           <span style="color:var(--primaria-txt)">${icone('trofeu', 22)}</span>
           <div class="lista__corpo">
-            <div class="lista__t">${esc(ex ? ex.n : 'Exercício removido')}</div>
-            <div class="lista__s num">${esc(Store.textoRecorde(r))} · ${esc(Store.D.relativo(r.peso.data))}</div>
+            <div class="lista__t">${esc(ex.n)}</div>
+            <div class="lista__s num">${esc(Store.textoRecorde(r, ex))} · ${esc(Store.D.relativo(r.peso.data))}</div>
           </div>
           <span class="lista__fim">${icone('direita', 20)}</span>
-        </button>`;
-      }).join('')}</div>
+        </button>`).join('')}</div>
     </section>`;
   }
 

@@ -1,5 +1,5 @@
 /* Servidor estático mínimo, sem dependências.
-   Uso:  node tools/servidor.js [porta]
+   Uso:  node tools/servidor.js [porta]     (ou a variável PORT)
    Mostra também o endereço da rede local para abrires no iPhone.   */
 const http = require('http');
 const fs = require('fs');
@@ -7,7 +7,7 @@ const path = require('path');
 const os = require('os');
 
 const RAIZ = path.join(__dirname, '..');
-const PORTA = Number(process.argv[2]) || 8080;
+const PORTA = Number(process.argv[2]) || Number(process.env.PORT) || 8080;
 
 const TIPOS = {
   '.html': 'text/html; charset=utf-8',

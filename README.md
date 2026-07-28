@@ -9,42 +9,58 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 
 | Ecrã | O que tem |
 |---|---|
-| **Hoje** | Sugestão de treino para o dia, cobertura muscular dos últimos 7 dias, resumo da semana |
-| **Treino** | Registo de séries (peso × reps), cronómetro de descanso automático, deteção de recordes |
+| **Hoje** | Objectivo de treino, sugestão do dia (força ou circuito), cobertura muscular dos últimos 7 dias |
+| **Treino** | Registo de séries e de rondas de circuito, cronómetro de descanso automático, deteção de recordes |
 | **Histórico** | Calendário do mês com os dias treinados, detalhe de cada sessão, editar/apagar/repetir |
-| **Exercícios** | 108 exercícios com músculos e equipamento, procura, favoritos, exercícios personalizados |
-| **Progresso** | Volume por semana, distribuição por grupo muscular (30 dias), recordes, top exercícios |
-| **Ajustes** | Plano de treino, tempos de descanso, kg/lb, tema, exportar/importar cópia de segurança |
+| **Exercícios** | 139 exercícios organizados por grupo muscular, com filtro da parte do músculo e instruções de execução |
+| **Progresso** | Volume por semana, condição física dos últimos 30 dias, distribuição muscular, recordes |
+| **Ajustes** | Objectivo, plano de treino, tempos de descanso, kg/lb, tema, exportar/importar cópia de segurança |
 
-### Configuração de origem
+### Objectivos
 
-Afinada para hipertrofia: **3 séries por exercício, 10–12 repetições**, 7 exercícios por sessão
-(21 séries), descanso de 3:00 nos compostos e 2:00 no isolamento, plano Push/Pull/Legs.
-**Glúteos estão fora** das sugestões e da cobertura muscular.
+A app serve quatro objectivos, e cada um repõe as repetições, o descanso, o volume e o plano:
 
-Cada sessão põe os compostos à frente e o isolamento no fim, e distribui os exercícios extra
-pelos grupos com maior défice **absoluto** de séries — por isso os dorsais e o peito levam dois
-ou três exercícios antes de o trapézio levar um segundo.
+| Objectivo | Repetições | Descanso | Plano |
+|---|---|---|---|
+| **Ganhar músculo** | 8–12 | 3:00 | Empurrar, puxar e pernas |
+| **Ganhar força** | 3–6 | 4:00 | Superior e inferior, com prioridade aos compostos |
+| **Perder peso** | 12–15 | 1:15 | Corpo inteiro alternado com circuitos |
+| **Força e condição física** | 6–10 | 2:30 | Dias de força alternados com circuitos |
 
-Exercícios que pedem repetições altas mantêm o intervalo próprio — gémeos e elevações laterais
-12–20, abdominais 15–25 — e a prancha continua em segundos. Tudo isto se muda em **Ajustes**,
-incluindo quais os músculos a ignorar.
+Depois de escolher um objectivo, todos os valores continuam a poder ser afinados um a um.
 
-Os alvos semanais por músculo seguem a referência de 10–20 séries para hipertrofia
-(peito 16, dorsais 18, quadríceps 16, bíceps e tríceps 14…). O selector **Volume semanal alvo**
-escala-os: *Moderado* se treinas 3× por semana, *Alto* se treinas 5–6×.
+### Treinos híbridos em circuito
+
+Sete circuitos prontos, com quatro formatos: **rondas fixas**, **máximo de voltas no tempo (AMRAP)**,
+**uma estação por minuto (EMOM)** e **tabata**. As estações juntam corrida, remoergómetro, bola à
+parede, kettlebell, saltos e agachamentos. Durante o treino a app conta as rondas, muda de estação
+sozinha e mede o descanso curto entre estações.
+
+Cada exercício regista-se na unidade que faz sentido: carga × repetições, só repetições, segundos,
+metros ou calorias da máquina. Os exercícios de condição física não entram na contagem de volume
+de musculação — aparecem no bloco **Condição física** do Progresso.
+
+### Figura dos músculos
+
+Todos os exercícios mostram uma figura humana de frente e de costas, com os músculos principais a
+laranja e os secundários a meio-tom. As formas vivem num único conjunto SVG injectado uma vez e
+reutilizado com `<use>`, para que centenas de figuras não pesem na página.
 
 ### Como decide o que sugerir
 
-1. Olha para o **plano escolhido** (Push/Pull/Legs, Superior/Inferior, Corpo inteiro ou Peito+Costas/Ombros+Braços/Pernas)
-   e vê qual foi o último dia feito — sugere o seguinte.
+1. Olha para o **plano escolhido** e vê qual foi o último dia feito — sugere o seguinte.
+   Se esse dia for de circuito, propõe um circuito adequado ao objectivo.
 2. Conta as **séries por músculo dos últimos 7 dias** (séries em que o músculo é secundário contam metade)
    e compara com um alvo semanal por grupo.
 3. Escolhe os exercícios pela ordem do dia, dando prioridade aos que já tens histórico
    (para saber a carga), aos favoritos e aos movimentos de referência.
-4. Se algum músculo estiver **7+ dias sem estímulo**, mete um exercício desse grupo mesmo que não seja do dia.
-5. Se na última sessão completaste todas as séries no topo do intervalo de reps (12), **sugere subir a carga**
-   e volta ao fundo do intervalo (10). É dupla progressão: sobes as reps de 10 até 12, depois sobes o peso.
+4. Se algum músculo estiver **7 ou mais dias sem estímulo**, mete um exercício desse grupo mesmo que não seja do dia.
+5. Se na última sessão completaste todas as séries no topo do intervalo, **sugere subir a carga**
+   e volta ao fundo do intervalo. É dupla progressão: sobes as repetições, depois sobes o peso.
+
+Os alvos semanais por músculo seguem a referência de 10 a 20 séries para hipertrofia
+(peito 16, dorsais 18, quadríceps 16, bíceps e tríceps 14…). O selector **Volume semanal alvo**
+escala-os: *Moderado* se treinas 3 vezes por semana, *Alto* se treinas 5 ou 6.
 
 ---
 
@@ -82,6 +98,7 @@ node tools/servidor.js
 ```
 
 Mostra o endereço `http://192.168.x.x:8080` para abrires no iPhone (tem de estar no mesmo Wi-Fi).
+Podes passar outra porta como argumento (`node tools/servidor.js 9000`) ou pela variável `PORT`.
 Serve para experimentar, mas **não é boa para uso diário**: sem `https` não funciona offline,
 e se o IP do PC mudar perdes o acesso aos treinos guardados.
 
@@ -114,7 +131,9 @@ manifest.webmanifest    metadados para o ecrã principal
 sw.js                   service worker — faz a app funcionar offline
 icons/                  ícones PNG gerados
 js/
-  exercises.js          catálogo: 15 grupos musculares, 108 exercícios, 4 planos
+  exercises.js          catálogo: 16 músculos, 9 grupos com partes, 139 exercícios, 6 planos, 7 circuitos
+  execucao.js           passos de execução e erro mais comum de cada exercício
+  anatomia.js           figura humana em SVG com os músculos trabalhados
   store.js              dados em localStorage + motor de sugestão e estatísticas
   ui.js                 ícones SVG, sheets, toasts, vibração, som
   charts.js             gráficos SVG sem bibliotecas

@@ -152,15 +152,20 @@ window.Vistas = window.Vistas || {};
 
       const vol = Store.volumeTreino(t);
       const series = Store.seriesTreino(t);
+      const cardio = Store.trabalhoCardio(t);
+      const circuito = t.tipo === 'circuito';
 
-      return `<section class="stats mb3">
+      return `${circuito ? `<p class="chip chip--primaria mb3">${icone('chama', 13)}Circuito · ${t.rondas || '—'} rondas previstas</p>` : ''}
+        <section class="stats mb3">
           ${Comp.stat(UI.fmtDuracao(t.duracao).replace(' min', ''), t.duracao && t.duracao >= 3600 ? 'duração' : 'minutos')}
-          ${Comp.stat(t.entradas.length, 'exercícios')}
-          ${Comp.stat(series, 'séries')}
-          ${Comp.stat(UI.fmt(Store.U.mostrar(vol), 0), 'volume', Store.U.label())}
+          ${Comp.stat(t.entradas.length, circuito ? 'estações' : 'exercícios')}
+          ${Comp.stat(series, circuito ? 'estações feitas' : 'séries')}
+          ${cardio.metros
+            ? Comp.stat(UI.fmt(cardio.metros, 0), 'distância', 'm')
+            : Comp.stat(UI.fmt(Store.U.mostrar(vol), 0), 'volume', Store.U.label())}
         </section>
         ${t.notas ? `<div class="cartao mb3"><p class="cartao__sub" style="color:var(--txt)">${icone('nota', 16)} ${esc(t.notas)}</p></div>` : ''}
-        ${t.entradas.map(entradaHtml).join('')}
+        ${t.entradas.map((e, i) => entradaHtml(e, i, t)).join('')}
         <button type="button" class="btn btn--secundario btn--bloco btn--grande mt4" data-repetir>
           ${icone('reiniciar', 20)}Repetir este treino
         </button>`;
@@ -177,7 +182,9 @@ window.Vistas = window.Vistas || {};
           msg: 'Queres descartá-lo e começar este?', ok: 'Descartar e começar', perigo: true
         }))) return;
         if (Store.state.ativo) Store.descartarTreino();
-        const novo = Store.comecarTreino(t.nome, t.entradas.map(e => e.exId));
+        const novo = t.circuitoId && Store.CIRCUITOS[t.circuitoId]
+          ? Store.comecarCircuito(t.circuitoId)
+          : Store.comecarTreino(t.nome, t.entradas.map(e => e.exId));
         if (t.splitId) { novo.splitId = t.splitId; novo.splitDia = t.splitDia; Store.guardar(true); }
         UI.haptic('sucesso');
         App.ir('treino');
@@ -190,30 +197,49 @@ window.Vistas = window.Vistas || {};
     }
   };
 
-  function entradaHtml(entrada) {
+  function entradaHtml(entrada, idx, treino) {
     const ex = Store.exercicio(entrada.exId);
     const nome = ex ? ex.n : 'Exercício removido';
     const uteis = entrada.series.filter(s => s.tipo !== 'aquecimento');
-    const melhor = uteis.reduce((m, s) => {
-      const r = Store.um1RM(s.kg, s.reps);
-      return !m || r > m.r ? { r, s } : m;
-    }, null);
-    const vol = uteis.reduce((v, s) => v + (s.kg || 0) * (s.reps || 0), 0);
+    const circuito = treino && treino.tipo === 'circuito';
+    const rotulo = circuito ? 'Ronda' : 'Série';
+
+    const n = uteis.length;
+    const conta = circuito
+      ? `${n} ronda${n === 1 ? '' : 's'}`
+      : `${n} série${n === 1 ? '' : 's'}`;
+    const soma = chave => uteis.reduce((v, s) => v + (s[chave] || 0), 0);
+
+    let resumo;
+    if (!ex) resumo = conta;
+    else if (ex.m === 'distancia') resumo = `${conta} · ${UI.fmt(soma('m'), 0)} m no total`;
+    else if (ex.m === 'calorias') resumo = `${conta} · ${UI.fmt(soma('cal'), 0)} calorias`;
+    else if (ex.tempo) resumo = `${conta} · ${UI.mmss(soma('reps'))} no total`;
+    else {
+      const vol = uteis.reduce((v, s) => v + (s.kg || 0) * (s.reps || 0), 0);
+      if (vol) {
+        const melhor = uteis.reduce((m, s) => Math.max(m, Store.um1RM(s.kg, s.reps)), 0);
+        resumo = `${conta} · ${UI.fmt(Store.U.mostrar(vol), 0)} ${Store.U.label()} de volume${melhor ? ` · 1 repetição máxima estimada ${Store.U.fmt(melhor)}` : ''}`;
+      } else {
+        resumo = `${conta} · ${soma('reps')} repetições no total`;
+      }
+    }
 
     return `<article class="exercicio mb3">
       <header class="exercicio__cab">
+        ${ex ? Anatomia.miniDoExercicio(ex) : ''}
         <div class="crescer">
           <h2 class="exercicio__n">${esc(nome)}</h2>
-          <p class="exercicio__meta num">${uteis.length} séries · ${UI.fmt(Store.U.mostrar(vol), 0)} ${esc(Store.U.label())} de volume${melhor && melhor.r ? ` · 1RM est. ${Store.U.fmt(melhor.r)}` : ''}</p>
+          <p class="exercicio__meta num">${esc(resumo)}</p>
         </div>
         ${ex ? `<button type="button" class="btn-icone" data-ex="${ex.id}" aria-label="Ver histórico de ${esc(nome)}">${icone('grafico', 20)}</button>` : ''}
       </header>
       <div style="padding:0 var(--e4) var(--e3)">
         ${entrada.series.map((s, i) => `<div class="entre" style="padding:6px 0;border-bottom:1px solid var(--borda)">
           <span style="font-size:var(--t-md);color:var(--txt-2);font-weight:600">
-            ${s.tipo === 'aquecimento' ? 'Aquecimento' : 'Série ' + (i + 1)}${s.tipo === 'falha' ? ' · falha' : ''}
+            ${s.tipo === 'aquecimento' ? 'Aquecimento' : rotulo + ' ' + (i + 1)}${s.tipo === 'falha' ? ' · até à falha' : ''}
           </span>
-          <span class="num" style="font-weight:700">${Store.U.fmt(s.kg)} × ${s.reps ?? '—'}</span>
+          <span class="num" style="font-weight:700">${esc(ex ? Vistas.exercicios.textoSerie(s, ex) : `${Store.U.fmt(s.kg)} × ${s.reps ?? '—'}`)}</span>
         </div>`).join('')}
         ${entrada.notas ? `<p class="cartao__sub mt3">${icone('nota', 14)} ${esc(entrada.notas)}</p>` : ''}
       </div>

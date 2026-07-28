@@ -7,7 +7,11 @@
 
   const KEY = 'treinos.db.v1';
   const LB = 0.45359237;
-  const { MUSCLES, EXERCISES, SPLITS } = global.CATALOGO;
+  const { MUSCLES, GRUPOS, EXERCISES, SPLITS, OBJETIVOS, METRICAS, CIRCUITOS } = global.CATALOGO;
+
+  /* Índice parte do músculo → grupo, para o menu de criação de treino */
+  const GRUPO_DA_PARTE = {};
+  Object.keys(GRUPOS).forEach(g => GRUPOS[g].partes.forEach(p => { GRUPO_DA_PARTE[p.k] = g; }));
 
   /* ---------- utilitários de data ---------- */
   const D = {
@@ -42,19 +46,21 @@
   /* ---------- estado inicial ---------- */
   function estadoInicial() {
     return {
-      version: 1,
+      version: 2,
       criadoEm: new Date().toISOString(),
       settings: {
         tema: 'auto',
         unidade: 'kg',
+        objetivo: 'musculo',    // musculo | forca | peso | hibrido
         descanso: 180,          // segundos, compostos (Schoenfeld 2016: 3 min > 1 min)
         descansoIsolamento: 120,
+        descansoCircuito: 20,   // entre estações de um circuito
         split: 'ppl',
         exerciciosPorTreino: 7,   // 7×3 = 21 séries por sessão
         seriesPorExercicio: 3,
-        repsAlvo: [10, 12],     // esquema de hipertrofia
+        repsAlvo: [8, 12],      // esquema de hipertrofia
         volume: 1,              // multiplicador dos alvos semanais (0.7 / 1 / 1.3)
-        musculosIgnorados: ['gluteos'],
+        musculosIgnorados: [],
         avisoSonoro: true,
         vibrar: true,
         equipamento: null       // null = tudo disponível
@@ -126,6 +132,33 @@
     }
   };
 
+  /* ---------- objectivo ---------- */
+  function objetivo() {
+    return OBJETIVOS[state.settings.objetivo] || OBJETIVOS.musculo;
+  }
+
+  /** Aplica os valores por omissão de um objectivo (o utilizador pode ajustar depois) */
+  function aplicarObjetivo(chave) {
+    const o = OBJETIVOS[chave];
+    if (!o) return null;
+    const s = state.settings;
+    s.objetivo = chave;
+    s.repsAlvo = o.reps.slice();
+    s.descanso = o.descanso;
+    s.descansoIsolamento = o.descansoIsolamento;
+    s.volume = o.volume;
+    s.seriesPorExercicio = o.series;
+    s.exerciciosPorTreino = o.exercicios;
+    s.split = o.split;
+    guardar(true);
+    return o;
+  }
+
+  /** O objectivo actual pede treinos em circuito? */
+  function usaCircuitos() {
+    return !!objetivo().circuitos;
+  }
+
   /* ---------- preferências de treino ---------- */
 
   /** Músculos que contam para sugestões e cobertura (exclui os ignorados) */
@@ -143,17 +176,66 @@
     return Math.round(MUSCLES[k].alvo * (state.settings.volume || 1));
   }
 
+  /* ---------- métricas de registo ---------- */
+
+  /** Descritor da métrica de um exercício: dois campos, a e b */
+  function metricaDe(ex) {
+    return METRICAS[(ex && ex.m) || 'peso'] || METRICAS.peso;
+  }
+
+  /** Campo onde vive o valor alvo (repetições, metros ou calorias) */
+  function chaveAlvo(ex) {
+    const m = (ex && ex.m) || 'peso';
+    if (m === 'distancia') return 'm';
+    if (m === 'calorias') return 'cal';
+    return 'reps';       // peso, tempo (segundos) e reps
+  }
+
+  /** O exercício mede-se em carga? (conta para volume e recordes de peso) */
+  function comCarga(ex) {
+    const m = (ex && ex.m) || 'peso';
+    return m === 'peso' || m === 'tempo' || m === 'reps';
+  }
+
   /**
-   * Intervalo de repetições a usar num exercício.
-   * Respeita o esquema preferido, mas mantém o do exercício quando este
-   * pede reps mais altas (gémeos, abdominais) ou é medido em segundos.
+   * Intervalo de referência de um exercício.
+   * O esquema de repetições do objectivo só se aplica a exercícios
+   * de carga; cardio, tempos e movimentos balísticos mantêm o seu.
    */
   function repsDe(ex) {
     const alvo = state.settings.repsAlvo;
-    if (!ex) return alvo || [10, 12];
-    if (ex.tempo || !alvo) return ex.r;
+    if (!ex) return alvo || [8, 12];
+    if (ex.cond || !comCarga(ex) || ex.tempo || !alvo) return ex.r;
+    if (ex.m === 'reps') return ex.r;
     if (ex.r[0] >= alvo[1]) return ex.r;   // gémeos, abdominais, elevações laterais…
     return alvo;
+  }
+
+  /** Série vazia com os campos certos para a métrica do exercício */
+  function serieVazia(ex) {
+    const met = metricaDe(ex);
+    const s = { feita: false, tipo: 'normal' };
+    s[met.a.k] = null;
+    s[met.b.k] = null;
+    return s;
+  }
+
+  /** Série já preenchida com o valor de referência */
+  function serieBase(ex, alvo) {
+    const s = serieVazia(ex);
+    const k = chaveAlvo(ex);
+    const r = repsDe(ex);
+    s[k] = alvo != null ? alvo : (k === 'reps' ? r[1] : r[0]);
+    return s;
+  }
+
+  /** Copia os valores de uma série anterior, campo a campo */
+  function copiarSerie(ex, origem) {
+    const met = metricaDe(ex);
+    const s = { feita: false, tipo: origem.tipo === 'aquecimento' ? 'aquecimento' : 'normal' };
+    s[met.a.k] = origem[met.a.k] != null ? origem[met.a.k] : null;
+    s[met.b.k] = origem[met.b.k] != null ? origem[met.b.k] : null;
+    return s;
   }
 
   /* ---------- exercícios ---------- */
@@ -178,8 +260,10 @@
     const ex = {
       id, n: dados.n, p: dados.p || [], s: dados.s || [],
       e: dados.e || 'halteres', t: dados.t || 'I',
-      r: dados.r || [8, 12], inc: dados.inc || 2.5, custom: true
+      r: dados.r || [8, 12], inc: dados.inc || 2.5,
+      m: dados.m || 'peso', pt: dados.pt || [], custom: true
     };
+    if (ex.m === 'tempo') ex.tempo = true;
     state.exerciciosCustom.push(ex);
     invalidarIndice();
     guardar(true);
@@ -200,6 +284,27 @@
     return i < 0;
   }
 
+  /** Exercícios de um grupo muscular, opcionalmente filtrados por parte */
+  function exerciciosDoGrupo(grupo, parte) {
+    const g = GRUPOS[grupo];
+    if (!g) return [];
+    return todosExercicios().filter(ex => {
+      const partes = ex.pt || [];
+      if (parte) return partes.includes(parte);
+      if (partes.some(p => GRUPO_DA_PARTE[p] === grupo)) return true;
+      // exercícios personalizados não têm partes: usa os músculos principais
+      if (!partes.length) return (ex.p || []).some(m => MUSCLES[m] && MUSCLES[m].grupo === grupo);
+      return false;
+    });
+  }
+
+  /** Quantos exercícios existem em cada grupo (para os cartões do menu) */
+  function contagemPorGrupo() {
+    const acc = {};
+    Object.keys(GRUPOS).forEach(g => { acc[g] = exerciciosDoGrupo(g).length; });
+    return acc;
+  }
+
   /* ---------- treino ativo ---------- */
   function comecarTreino(nome, exercicioIds) {
     state.ativo = {
@@ -207,11 +312,47 @@
       data: D.hoje(),
       inicio: Date.now(),
       nome: nome || 'Treino livre',
+      tipo: 'forca',
       notas: '',
       entradas: (exercicioIds || []).map(criarEntrada)
     };
     guardar(true);
     return state.ativo;
+  }
+
+  /** Começa um treino em circuito a partir de um modelo do catálogo */
+  function comecarCircuito(chave) {
+    const c = CIRCUITOS[chave];
+    if (!c) return null;
+    state.ativo = {
+      id: 'w' + Date.now(),
+      data: D.hoje(),
+      inicio: Date.now(),
+      nome: c.name,
+      tipo: 'circuito',
+      circuitoId: chave,
+      formato: c.formato,
+      rondas: c.rondas,
+      minutos: c.minutos,
+      descansoEstacao: c.descansoEstacao,
+      descansoRonda: c.descansoRonda,
+      notas: '',
+      entradas: c.estacoes.map(e => criarEntradaCircuito(e, c.rondas))
+    };
+    guardar(true);
+    return state.ativo;
+  }
+
+  function criarEntradaCircuito(estacao, rondas) {
+    const ex = exercicio(estacao.ex);
+    const ult = ultimaPerformance(estacao.ex);
+    const cargaAnterior = ult ? Math.max(...ult.series.map(s => s.kg || 0)) : 0;
+    const series = Array.from({ length: Math.max(1, rondas) }, () => {
+      const s = serieBase(ex, estacao.alvo);
+      if (cargaAnterior && comCarga(ex)) s.kg = cargaAnterior;
+      return s;
+    });
+    return { exId: estacao.ex, series, notas: '', alvo: estacao.alvo };
   }
 
   function criarEntrada(exId) {
@@ -221,11 +362,11 @@
     const reps = repsDe(ex);
     let series = [];
     if (ult) {
-      series = ult.series.filter(s => s.tipo !== 'aquecimento').map(s => ({ kg: s.kg, reps: s.reps, feita: false, tipo: 'normal' }));
+      series = ult.series.filter(s => s.tipo !== 'aquecimento').map(s => copiarSerie(ex, s));
       const sug = sugerirProgressao(exId);
       if (sug && sug.subir) series.forEach(s => { s.kg = sug.kg; s.reps = reps[0]; });
     }
-    if (!series.length) series = Array.from({ length: nSeries }, () => ({ kg: null, reps: reps[1], feita: false, tipo: 'normal' }));
+    if (!series.length) series = Array.from({ length: nSeries }, () => serieBase(ex));
     return { exId, series, notas: '' };
   }
 
@@ -260,19 +401,39 @@
     return kg * (1 + reps / 30);          // Epley
   }
 
+  function serieUtil(s) { return s.feita !== false && s.tipo !== 'aquecimento'; }
+
   function volumeTreino(t) {
     let v = 0;
     t.entradas.forEach(e => e.series.forEach(s => {
-      if (s.feita !== false && s.tipo !== 'aquecimento') v += (s.kg || 0) * (s.reps || 0);
+      if (serieUtil(s)) v += (s.kg || 0) * (s.reps || 0);
     }));
     return v;
   }
 
   function seriesTreino(t) {
-    return t.entradas.reduce((n, e) => n + e.series.filter(s => s.feita !== false && s.tipo !== 'aquecimento').length, 0);
+    return t.entradas.reduce((n, e) => n + e.series.filter(serieUtil).length, 0);
   }
 
-  /** Séries por músculo num intervalo. Primário = 1, secundário = 0,5 */
+  /** Trabalho de condição física de um treino: metros, calorias e segundos */
+  function trabalhoCardio(t) {
+    const acc = { metros: 0, calorias: 0, segundos: 0, series: 0 };
+    t.entradas.forEach(e => {
+      const ex = exercicio(e.exId);
+      if (!ex || !ex.cond) return;
+      e.series.forEach(s => {
+        if (!serieUtil(s)) return;
+        acc.series++;
+        acc.metros += s.m || 0;
+        acc.calorias += s.cal || 0;
+        acc.segundos += (s.seg || 0) + (ex.tempo ? (s.reps || 0) : 0);
+      });
+    });
+    return acc;
+  }
+
+  /** Séries por músculo num intervalo. Primário = 1, secundário = 0,5.
+      Exercícios de condição física não contam — servem outro objectivo. */
   function seriesPorMusculo(dias) {
     const limite = dias ? D.maisDias(D.hoje(), -dias + 1) : '0000-00-00';
     const acc = {};
@@ -281,8 +442,8 @@
       if (t.data < limite) return;
       t.entradas.forEach(e => {
         const ex = exercicio(e.exId);
-        if (!ex) return;
-        const n = e.series.filter(s => s.feita !== false && s.tipo !== 'aquecimento').length;
+        if (!ex || ex.cond) return;
+        const n = e.series.filter(serieUtil).length;
         (ex.p || []).forEach(m => { if (acc[m] != null) acc[m] += n; });
         (ex.s || []).forEach(m => { if (acc[m] != null) acc[m] += n * 0.5; });
       });
@@ -296,7 +457,7 @@
     state.treinos.forEach(t => {
       t.entradas.forEach(e => {
         const ex = exercicio(e.exId);
-        if (!ex) return;
+        if (!ex || ex.cond) return;
         (ex.p || []).forEach(m => { if (!ult[m] || t.data > ult[m]) ult[m] = t.data; });
       });
     });
@@ -305,7 +466,7 @@
 
   /**
    * Estado de recuperação/cobertura por músculo.
-   * estado: nunca | recuperar | pronto | atraso
+   * estado: nunca | recuperar | pronto | atraso | indirecto
    */
   function estadoMusculos(incluirIgnorados) {
     const s7 = seriesPorMusculo(7);
@@ -324,7 +485,7 @@
       else if (sets < alvo * 0.6) estado = 'atraso';
       else estado = 'pronto';
       return {
-        key: k, nome: m.name, curto: m.curto, zona: m.zona,
+        key: k, nome: m.name, zona: m.zona, grupo: m.grupo,
         alvo, sets, dias, ultima: ult[k] || null, estado,
         ignorado: ignorado(k),
         pct: Math.min(1, sets / (alvo || 1))
@@ -344,33 +505,43 @@
 
   /** Histórico completo de um exercício (mais recente primeiro) */
   function historicoExercicio(exId) {
+    const ex = exercicio(exId);
     const out = [];
     state.treinos.forEach(t => {
       const e = t.entradas.find(x => x.exId === exId);
       if (!e) return;
-      const uteis = e.series.filter(s => s.feita !== false && s.tipo !== 'aquecimento');
+      const uteis = e.series.filter(serieUtil);
       if (!uteis.length) return;
       let melhor = null, vol = 0;
+      const total = { reps: 0, m: 0, cal: 0, seg: 0 };
       uteis.forEach(s => {
         vol += (s.kg || 0) * (s.reps || 0);
+        total.reps += s.reps || 0;
+        total.m += s.m || 0;
+        total.cal += s.cal || 0;
+        total.seg += (s.seg || 0) + (ex && ex.tempo ? (s.reps || 0) : 0);
         const rm = um1RM(s.kg, s.reps);
         if (!melhor || rm > melhor.rm) melhor = { rm, kg: s.kg, reps: s.reps };
       });
-      out.push({ data: t.data, treinoId: t.id, series: uteis, volume: vol, melhor });
+      out.push({ data: t.data, treinoId: t.id, series: uteis, volume: vol, melhor, total });
     });
     return out;
   }
 
-  /** Índice peso-máximo por exercício, numa só passagem (cache até gravar) */
+  /** Índice dos melhores registos por exercício, numa só passagem */
   let _idxRec = null;
   function indiceRecordes() {
     if (_idxRec) return _idxRec;
     _idxRec = {};
     state.treinos.forEach(t => t.entradas.forEach(e => {
       e.series.forEach(s => {
-        if (s.feita === false || s.tipo === 'aquecimento' || !s.kg) return;
-        const r = _idxRec[e.exId] || (_idxRec[e.exId] = { kg: 0, reps: 0, data: null });
-        if (s.kg > r.kg) { r.kg = s.kg; r.reps = s.reps; r.data = t.data; }
+        if (!serieUtil(s)) return;
+        const r = _idxRec[e.exId] || (_idxRec[e.exId] = { kg: 0, reps: 0, m: 0, cal: 0, seg: 0, data: null });
+        if ((s.kg || 0) > r.kg) { r.kg = s.kg; r.reps = s.reps || r.reps; r.data = t.data; }
+        if ((s.reps || 0) > r.reps && !s.kg) r.reps = s.reps;
+        if ((s.m || 0) > r.m) { r.m = s.m; if (!r.data) r.data = t.data; }
+        if ((s.cal || 0) > r.cal) { r.cal = s.cal; if (!r.data) r.data = t.data; }
+        if ((s.seg || 0) > r.seg) r.seg = s.seg;
       });
     }));
     return _idxRec;
@@ -378,44 +549,77 @@
 
   /**
    * Recordes pessoais de um exercício.
-   * `peso` está sempre preenchido quando há histórico — em exercícios de peso
-   * corporal sem carga adicional fica a 0 kg e o recorde relevante é `reps`.
+   * Em exercícios de carga, `peso` está sempre preenchido quando há
+   * histórico; em exercícios de condição física devolve o melhor
+   * registo da métrica própria (metros, calorias ou segundos).
    */
   function recordes(exId) {
+    const ex = exercicio(exId);
     const h = historicoExercicio(exId);
     if (!h.length) return null;
+    const met = (ex && ex.m) || 'peso';
     let peso = null, reps = null, rm = 0, rmInfo = null, vol = 0;
-    h.forEach(s => {
-      s.series.forEach(x => {
+    let dist = null, cal = null, seg = null, melhorTotal = 0;
+
+    h.forEach(sessao => {
+      sessao.series.forEach(x => {
         const kg = x.kg || 0, r = x.reps || 0;
-        if (!peso || kg > peso.kg) peso = { kg, reps: r, data: s.data };
-        if (!reps || r > reps.reps) reps = { kg, reps: r, data: s.data };
+        if (!peso || kg > peso.kg) peso = { kg, reps: r, data: sessao.data };
+        if (!reps || r > reps.reps) reps = { kg, reps: r, data: sessao.data };
         const e = um1RM(kg, r);
-        if (e > rm) { rm = e; rmInfo = { kg, reps: r, data: s.data }; }
+        if (e > rm) { rm = e; rmInfo = { kg, reps: r, data: sessao.data }; }
+        if (x.m && (!dist || x.m > dist.valor)) dist = { valor: x.m, data: sessao.data };
+        if (x.cal && (!cal || x.cal > cal.valor)) cal = { valor: x.cal, data: sessao.data };
+        const s = x.seg || (ex && ex.tempo ? r : 0);
+        if (s && (!seg || s > seg.valor)) seg = { valor: s, data: sessao.data };
       });
-      if (s.volume > vol) vol = s.volume;
+      if (sessao.volume > vol) vol = sessao.volume;
+      const t = met === 'distancia' ? sessao.total.m : met === 'calorias' ? sessao.total.cal : sessao.total.seg;
+      if (t > melhorTotal) melhorTotal = t;
     });
+
     if (!peso) return null;
-    return { peso, reps, rm: rmInfo, rmValor: rm, volume: vol, sessoes: h.length, semCarga: peso.kg === 0 };
+    return {
+      metrica: met, comCarga: comCarga(ex),
+      peso, reps, rm: rmInfo, rmValor: rm, volume: vol,
+      distancia: dist, calorias: cal, tempo: seg, melhorTotal,
+      sessoes: h.length, semCarga: peso.kg === 0
+    };
   }
 
-  /** Texto curto do melhor registo, adequado a carga ou a peso corporal */
-  function textoRecorde(rec) {
+  /** Texto curto do melhor registo, adequado à métrica do exercício */
+  function textoRecorde(rec, ex) {
     if (!rec) return '';
-    return rec.semCarga
-      ? `${rec.reps.reps} reps`
-      : `${U.fmt(rec.peso.kg)} × ${rec.peso.reps}`;
+    const met = rec.metrica || 'peso';
+    if (met === 'distancia') return rec.distancia ? `${UI.fmt(rec.distancia.valor, 0)} m` : '—';
+    if (met === 'calorias') return rec.calorias ? `${UI.fmt(rec.calorias.valor, 0)} cal` : '—';
+    if (met === 'tempo') return rec.tempo ? UI.mmss(rec.tempo.valor) : '—';
+    if (rec.semCarga) return `${rec.reps.reps} repetições`;
+    return `${U.fmt(rec.peso.kg)} × ${rec.peso.reps}`;
+  }
+
+  /** Etiqueta curta para listas, a partir do índice de recordes */
+  function melhorEtiqueta(ex, r) {
+    if (!ex || !r) return null;
+    const met = ex.m || 'peso';
+    if (met === 'distancia') return r.m ? `${UI.fmt(r.m, 0)} m` : null;
+    if (met === 'calorias') return r.cal ? `${UI.fmt(r.cal, 0)} cal` : null;
+    if (met === 'tempo') return r.reps ? `${r.reps} s` : null;
+    if (r.kg) return U.fmt(r.kg);
+    return r.reps ? `${r.reps} repetições` : null;
   }
 
   /** Progressão sugerida: sobe carga se completou todas as séries no topo do intervalo */
   function sugerirProgressao(exId) {
     const ex = exercicio(exId);
+    if (!ex || !comCarga(ex)) return null;
     const ult = ultimaPerformance(exId);
-    if (!ex || !ult) return null;
-    const uteis = ult.series.filter(s => s.feita !== false && s.tipo !== 'aquecimento');
+    if (!ult) return null;
+    const uteis = ult.series.filter(serieUtil);
     if (!uteis.length) return null;
     const reps = repsDe(ex);
     const kgBase = Math.max(...uteis.map(s => s.kg || 0));
+    if (!kgBase) return null;
     const todasNoTopo = uteis.every(s => (s.reps || 0) >= reps[1] && (s.kg || 0) >= kgBase);
     return {
       subir: todasNoTopo,
@@ -427,7 +631,7 @@
 
   /* ---------- motor de sugestão ---------- */
 
-  /** Escolhe o próximo dia do split com base no histórico */
+  /** Escolhe o próximo dia do plano com base no histórico */
   function proximoDiaSplit() {
     const split = SPLITS[state.settings.split] || SPLITS.ppl;
     const ultimo = state.treinos.find(t => t.splitId === state.settings.split && typeof t.splitDia === 'number');
@@ -440,6 +644,7 @@
   function melhorExercicioPara(musculo, usados, equipamento) {
     const cands = todosExercicios().filter(ex =>
       (ex.p || []).includes(musculo) &&
+      !ex.cond &&
       !usados.has(ex.id) &&
       (!equipamento || !equipamento.length || equipamento.includes(ex.e))
     );
@@ -452,6 +657,7 @@
     }));
 
     const PESO_EQUIP = { barra: 30, halteres: 28, maquina: 26, cabos: 24, corporal: 14, kettlebell: 10, elastico: 6 };
+    const forca = state.settings.objetivo === 'forca';
 
     function pontuar(ex) {
       let p = 0;
@@ -459,9 +665,9 @@
       if (ex.pr === 1) p += 130; else if (ex.pr === 2) p += 65;
       if (state.favoritos.includes(ex.id)) p += 90;
       if (hist[ex.id] != null) p += 70 - Math.min(60, hist[ex.id] * 4);  // já sabe a carga
-      if (ex.t === 'C') p += 25;
+      if (ex.t === 'C') p += forca ? 70 : 25;           // quem treina força quer compostos
       p += PESO_EQUIP[ex.e] || 0;
-      if ((ex.p || []).length >= 3) p -= 40;            // demasiado global (ex.: burpees)
+      if ((ex.p || []).length >= 3) p -= 40;            // demasiado global
       if (ex.custom) p += 25;
       return p;
     }
@@ -470,18 +676,52 @@
     return cands[0];
   }
 
+  /** Circuitos que fazem sentido para o objectivo actual */
+  function circuitosSugeridos() {
+    const obj = state.settings.objetivo;
+    const chaves = Object.keys(CIRCUITOS);
+    const bons = chaves.filter(k => (CIRCUITOS[k].objetivos || []).includes(obj));
+    return (bons.length ? bons : chaves).map(k => ({ chave: k, ...CIRCUITOS[k] }));
+  }
+
+  /** Sugestão de circuito: alterna entre os que servem o objectivo */
+  function sugerirCircuito(preferido) {
+    const lista = circuitosSugeridos();
+    if (!lista.length) return null;
+    if (preferido && CIRCUITOS[preferido]) return { chave: preferido, ...CIRCUITOS[preferido] };
+    const feitos = state.treinos.filter(t => t.circuitoId).map(t => t.circuitoId);
+    const nunca = lista.find(c => !feitos.includes(c.chave));
+    if (nunca) return nunca;
+    // o que está há mais tempo sem ser feito
+    return lista.slice().sort((a, b) => feitos.indexOf(a.chave) - feitos.indexOf(b.chave)).pop();
+  }
+
   /**
    * Sugestão de treino para hoje.
-   * Combina o split escolhido com os músculos em défice na última semana.
+   * Combina o plano escolhido com os músculos em défice na última semana.
+   * Se o dia do plano for de circuito, devolve um treino híbrido.
    */
   function sugerirTreino() {
     const { split, splitKey, indice, dia } = proximoDiaSplit();
+
+    if (dia.circuito) {
+      const c = sugerirCircuito(dia.circuito);
+      if (c) {
+        return {
+          tipo: 'circuito', circuito: c, chave: c.chave,
+          nome: c.name, splitId: splitKey, splitDia: indice, splitNome: split.name,
+          exercicios: c.estacoes.map(e => ({ ex: exercicio(e.ex), alvo: e.alvo })).filter(x => x.ex),
+          alerta: null
+        };
+      }
+    }
+
     const estados = {};
     estadoMusculos().forEach(m => { estados[m.key] = m; });
 
-    // a ordem do split define a estrutura da sessão (compostos grandes primeiro);
+    // a ordem do plano define a estrutura da sessão (compostos grandes primeiro);
     // o défice só decide quem leva exercício extra
-    const foco = dia.foco.filter(k => !ignorado(k));
+    const foco = (dia.foco || []).filter(k => !ignorado(k));
     // défice absoluto (não relativo): assim os exercícios extra vão para os
     // grupos grandes — dorsais, peito, quadríceps — e não para o trapézio
     const porDefice = foco.slice().sort((a, b) =>
@@ -490,7 +730,7 @@
     // músculo claramente em falta fora do dia — junta-se no fim se houver espaço
     // (só depois de haver histórico suficiente para a comparação fazer sentido)
     const extras = (state.treinos.length < 4 ? [] : musculosActivos().filter(k => {
-      if (dia.foco.includes(k)) return false;
+      if (foco.includes(k)) return false;
       const e = estados[k];
       if (e.dias === null) return e.sets < e.alvo * 0.5;              // nunca trabalhado directamente
       return e.dias >= 2 && (e.dias >= 6 || e.sets < e.alvo * 0.35);  // parado ou com pouco volume
@@ -526,6 +766,7 @@
     }
 
     return {
+      tipo: 'forca',
       nome: dia.name,
       splitId: splitKey,
       splitDia: indice,
@@ -535,16 +776,16 @@
         .slice()
         .sort((a, b) => (b.ex.t === 'C' ? 1 : 0) - (a.ex.t === 'C' ? 1 : 0))
         .map(({ ex, musculo }) => {
-        const prog = sugerirProgressao(ex.id);
-        return {
-          ex, musculo,
-          series: Math.max(1, state.settings.seriesPorExercicio || 3),
-          reps: repsDe(ex),
-          kg: prog ? prog.kg : null,
-          subir: prog ? prog.subir : false,
-          anterior: prog ? prog.anterior : null
-        };
-      }),
+          const prog = sugerirProgressao(ex.id);
+          return {
+            ex, musculo,
+            series: Math.max(1, state.settings.seriesPorExercicio || 3),
+            reps: repsDe(ex),
+            kg: prog ? prog.kg : null,
+            subir: prog ? prog.subir : false,
+            anterior: prog ? prog.anterior : null
+          };
+        }),
       alerta: extras.length ? (() => {
         const e = estados[extras[0]];
         const n = MUSCLES[extras[0]].name;
@@ -591,6 +832,8 @@
         label: D.curto(ini),
         volume: treinos.reduce((v, t) => v + volumeTreino(t), 0),
         series: treinos.reduce((v, t) => v + seriesTreino(t), 0),
+        metros: treinos.reduce((v, t) => v + trabalhoCardio(t).metros, 0),
+        minutos: Math.round(treinos.reduce((v, t) => v + (t.duracao || 0), 0) / 60),
         treinos: treinos.length
       });
     }
@@ -629,14 +872,18 @@
 
   global.Store = {
     get state() { return state; },
-    D, U, MUSCLES, SPLITS,
+    D, U, MUSCLES, GRUPOS, SPLITS, OBJETIVOS, CIRCUITOS, METRICAS,
     carregar, guardar, aoMudar,
+    objetivo, aplicarObjetivo, usaCircuitos,
     musculosActivos, ignorado, alvoDe, repsDe,
+    metricaDe, chaveAlvo, comCarga, serieVazia, serieBase, serieUtil,
     todosExercicios, exercicio, criarExercicio, apagarExercicioCustom, alternarFavorito,
-    comecarTreino, criarEntrada, terminarTreino, descartarTreino, apagarTreino,
-    um1RM, volumeTreino, seriesTreino, seriesPorMusculo, estadoMusculos,
-    ultimaPerformance, historicoExercicio, recordes, indiceRecordes, textoRecorde, sugerirProgressao,
-    sugerirTreino, proximoDiaSplit, diasTreinados, sequencia, volumeSemanal,
+    exerciciosDoGrupo, contagemPorGrupo,
+    comecarTreino, comecarCircuito, criarEntrada, terminarTreino, descartarTreino, apagarTreino,
+    um1RM, volumeTreino, seriesTreino, trabalhoCardio, seriesPorMusculo, estadoMusculos,
+    ultimaPerformance, historicoExercicio, recordes, indiceRecordes, textoRecorde, melhorEtiqueta,
+    sugerirProgressao, sugerirTreino, sugerirCircuito, circuitosSugeridos, proximoDiaSplit,
+    diasTreinados, sequencia, volumeSemanal,
     exportar, importar, apagarTudo
   };
 })(window);

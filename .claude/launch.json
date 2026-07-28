@@ -4,8 +4,9 @@
     {
       "name": "treinos",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["tools/servidor.js", "8080"],
-      "port": 8080
+      "runtimeArgs": ["tools/servidor.js"],
+      "port": 8080,
+      "autoPort": true
     }
   ]
 }

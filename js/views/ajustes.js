@@ -17,6 +17,30 @@ window.Vistas = window.Vistas || {};
 
       return `
         <section class="seccao">
+          <div class="seccao__cab"><h2 class="seccao__tit">Objectivo</h2></div>
+          <div class="pilha">
+            ${Object.keys(CATALOGO.OBJETIVOS).map(k => {
+              const o = CATALOGO.OBJETIVOS[k];
+              const activo = s.objetivo === k;
+              return `<button type="button" class="cartao objetivo-c ${activo ? 'objetivo-c--activo' : ''}" data-objetivo="${k}">
+                <div class="entre">
+                  <span class="lista__t">${esc(o.name)}</span>
+                  ${activo ? `<span class="chip chip--primaria">${icone('check', 13)}Actual</span>` : ''}
+                </div>
+                <p class="cartao__sub mt2">${esc(o.desc)}</p>
+                <div class="linha mt3" style="flex-wrap:wrap;gap:6px">
+                  <span class="chip num">${o.reps[0]}–${o.reps[1]} repetições</span>
+                  <span class="chip num">${UI.mmss(o.descanso)} de descanso</span>
+                  ${o.circuitos ? '<span class="chip chip--primaria">Com circuitos</span>' : ''}
+                </div>
+              </button>`;
+            }).join('')}
+          </div>
+          <p class="campo__ajuda">Escolher um objectivo repõe as repetições, o descanso, o volume e o plano.
+            Depois podes afinar cada valor em baixo.</p>
+        </section>
+
+        <section class="seccao">
           <div class="seccao__cab"><h2 class="seccao__tit">Plano de treino</h2></div>
           <div class="cartao">
             <div class="campo" style="margin-bottom:var(--e3)">
@@ -46,9 +70,9 @@ window.Vistas = window.Vistas || {};
               <button type="button" class="btn-icone" data-reps="1" aria-label="Aumentar intervalo de repetições">${icone('mais', 22)}</button>
             </div>
             <p class="campo__ajuda">
-              6–8 força · 8–12 hipertrofia · 12–20 resistência.
-              Exercícios que pedem reps altas (gémeos, abdominais, elevações laterais) mantêm
-              o intervalo próprio, e a prancha continua em segundos.
+              3 a 6 para força · 8 a 12 para músculo · 12 a 20 para resistência.
+              Exercícios que pedem repetições altas (gémeos, abdominais, elevações laterais)
+              mantêm o intervalo próprio, a prancha continua em segundos e a corrida em metros.
             </p>
           </div>
 
@@ -75,7 +99,7 @@ window.Vistas = window.Vistas || {};
               ${Object.keys(Store.MUSCLES).map(k => {
                 const off = (s.musculosIgnorados || []).includes(k);
                 return `<button type="button" class="filtro" data-ign="${k}" aria-pressed="${off}"
-                  aria-label="${esc(Store.MUSCLES[k].name)}${off ? ': ignorado' : ': incluído'}">${esc(Store.MUSCLES[k].curto)}</button>`;
+                  aria-label="${esc(Store.MUSCLES[k].name)}${off ? ': ignorado' : ': incluído'}">${esc(Store.MUSCLES[k].name)}</button>`;
               }).join('')}
             </div>
           </div>
@@ -88,9 +112,12 @@ window.Vistas = window.Vistas || {};
             <hr class="divisor">
             ${linhaDescanso('descansoIsolamento', 'Isolamento', s.descansoIsolamento)}
             <hr class="divisor">
+            ${linhaDescanso('descansoCircuito', 'Entre estações de um circuito', s.descansoCircuito)}
+            <hr class="divisor">
             <p class="campo__ajuda" style="margin-bottom:var(--e3)">
-              Para hipertrofia, descansa até conseguires repetir as mesmas repetições na série
-              seguinte. Se cais de 12 para 8 reps, estás a descansar pouco.
+              Para ganhar músculo, descansa até conseguires repetir as mesmas repetições na série
+              seguinte. Se cais de 12 para 8 repetições, estás a descansar pouco. Nos circuitos é
+              ao contrário: o descanso curto é o que faz o trabalho.
             </p>
             ${troca('avisoSonoro', 'Aviso sonoro', 'Toca quando o descanso acaba', s.avisoSonoro)}
             ${troca('vibrar', 'Vibração', 'Resposta táctil ao marcar séries', s.vibrar)}
@@ -152,12 +179,20 @@ window.Vistas = window.Vistas || {};
           <button type="button" class="btn btn--perigo-fantasma btn--bloco" data-apagar-tudo>
             ${icone('lixo', 18)}Apagar todos os dados
           </button>
-          <p class="cartao__sub mt3" style="text-align:center">Treinos · v1.0 · funciona offline</p>
+          <p class="cartao__sub mt3" style="text-align:center">Treinos · v2.0 · funciona offline</p>
         </section>`;
     },
 
     montar(raiz) {
       const s = Store.state.settings;
+
+      raiz.querySelectorAll('[data-objetivo]').forEach(b => b.addEventListener('click', () => {
+        const o = Store.aplicarObjetivo(b.dataset.objetivo);
+        if (!o) return;
+        UI.haptic('sucesso');
+        UI.toast(`Objectivo: ${o.name}`, 'sucesso');
+        App.render();
+      }));
 
       raiz.querySelector('#a-split').addEventListener('change', e => {
         s.split = e.target.value;

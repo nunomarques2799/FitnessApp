@@ -1,15 +1,17 @@
 /* Service worker — permite abrir a app sem internet.
    Sobe o número da versão sempre que alterares ficheiros. */
-const VERSAO = 'treinos-v3';
+const VERSAO = 'treinos-v4';
 const FICHEIROS = [
   './',
   './index.html',
   './styles.css',
   './manifest.webmanifest',
   './js/exercises.js',
+  './js/execucao.js',
   './js/store.js',
   './js/ui.js',
   './js/charts.js',
+  './js/anatomia.js',
   './js/components.js',
   './js/views/hoje.js',
   './js/views/treino.js',
