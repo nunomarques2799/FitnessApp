@@ -19,7 +19,7 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 ### Configuração de origem
 
 Afinada para hipertrofia: **3 séries por exercício, 10–12 repetições**, 7 exercícios por sessão
-(21 séries), descanso de 1:30 nos compostos e 1:00 no isolamento, plano Push/Pull/Legs.
+(21 séries), descanso de 3:00 nos compostos e 2:00 no isolamento, plano Push/Pull/Legs.
 **Glúteos estão fora** das sugestões e da cobertura muscular.
 
 Cada sessão põe os compostos à frente e o isolamento no fim, e distribui os exercícios extra

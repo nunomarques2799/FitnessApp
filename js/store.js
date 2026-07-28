@@ -47,8 +47,8 @@
       settings: {
         tema: 'auto',
         unidade: 'kg',
-        descanso: 90,           // segundos, exercícios compostos
-        descansoIsolamento: 60,
+        descanso: 180,          // segundos, compostos (Schoenfeld 2016: 3 min > 1 min)
+        descansoIsolamento: 120,
         split: 'ppl',
         exerciciosPorTreino: 7,   // 7×3 = 21 séries por sessão
         seriesPorExercicio: 3,

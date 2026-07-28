@@ -88,6 +88,10 @@ window.Vistas = window.Vistas || {};
             <hr class="divisor">
             ${linhaDescanso('descansoIsolamento', 'Isolamento', s.descansoIsolamento)}
             <hr class="divisor">
+            <p class="campo__ajuda" style="margin-bottom:var(--e3)">
+              Para hipertrofia, descansa até conseguires repetir as mesmas repetições na série
+              seguinte. Se cais de 12 para 8 reps, estás a descansar pouco.
+            </p>
             ${troca('avisoSonoro', 'Aviso sonoro', 'Toca quando o descanso acaba', s.avisoSonoro)}
             ${troca('vibrar', 'Vibração', 'Resposta táctil ao marcar séries', s.vibrar)}
           </div>

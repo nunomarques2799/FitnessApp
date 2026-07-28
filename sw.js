@@ -1,6 +1,6 @@
 /* Service worker — permite abrir a app sem internet.
    Sobe o número da versão sempre que alterares ficheiros. */
-const VERSAO = 'treinos-v2';
+const VERSAO = 'treinos-v3';
 const FICHEIROS = [
   './',
   './index.html',
