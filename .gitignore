@@ -1,0 +1,14 @@
+# Windows / macOS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node (a app não usa dependências, mas por precaução)
+node_modules/
+npm-debug.log*

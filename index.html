@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Treinos</title>
+  <meta name="description" content="Registo de treinos pessoal, offline e privado.">
+
+  <!-- App em ecrã inteiro no iPhone (Adicionar ao ecrã principal) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Treinos">
+  <meta name="theme-color" content="#0B0F16" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F4F6FA" media="(prefers-color-scheme: light)">
+  <meta name="format-detection" content="telephone=no">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="#conteudo" class="oculto-visual">Saltar para o conteúdo</a>
+
+  <header class="app-cab" id="cabecalho">
+    <div class="crescer">
+      <h1 class="app-cab__tit" id="cab-titulo">Hoje</h1>
+      <p class="app-cab__sub" id="cab-sub"></p>
+    </div>
+    <div class="app-cab__accoes" id="cab-accoes"></div>
+  </header>
+
+  <main id="conteudo" class="vista" tabindex="-1"></main>
+
+  <div id="timer-slot"></div>
+  <div id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <nav class="nav" id="nav" aria-label="Navegação principal"></nav>
+
+  <script src="js/exercises.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/views/hoje.js"></script>
+  <script src="js/views/treino.js"></script>
+  <script src="js/views/historico.js"></script>
+  <script src="js/views/exercicios.js"></script>
+  <script src="js/views/progresso.js"></script>
+  <script src="js/views/ajustes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
