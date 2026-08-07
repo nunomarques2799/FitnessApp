@@ -90,8 +90,13 @@
       if (raw) {
         const dados = JSON.parse(raw);
         const base = estadoInicial();
+        // guardar as omissões antes da mistura: o Object.assign de baixo
+        // substitui base.settings inteiro pelo que estava guardado, e as
+        // definições acrescentadas em versões novas ficariam por preencher
+        const omissoes = base.settings;
         state = Object.assign(base, dados);
-        state.settings = Object.assign(base.settings, dados.settings || {});
+        state.settings = Object.assign({}, omissoes, dados.settings || {});
+        if (!state.nomes) state.nomes = {};
       }
     } catch (e) {
       console.error('Falha a ler dados locais', e);
