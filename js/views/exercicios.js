@@ -6,14 +6,14 @@ window.Vistas = window.Vistas || {};
   'use strict';
   const esc = UI.esc, icone = UI.icone;
 
-  let grupo = null, parte = null, especial = null, procura = '';
+  let grupo = null, parte = null, pega = null, especial = null, procura = '';
 
   /* ================= BIBLIOTECA ================= */
   Vistas.exercicios = {
     titulo: () => grupo ? Store.GRUPOS[grupo].name : 'Exercícios',
     sub: () => {
       if (grupo) {
-        const n = Store.exerciciosDoGrupo(grupo, parte).length;
+        const n = listaDoGrupo().length;
         return `${n} exercício${n === 1 ? '' : 's'}`;
       }
       return `${Store.todosExercicios().length} exercícios na biblioteca`;
@@ -25,7 +25,7 @@ window.Vistas = window.Vistas || {};
       const b = cont.querySelector('[data-novo]');
       if (b) b.addEventListener('click', () => Comp.criarExercicio(id => App.ir('exercicio/' + id)));
       const v = cont.querySelector('[data-voltar-g]');
-      if (v) v.addEventListener('click', () => { grupo = null; parte = null; especial = null; App.render(); });
+      if (v) v.addEventListener('click', () => { grupo = null; parte = null; pega = null; especial = null; App.render(); });
     },
 
     render() {
@@ -58,19 +58,22 @@ window.Vistas = window.Vistas || {};
 
       raiz.addEventListener('click', e => {
         const det = e.target.closest('[data-detalhe]');
-        if (det) return Comp.detalhes(det.dataset.detalhe);
+        if (det) return Comp.detalhes(det.dataset.detalhe, { aoRenomear: () => App.render() });
 
         const g = e.target.closest('[data-grupo]');
-        if (g) { grupo = g.dataset.grupo; parte = null; especial = null; UI.haptic('leve'); return redesenhar(); }
+        if (g) { grupo = g.dataset.grupo; parte = null; pega = null; especial = null; UI.haptic('leve'); return redesenhar(); }
 
         const esp = e.target.closest('[data-especial]');
-        if (esp) { especial = esp.dataset.especial; grupo = null; UI.haptic('leve'); return redesenhar(); }
+        if (esp) { especial = esp.dataset.especial; grupo = null; pega = null; UI.haptic('leve'); return redesenhar(); }
 
         const v = e.target.closest('[data-voltar-grupos]');
-        if (v) { grupo = null; parte = null; especial = null; UI.haptic('leve'); return redesenhar(); }
+        if (v) { grupo = null; parte = null; pega = null; especial = null; UI.haptic('leve'); return redesenhar(); }
 
         const p = e.target.closest('[data-parte]');
-        if (p) { parte = p.dataset.parte || null; UI.haptic('leve'); return redesenhar(); }
+        if (p) { parte = p.dataset.parte || null; pega = null; UI.haptic('leve'); return redesenhar(); }
+
+        const pg = e.target.closest('[data-pega]');
+        if (pg) { pega = pg.dataset.pega || null; UI.haptic('leve'); return redesenhar(); }
 
         const b = e.target.closest('[data-ex]');
         if (b) return App.ir('exercicio/' + b.dataset.ex);
@@ -81,17 +84,20 @@ window.Vistas = window.Vistas || {};
     }
   };
 
+  /** Exercícios do grupo escolhido, já com o filtro da parte e da pega */
+  function listaDoGrupo() {
+    const lista = Store.exerciciosDoGrupo(grupo, parte);
+    return pega ? lista.filter(e => e.pg === pega) : lista;
+  }
+
   function resultados() {
     if (procura) {
-      const q = Comp.normalizar(procura);
-      const lista = Store.todosExercicios().filter(e => Comp.normalizar(e.n).includes(q));
+      const lista = Comp.procurarExercicios(procura);
       return listaHtml(lista, `${lista.length} resultado${lista.length === 1 ? '' : 's'}`);
     }
 
     if (especial) {
-      const lista = especial === 'fav'
-        ? Store.todosExercicios().filter(e => Store.state.favoritos.includes(e.id))
-        : Store.state.exerciciosCustom.slice();
+      const lista = Comp.listaEspecial(especial);
       if (!lista.length) {
         return Comp.vazio({
           icone: especial === 'fav' ? 'estrela' : 'editar',
@@ -102,33 +108,33 @@ window.Vistas = window.Vistas || {};
           accao: especial === 'fav' ? null : 'Criar exercício'
         });
       }
-      return cabecalhoVoltar(especial === 'fav' ? 'Favoritos' : 'Os meus exercícios') + listaHtml(lista);
+      return cabecalhoVoltar(Comp.tituloDeEspecial(especial)) +
+        (especial === 'uni' ? `<p class="cartao__sub mb3">${icone('info', 14)} ${esc(CATALOGO.UNI_AJUDA)}</p>` : '') +
+        listaHtml(lista);
     }
 
     if (grupo) {
       const g = Store.GRUPOS[grupo];
-      const lista = Store.exerciciosDoGrupo(grupo, parte);
+      const todos = Store.exerciciosDoGrupo(grupo, parte);
+      const lista = listaDoGrupo();
       return cabecalhoVoltar(g.name) +
         Comp.filtrosParte(grupo, parte) +
         Comp.descricaoParte(grupo, parte) +
+        Comp.filtrosPega(todos, pega) +
+        descricaoPega() +
         (lista.length
           ? listaHtml(lista)
-          : Comp.vazio({ icone: 'procurar', titulo: 'Nada nesta parte', sub: 'Escolhe outra parte do músculo ou cria um exercício.', accao: 'Criar exercício' }));
+          : Comp.vazio({ icone: 'procurar', titulo: 'Nada com este filtro', sub: 'Escolhe outra parte do músculo, outra pega, ou cria um exercício.', accao: 'Criar exercício' }));
     }
 
     return `<p class="texto-corpo mb3">Escolhe o grupo muscular. Dentro de cada um podes afinar
-        que parte queres trabalhar.</p>
-      ${Comp.grelhaGrupos(`
-        <button type="button" class="grupo-c grupo-c--simples" data-especial="fav">
-          <span class="grupo-c__ic">${icone('estrela', 26)}</span>
-          <span class="grupo-c__n">Favoritos</span>
-          <span class="grupo-c__s num">${Store.state.favoritos.length} exercícios</span>
-        </button>
-        <button type="button" class="grupo-c grupo-c--simples" data-especial="meus">
-          <span class="grupo-c__ic">${icone('editar', 26)}</span>
-          <span class="grupo-c__n">Os meus</span>
-          <span class="grupo-c__s num">${Store.state.exerciciosCustom.length} exercícios</span>
-        </button>`)}`;
+        que parte queres trabalhar e com que pega.</p>
+      ${Comp.grelhaGrupos(Comp.cartoesEspeciais())}`;
+  }
+
+  function descricaoPega() {
+    const p = pega && CATALOGO.PEGAS[pega];
+    return p ? `<p class="cartao__sub mb3">${icone('info', 14)} ${esc(p.desc)}</p>` : '';
   }
 
   function cabecalhoVoltar(titulo) {
@@ -195,8 +201,7 @@ window.Vistas = window.Vistas || {};
       return `<section class="cartao mb3">
           ${Anatomia.doExercicio(ex)}
           <div class="linha mt3" style="flex-wrap:wrap;gap:var(--e2)">
-            <span class="chip chip--primaria">${esc(CATALOGO.EQUIPAMENTO[ex.e] || ex.e)}</span>
-            <span class="chip">${ex.t === 'C' ? 'Composto' : 'Isolamento'}</span>
+            ${Comp.chipsExercicio(ex)}
             <span class="chip num">${reps[0]}–${reps[1]} ${esc(unidade)}</span>
             ${ex.cond ? '<span class="chip chip--aviso">Condição física</span>' : ''}
             ${ex.custom ? '<span class="chip chip--sucesso">Personalizado</span>' : ''}
@@ -217,6 +222,7 @@ window.Vistas = window.Vistas || {};
               <span class="aviso-cx__ic">${icone('aviso', 20)}</span>
               <div><p class="aviso-cx__t">Erro mais comum</p><p class="aviso-cx__s">${esc(info.erro)}</p></div>
             </div>` : ''}
+            ${Comp.notasPega(ex)}
           </div>
         </section>
 
@@ -231,6 +237,9 @@ window.Vistas = window.Vistas || {};
 
         <button type="button" class="btn btn--primario btn--bloco btn--grande mt4" data-adicionar>
           ${icone('mais', 20)}${Store.state.ativo ? 'Juntar ao treino a decorrer' : 'Começar treino com este exercício'}
+        </button>
+        <button type="button" class="btn btn--secundario btn--bloco mt2" data-renomear>
+          ${icone('editar', 18)}Mudar o nome
         </button>
         ${ex.custom ? `<button type="button" class="btn btn--perigo-fantasma btn--bloco mt2" data-apagar>${icone('lixo', 18)}Apagar exercício</button>` : ''}`;
     },
@@ -254,6 +263,9 @@ window.Vistas = window.Vistas || {};
           App.ir('treino');
         }
       });
+
+      const ren = raiz.querySelector('[data-renomear]');
+      if (ren) ren.addEventListener('click', () => Comp.renomearExercicio(id));
 
       const ap = raiz.querySelector('[data-apagar]');
       if (ap) ap.addEventListener('click', async () => {

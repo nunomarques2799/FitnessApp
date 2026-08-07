@@ -7,7 +7,8 @@
 
   const KEY = 'treinos.db.v1';
   const LB = 0.45359237;
-  const { MUSCLES, GRUPOS, EXERCISES, SPLITS, OBJETIVOS, METRICAS, CIRCUITOS } = global.CATALOGO;
+  const CATALOGO = global.CATALOGO;
+  const { MUSCLES, GRUPOS, EXERCISES, SPLITS, OBJETIVOS, METRICAS, CIRCUITOS } = CATALOGO;
 
   /* Índice parte do músculo → grupo, para o menu de criação de treino */
   const GRUPO_DA_PARTE = {};
@@ -63,10 +64,12 @@
         musculosIgnorados: [],
         avisoSonoro: true,
         vibrar: true,
+        timerModo: 'perguntar', // perguntar | sempre | nunca — cronómetro de descanso
         equipamento: null       // null = tudo disponível
       },
       perfil: { peso: null },
       exerciciosCustom: [],
+      nomes: {},                // exId → nome escolhido por ti
       favoritos: [],
       treinos: [],              // histórico (mais recente primeiro)
       ativo: null,              // treino em curso
@@ -239,8 +242,18 @@
   }
 
   /* ---------- exercícios ---------- */
+
+  /** Aplica o nome que o utilizador deu ao exercício, sem mexer no catálogo */
+  function comNome(e) {
+    const novo = state.nomes && state.nomes[e.id];
+    if (!novo || novo === e.n) return e;
+    return Object.assign({}, e, { n: novo, nomeOriginal: e.nomeOriginal || e.n });
+  }
+
+  let _lista = null;
   function todosExercicios() {
-    return EXERCISES.concat(state.exerciciosCustom);
+    if (!_lista) _lista = EXERCISES.concat(state.exerciciosCustom).map(comNome);
+    return _lista;
   }
   const _idx = {};
   function exercicio(id) {
@@ -251,7 +264,39 @@
     }
     return _idx[id];
   }
-  function invalidarIndice() { for (const k in _idx) delete _idx[k]; }
+  function invalidarIndice() { _lista = null; for (const k in _idx) delete _idx[k]; }
+
+  /**
+   * Muda o nome de um exercício. Os exercícios do catálogo guardam o
+   * nome novo à parte, para o original se poder repor; os teus mudam
+   * de nome directamente. Devolve o nome que ficou.
+   */
+  function renomearExercicio(id, nome) {
+    const base = EXERCISES.find(e => e.id === id);
+    const meu = state.exerciciosCustom.find(e => e.id === id);
+    if (!base && !meu) return null;
+    const limpo = String(nome || '').trim();
+    if (!state.nomes) state.nomes = {};
+
+    if (meu) {
+      // um exercício teu: o original é o nome com que foi criado
+      if (!limpo || limpo === meu.n) { delete state.nomes[id]; }
+      else state.nomes[id] = limpo;
+    } else if (!limpo || limpo === base.n) {
+      delete state.nomes[id];
+    } else {
+      state.nomes[id] = limpo;
+    }
+    invalidarIndice();
+    guardar(true);
+    const ex = exercicio(id);
+    return ex ? ex.n : null;
+  }
+
+  /** O exercício tem um nome dado por ti? */
+  function nomeProprio(id) {
+    return !!(state.nomes && state.nomes[id]);
+  }
 
   function criarExercicio(dados) {
     const base = dados.n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -273,6 +318,7 @@
   function apagarExercicioCustom(id) {
     state.exerciciosCustom = state.exerciciosCustom.filter(e => e.id !== id);
     state.favoritos = state.favoritos.filter(f => f !== id);
+    if (state.nomes) delete state.nomes[id];
     invalidarIndice();
     guardar(true);
   }
@@ -305,6 +351,42 @@
     return acc;
   }
 
+  /** Exercícios de um lado de cada vez */
+  function exerciciosUnilaterais() {
+    return todosExercicios().filter(e => e.uni);
+  }
+
+  /** Pegas presentes numa lista, pela ordem do catálogo */
+  function pegasDe(lista) {
+    const ordem = Object.keys(CATALOGO.PEGAS);
+    const usadas = new Set((lista || []).map(e => e.pg).filter(Boolean));
+    return ordem.filter(k => usadas.has(k));
+  }
+
+  /* ---------- cronómetro de descanso ----------
+     'sempre' e 'nunca' decidem já; 'perguntar' deixa o campo por
+     preencher e a vista do treino pergunta uma vez, ao começar.  */
+  function descansoInicial() {
+    const modo = state.settings.timerModo || 'perguntar';
+    if (modo === 'sempre') return true;
+    if (modo === 'nunca') return false;
+    return null;
+  }
+
+  /** O treino a decorrer arranca o cronómetro sozinho? */
+  function comDescanso(treino) {
+    const a = treino || state.ativo;
+    return !!(a && a.descansoAuto);
+  }
+
+  /** Liga ou desliga o cronómetro automático do treino a decorrer */
+  function definirDescanso(liga) {
+    if (!state.ativo) return;
+    state.ativo.descansoAuto = !!liga;
+    if (!liga) state.timer = null;
+    guardar(true);
+  }
+
   /* ---------- treino ativo ---------- */
   function comecarTreino(nome, exercicioIds) {
     state.ativo = {
@@ -314,6 +396,7 @@
       nome: nome || 'Treino livre',
       tipo: 'forca',
       notas: '',
+      descansoAuto: descansoInicial(),
       entradas: (exercicioIds || []).map(criarEntrada)
     };
     guardar(true);
@@ -336,6 +419,7 @@
       minutos: c.minutos,
       descansoEstacao: c.descansoEstacao,
       descansoRonda: c.descansoRonda,
+      descansoAuto: descansoInicial(),
       notas: '',
       entradas: c.estacoes.map(e => criarEntradaCircuito(e, c.rondas))
     };
@@ -854,6 +938,8 @@
       state.treinos.sort((x, y) => y.data.localeCompare(x.data) || (y.inicio || 0) - (x.inicio || 0));
       const cids = new Set(state.exerciciosCustom.map(e => e.id));
       (dados.exerciciosCustom || []).forEach(e => { if (!cids.has(e.id)) state.exerciciosCustom.push(e); });
+      // nomes próprios: o que já está neste telemóvel manda
+      state.nomes = Object.assign({}, dados.nomes || {}, state.nomes || {});
     } else {
       state = Object.assign(estadoInicial(), dados);
       state.settings = Object.assign(estadoInicial().settings, dados.settings || {});
@@ -878,7 +964,9 @@
     musculosActivos, ignorado, alvoDe, repsDe,
     metricaDe, chaveAlvo, comCarga, serieVazia, serieBase, serieUtil,
     todosExercicios, exercicio, criarExercicio, apagarExercicioCustom, alternarFavorito,
-    exerciciosDoGrupo, contagemPorGrupo,
+    renomearExercicio, nomeProprio,
+    exerciciosDoGrupo, contagemPorGrupo, exerciciosUnilaterais, pegasDe,
+    comDescanso, definirDescanso,
     comecarTreino, comecarCircuito, criarEntrada, terminarTreino, descartarTreino, apagarTreino,
     um1RM, volumeTreino, seriesTreino, trabalhoCardio, seriesPorMusculo, estadoMusculos,
     ultimaPerformance, historicoExercicio, recordes, indiceRecordes, textoRecorde, melhorEtiqueta,

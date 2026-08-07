@@ -45,7 +45,9 @@
     filtro: '<path d="M3.5 5.5h17l-6.8 8v5.2l-3.4 1.8v-7z"/>',
     corpo: '<circle cx="12" cy="4.6" r="2.3"/><path d="M12 6.9v7.4M12 9.5 7 12M12 9.5l5 2.5M12 14.3l-2.6 6.8M12 14.3l2.6 6.8"/>',
     cadeado: '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path d="M8 10.5V7.4a4 4 0 0 1 8 0v3.1"/>',
-    seta: '<path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/>'
+    seta: '<path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/>',
+    // mão fechada à volta de uma barra — as pegas dos exercícios
+    pega: '<path d="M2.5 8.75h19"/><rect x="6" y="7.25" width="12" height="9.5" rx="4.75"/><path d="M10 16.15v-3.6M14 16.15v-3.6"/>'
   };
 
   function icone(nome, tam, cls) {

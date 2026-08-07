@@ -107,6 +107,19 @@ window.Vistas = window.Vistas || {};
 
         <section class="seccao">
           <div class="seccao__cab"><h2 class="seccao__tit">Descanso entre séries</h2></div>
+          <div class="cartao mb3">
+            <span class="campo__l" id="a-timer-l">Cronómetro de descanso</span>
+            <div class="segmento mt2" role="group" aria-labelledby="a-timer-l">
+              <button type="button" class="segmento__b" data-timer-modo="perguntar" aria-pressed="${(s.timerModo || 'perguntar') === 'perguntar'}">Perguntar</button>
+              <button type="button" class="segmento__b" data-timer-modo="sempre" aria-pressed="${s.timerModo === 'sempre'}">Sempre</button>
+              <button type="button" class="segmento__b" data-timer-modo="nunca" aria-pressed="${s.timerModo === 'nunca'}">Nunca</button>
+            </div>
+            <p class="campo__ajuda">
+              <strong>Perguntar</strong> — no início de cada treino escolhes se queres contar o descanso.
+              <strong>Sempre</strong> — arranca sozinho a cada série marcada.
+              <strong>Nunca</strong> — o cronómetro nunca aparece, mas continuas a poder ligá-lo nas opções do treino.
+            </p>
+          </div>
           <div class="cartao">
             ${linhaDescanso('descanso', 'Exercícios compostos', s.descanso)}
             <hr class="divisor">
@@ -242,6 +255,20 @@ window.Vistas = window.Vistas || {};
         UI.haptic('leve');
         Store.guardar(true);
         UI.toast(off ? `${Store.MUSCLES[k].name} fora das sugestões` : `${Store.MUSCLES[k].name} incluído`);
+      }));
+
+      raiz.querySelectorAll('[data-timer-modo]').forEach(b => b.addEventListener('click', () => {
+        s.timerModo = b.dataset.timerModo;
+        Store.guardar(true);
+        // treino a decorrer ainda sem resposta: fica já decidido
+        if (Store.state.ativo && Store.state.ativo.descansoAuto == null && s.timerModo !== 'perguntar') {
+          Store.definirDescanso(s.timerModo === 'sempre');
+        }
+        UI.haptic('leve');
+        UI.toast(s.timerModo === 'sempre' ? 'O descanso passa a ser contado sempre'
+          : s.timerModo === 'nunca' ? 'O cronómetro deixa de aparecer'
+          : 'A app pergunta no início de cada treino');
+        App.render();
       }));
 
       raiz.querySelectorAll('[data-descanso]').forEach(b => b.addEventListener('click', () => {

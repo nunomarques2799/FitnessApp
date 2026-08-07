@@ -142,10 +142,45 @@
     bola:       'Bola medicinal',
     caixa:      'Caixa',
     corda:      'Corda',
+    disco:      'Disco',
     treno:      'Trenó',
     cardio:     'Máquina de cardio',
     nenhum:     'Sem equipamento'
   };
+
+  /* --- Pegas ---------------------------------------------------
+     A mesma puxada muda de exercício conforme a pega. Cada
+     exercício diz qual usa, para não haver dúvidas na barra. */
+  const PEGAS = {
+    pronada:  { name: 'Pega pronada',  curto: 'Pronada',
+      desc: 'Palmas viradas para a frente ou para baixo, polegares para dentro. Tira trabalho ao bíceps e é a que puxa mais dorsal de fora.' },
+    supinada: { name: 'Pega supinada', curto: 'Supinada',
+      desc: 'Palmas viradas para ti. Mete bastante bíceps e puxa mais a parte de baixo dos dorsais.' },
+    neutra:   { name: 'Pega neutra',   curto: 'Neutra',
+      desc: 'Palmas viradas uma para a outra. É a mais amiga do ombro e do cotovelo, e a que aguenta mais carga sem dores.' },
+    mista:    { name: 'Pega mista',    curto: 'Mista',
+      desc: 'Uma palma para a frente e a outra para trás. Só para peso morto pesado — troca o lado de série para série.' },
+    corda:    { name: 'Corda',         curto: 'Corda',
+      desc: 'Pega neutra que abre no fim do movimento. Deixa o pulso rodar à vontade e dá mais amplitude no fecho.' }
+  };
+
+  /* Largura da pega — só faz diferença nas puxadas e remadas */
+  const LARGURAS = {
+    larga:   { name: 'Larga',   desc: 'Mãos bem mais afastadas do que os ombros. Encurta o percurso e insiste na parte de fora dos dorsais.' },
+    media:   { name: 'Média',   desc: 'Mãos à largura dos ombros. É a mais equilibrada e a que aguenta mais carga.' },
+    fechada: { name: 'Fechada', desc: 'Mãos juntas ou quase. Dá mais amplitude e mete mais bíceps e parte de baixo do dorsal.' }
+  };
+
+  /* --- Exercícios de um lado de cada vez -----------------------
+     Corrigem diferenças entre lados e deixam apoiar o tronco.
+     Uma série conta o trabalho de um lado: faz os dois antes de
+     a marcares como feita.                                      */
+  const UNILATERAL = {
+    braco: { chip: 'Um braço', name: 'Um braço de cada vez' },
+    perna: { chip: 'Uma perna', name: 'Uma perna de cada vez' },
+    lado:  { chip: 'Um lado',  name: 'Um lado de cada vez' }
+  };
+  const UNI_AJUDA = 'Faz o lado direito e o esquerdo antes de marcares a série como feita. A carga que escreves é a de um lado.';
 
   /* --- Objectivos de treino -----------------------------------
      Cada objectivo define o esquema de repetições, o descanso e
@@ -205,6 +240,8 @@
      pt  partes do músculo que o exercício trabalha
      bw  exercício de peso do corpo (a carga é peso extra)
      m   métrica de registo (peso por omissão)
+     uni um lado de cada vez: 'braco' | 'perna' | 'lado'
+     pg  pega (ver PEGAS)      lg  largura da pega (ver LARGURAS)
      cond  exercício de condição física — não conta para o volume
            de musculação, conta para o tempo e para o cardio     */
   const EXERCISES = [
@@ -225,25 +262,44 @@
     { id: 'flexoes-declinadas', n: 'Flexões com os pés elevados', p: ['peito', 'deltoide_ant'], s: ['triceps'], e: 'corporal', t: 'C', r: [10, 20], inc: 2.5, bw: true, pt: ['peito-superior'] },
     { id: 'dips-peito', n: 'Paralelas inclinadas para o peito', p: ['peito'], s: ['triceps', 'deltoide_ant'], e: 'corporal', t: 'C', r: [6, 12], inc: 2.5, bw: true, pt: ['peito-inferior'] },
     { id: 'pullover-halter', n: 'Pullover com halter', p: ['peito', 'dorsais'], s: ['triceps'], e: 'halteres', t: 'I', r: [10, 15], inc: 2.5, pt: ['peito-superior', 'costas-largura'] },
+    { id: 'supino-inclinado-maquina', n: 'Press inclinado na máquina', p: ['peito', 'deltoide_ant'], s: ['triceps'], e: 'maquina', t: 'C', r: [8, 12], inc: 5, pt: ['peito-superior'] },
+    { id: 'press-peito-maquina-uni', n: 'Press de peito na máquina a um braço', p: ['peito'], s: ['triceps', 'deltoide_ant', 'abdominais'], e: 'maquina', t: 'C', r: [8, 14], inc: 2.5, uni: 'braco', pt: ['peito-medio'] },
+    { id: 'supino-halter-uni', n: 'Supino com halter a um braço', p: ['peito'], s: ['triceps', 'abdominais', 'deltoide_ant'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, uni: 'braco', pt: ['peito-medio'] },
+    { id: 'crossover-uni', n: 'Cruzamento na polia a um braço', p: ['peito'], s: ['deltoide_ant', 'abdominais'], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, uni: 'braco', pt: ['peito-medio', 'peito-inferior'] },
+    { id: 'peck-deck-uni', n: 'Aberturas na máquina a um braço', p: ['peito'], s: ['deltoide_ant'], e: 'maquina', t: 'I', r: [10, 15], inc: 2.5, uni: 'braco', pt: ['peito-medio'] },
+    { id: 'flexoes-arqueiro', n: 'Flexões de arqueiro', p: ['peito'], s: ['triceps', 'deltoide_ant', 'abdominais'], e: 'corporal', t: 'C', r: [5, 10], inc: 2.5, bw: true, uni: 'braco', pt: ['peito-medio'] },
 
     // ---------------- COSTAS ----------------
-    { id: 'elevacoes-pronada', n: 'Elevações na barra fixa (pega pronada)', p: ['dorsais'], s: ['biceps', 'antebraco', 'trapezio'], e: 'corporal', t: 'C', r: [5, 10], inc: 2.5, bw: true, pt: ['costas-largura'] },
-    { id: 'elevacoes-supinada', n: 'Elevações na barra fixa (pega supinada)', p: ['dorsais', 'biceps'], s: ['antebraco'], e: 'corporal', t: 'C', r: [5, 10], inc: 2.5, bw: true, pt: ['costas-largura', 'biceps-completo'] },
-    { id: 'puxada-frontal', n: 'Puxada à frente na polia alta', p: ['dorsais'], s: ['biceps', 'trapezio'], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pt: ['costas-largura'] },
-    { id: 'puxada-supinada', n: 'Puxada na polia com pega supinada', p: ['dorsais', 'biceps'], s: [], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pt: ['costas-largura'] },
-    { id: 'puxada-neutra', n: 'Puxada na polia com pega neutra', p: ['dorsais'], s: ['biceps'], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pt: ['costas-largura'] },
-    { id: 'remada-curvada-barra', n: 'Remada curvada com barra', p: ['dorsais', 'trapezio'], s: ['biceps', 'lombar'], e: 'barra', t: 'C', r: [6, 10], inc: 2.5, pt: ['costas-espessura'] },
-    { id: 'remada-pendlay', n: 'Remada Pendlay', p: ['dorsais', 'trapezio'], s: ['biceps', 'lombar'], e: 'barra', t: 'C', r: [5, 8], inc: 2.5, pt: ['costas-espessura'] },
-    { id: 'remada-halter-uni', n: 'Remada com halter a um braço', p: ['dorsais'], s: ['biceps', 'trapezio'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, pt: ['costas-espessura'] },
-    { id: 'remada-barra-t', n: 'Remada na barra T', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'barra', t: 'C', r: [8, 12], inc: 2.5, pt: ['costas-espessura'] },
-    { id: 'remada-baixa-polia', n: 'Remada sentada na polia baixa', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pt: ['costas-espessura'] },
-    { id: 'remada-maquina', n: 'Remada na máquina', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'maquina', t: 'C', r: [8, 12], inc: 5, pt: ['costas-espessura'] },
-    { id: 'pullover-polia', n: 'Pullover na polia alta', p: ['dorsais'], s: ['triceps'], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, pt: ['costas-largura'] },
-    { id: 'remada-invertida', n: 'Remada invertida na barra baixa', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'corporal', t: 'C', r: [8, 15], inc: 2.5, bw: true, pt: ['costas-espessura'] },
-    { id: 'face-pull', n: 'Puxada à cara na polia', p: ['deltoide_post', 'trapezio'], s: ['biceps'], e: 'cabos', t: 'I', r: [12, 20], inc: 2.5, pt: ['ombro-posterior', 'costas-trapezio'] },
-    { id: 'encolhimentos-barra', n: 'Encolhimento de ombros com barra', p: ['trapezio'], s: ['antebraco'], e: 'barra', t: 'I', r: [10, 15], inc: 5, pt: ['costas-trapezio'] },
-    { id: 'encolhimentos-halteres', n: 'Encolhimento de ombros com halteres', p: ['trapezio'], s: ['antebraco'], e: 'halteres', t: 'I', r: [10, 15], inc: 2, pt: ['costas-trapezio'] },
-    { id: 'peso-morto', n: 'Peso morto convencional', p: ['isquiotibiais', 'gluteos', 'lombar'], s: ['trapezio', 'dorsais', 'antebraco', 'quadriceps'], e: 'barra', t: 'C', r: [3, 6], inc: 5, pt: ['costas-lombar', 'pernas-isquiotibiais', 'pernas-gluteos'] },
+    { id: 'elevacoes-pronada', n: 'Elevações na barra fixa (pega pronada)', p: ['dorsais'], s: ['biceps', 'antebraco', 'trapezio'], e: 'corporal', t: 'C', r: [5, 10], inc: 2.5, bw: true, pg: 'pronada', lg: 'larga', pt: ['costas-largura'] },
+    { id: 'elevacoes-supinada', n: 'Elevações na barra fixa (pega supinada)', p: ['dorsais', 'biceps'], s: ['antebraco'], e: 'corporal', t: 'C', r: [5, 10], inc: 2.5, bw: true, pg: 'supinada', lg: 'fechada', pt: ['costas-largura', 'biceps-completo'] },
+    { id: 'elevacoes-neutra', n: 'Elevações na barra fixa (pega neutra)', p: ['dorsais'], s: ['biceps', 'antebraco'], e: 'corporal', t: 'C', r: [5, 10], inc: 2.5, bw: true, pg: 'neutra', lg: 'fechada', pt: ['costas-largura'] },
+    { id: 'puxada-frontal', n: 'Puxada à frente na polia alta (pega larga pronada)', p: ['dorsais'], s: ['biceps', 'trapezio'], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pg: 'pronada', lg: 'larga', pt: ['costas-largura'] },
+    { id: 'puxada-fechada-pronada', n: 'Puxada à frente com pega estreita pronada', p: ['dorsais'], s: ['biceps', 'trapezio'], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pg: 'pronada', lg: 'fechada', pt: ['costas-largura'] },
+    { id: 'puxada-supinada', n: 'Puxada na polia com pega supinada', p: ['dorsais', 'biceps'], s: [], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pg: 'supinada', lg: 'fechada', pt: ['costas-largura'] },
+    { id: 'puxada-neutra', n: 'Puxada na polia com pega neutra (triângulo)', p: ['dorsais'], s: ['biceps'], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pg: 'neutra', lg: 'fechada', pt: ['costas-largura'] },
+    { id: 'puxada-corda', n: 'Puxada na polia alta com corda', p: ['dorsais'], s: ['biceps', 'deltoide_post'], e: 'cabos', t: 'C', r: [10, 15], inc: 2.5, pg: 'corda', pt: ['costas-largura'] },
+    { id: 'puxada-uni-polia', n: 'Puxada na polia alta a um braço', p: ['dorsais'], s: ['biceps', 'abdominais'], e: 'cabos', t: 'C', r: [8, 12], inc: 2.5, uni: 'braco', pg: 'neutra', pt: ['costas-largura'] },
+    { id: 'remada-curvada-barra', n: 'Remada curvada com barra', p: ['dorsais', 'trapezio'], s: ['biceps', 'lombar'], e: 'barra', t: 'C', r: [6, 10], inc: 2.5, pg: 'pronada', lg: 'media', pt: ['costas-espessura'] },
+    { id: 'remada-yates', n: 'Remada com barra em pega supinada (Yates)', p: ['dorsais'], s: ['biceps', 'trapezio', 'lombar'], e: 'barra', t: 'C', r: [6, 10], inc: 2.5, pg: 'supinada', lg: 'media', pt: ['costas-espessura'] },
+    { id: 'remada-pendlay', n: 'Remada Pendlay', p: ['dorsais', 'trapezio'], s: ['biceps', 'lombar'], e: 'barra', t: 'C', r: [5, 8], inc: 2.5, pg: 'pronada', lg: 'media', pt: ['costas-espessura'] },
+    { id: 'remada-halter-uni', n: 'Remada com halter a um braço', p: ['dorsais'], s: ['biceps', 'trapezio'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, uni: 'braco', pg: 'neutra', pt: ['costas-espessura'] },
+    { id: 'remada-meadows', n: 'Remada Meadows a um braço', p: ['dorsais'], s: ['biceps', 'trapezio', 'lombar'], e: 'barra', t: 'C', r: [8, 12], inc: 2.5, uni: 'braco', pg: 'pronada', pt: ['costas-espessura'] },
+    { id: 'remada-peito-apoiado', n: 'Remada com halteres com o peito apoiado', p: ['dorsais', 'trapezio'], s: ['biceps', 'deltoide_post'], e: 'halteres', t: 'C', r: [10, 14], inc: 2, pg: 'neutra', pt: ['costas-espessura'] },
+    { id: 'remada-barra-t', n: 'Remada na barra T', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'barra', t: 'C', r: [8, 12], inc: 2.5, pg: 'neutra', lg: 'fechada', pt: ['costas-espessura'] },
+    { id: 'remada-baixa-polia', n: 'Remada sentada na polia baixa', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'cabos', t: 'C', r: [8, 12], inc: 5, pg: 'neutra', lg: 'fechada', pt: ['costas-espessura'] },
+    { id: 'remada-polia-larga', n: 'Remada na polia com pega larga pronada', p: ['dorsais', 'trapezio'], s: ['deltoide_post', 'biceps'], e: 'cabos', t: 'C', r: [10, 14], inc: 5, pg: 'pronada', lg: 'larga', pt: ['costas-espessura', 'ombro-posterior'] },
+    { id: 'remada-polia-uni', n: 'Remada na polia a um braço', p: ['dorsais'], s: ['biceps', 'trapezio', 'abdominais'], e: 'cabos', t: 'C', r: [8, 12], inc: 2.5, uni: 'braco', pg: 'neutra', pt: ['costas-espessura'] },
+    { id: 'remada-maquina', n: 'Remada na máquina', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'maquina', t: 'C', r: [8, 12], inc: 5, pg: 'neutra', pt: ['costas-espessura'] },
+    { id: 'remada-maquina-uni', n: 'Remada na máquina a um braço', p: ['dorsais'], s: ['biceps', 'trapezio'], e: 'maquina', t: 'C', r: [8, 12], inc: 2.5, uni: 'braco', pg: 'neutra', pt: ['costas-espessura'] },
+    { id: 'pullover-polia', n: 'Pullover na polia alta', p: ['dorsais'], s: ['triceps'], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, pg: 'pronada', lg: 'media', pt: ['costas-largura'] },
+    { id: 'puxada-omoplatas', n: 'Puxada de omoplatas na polia alta', p: ['trapezio'], s: ['dorsais'], e: 'cabos', t: 'I', r: [10, 15], inc: 5, pg: 'pronada', lg: 'larga', pt: ['costas-trapezio', 'costas-largura'] },
+    { id: 'remada-invertida', n: 'Remada invertida na barra baixa', p: ['dorsais', 'trapezio'], s: ['biceps'], e: 'corporal', t: 'C', r: [8, 15], inc: 2.5, bw: true, pg: 'pronada', lg: 'media', pt: ['costas-espessura'] },
+    { id: 'remada-invertida-supinada', n: 'Remada invertida com pega supinada', p: ['dorsais', 'biceps'], s: ['trapezio'], e: 'corporal', t: 'C', r: [8, 15], inc: 2.5, bw: true, pg: 'supinada', lg: 'fechada', pt: ['costas-espessura', 'biceps-completo'] },
+    { id: 'face-pull', n: 'Puxada à cara na polia', p: ['deltoide_post', 'trapezio'], s: ['biceps'], e: 'cabos', t: 'I', r: [12, 20], inc: 2.5, pg: 'corda', pt: ['ombro-posterior', 'costas-trapezio'] },
+    { id: 'encolhimentos-barra', n: 'Encolhimento de ombros com barra', p: ['trapezio'], s: ['antebraco'], e: 'barra', t: 'I', r: [10, 15], inc: 5, pg: 'pronada', lg: 'media', pt: ['costas-trapezio'] },
+    { id: 'encolhimentos-halteres', n: 'Encolhimento de ombros com halteres', p: ['trapezio'], s: ['antebraco'], e: 'halteres', t: 'I', r: [10, 15], inc: 2, pg: 'neutra', pt: ['costas-trapezio'] },
+    { id: 'encolhimento-polia', n: 'Encolhimento de ombros na polia', p: ['trapezio'], s: ['antebraco'], e: 'cabos', t: 'I', r: [12, 20], inc: 5, pg: 'neutra', pt: ['costas-trapezio'] },
+    { id: 'peso-morto', n: 'Peso morto convencional', p: ['isquiotibiais', 'gluteos', 'lombar'], s: ['trapezio', 'dorsais', 'antebraco', 'quadriceps'], e: 'barra', t: 'C', r: [3, 6], inc: 5, pg: 'mista', lg: 'media', pt: ['costas-lombar', 'pernas-isquiotibiais', 'pernas-gluteos'] },
     { id: 'peso-morto-romeno', n: 'Peso morto romeno', p: ['isquiotibiais', 'gluteos'], s: ['lombar', 'trapezio', 'antebraco'], e: 'barra', t: 'C', r: [6, 10], inc: 2.5, pt: ['pernas-isquiotibiais', 'pernas-gluteos'] },
     { id: 'peso-morto-sumo', n: 'Peso morto sumo', p: ['gluteos', 'quadriceps', 'isquiotibiais'], s: ['lombar', 'trapezio', 'adutores'], e: 'barra', t: 'C', r: [3, 6], inc: 5, pt: ['pernas-gluteos', 'pernas-adutores', 'costas-lombar'] },
     { id: 'hiperextensoes', n: 'Extensão do tronco no banco romano', p: ['lombar', 'gluteos'], s: ['isquiotibiais'], e: 'corporal', t: 'I', r: [10, 15], inc: 2.5, bw: true, pt: ['costas-lombar'] },
@@ -253,74 +309,105 @@
     { id: 'press-ombros-halteres', n: 'Press de ombros com halteres', p: ['deltoide_ant', 'deltoide_lat'], s: ['triceps'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, pt: ['ombro-anterior', 'ombro-lateral'] },
     { id: 'press-arnold', n: 'Press Arnold', p: ['deltoide_ant', 'deltoide_lat'], s: ['triceps'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, pt: ['ombro-anterior', 'ombro-lateral'] },
     { id: 'press-ombros-maquina', n: 'Press de ombros na máquina', p: ['deltoide_ant', 'deltoide_lat'], s: ['triceps'], e: 'maquina', t: 'C', r: [8, 12], inc: 5, pt: ['ombro-anterior'] },
+    { id: 'press-ombros-neutro', n: 'Press de ombros com halteres em pega neutra', p: ['deltoide_ant', 'deltoide_lat'], s: ['triceps'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, pg: 'neutra', pt: ['ombro-anterior'] },
+    { id: 'press-ombro-uni-halter', n: 'Press de ombro a um braço com halter', p: ['deltoide_ant', 'deltoide_lat'], s: ['triceps', 'abdominais'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, uni: 'braco', pt: ['ombro-anterior'] },
+    { id: 'press-kettlebell-uni', n: 'Press de ombro a um braço com kettlebell', p: ['deltoide_ant'], s: ['triceps', 'abdominais', 'trapezio'], e: 'kettlebell', t: 'C', r: [6, 10], inc: 4, uni: 'braco', pt: ['ombro-anterior'] },
     { id: 'elevacoes-laterais', n: 'Elevações laterais com halteres', p: ['deltoide_lat'], s: [], e: 'halteres', t: 'I', r: [12, 20], inc: 1, pt: ['ombro-lateral'] },
-    { id: 'elevacoes-laterais-polia', n: 'Elevações laterais na polia', p: ['deltoide_lat'], s: [], e: 'cabos', t: 'I', r: [12, 20], inc: 2.5, pt: ['ombro-lateral'] },
+    { id: 'elevacoes-laterais-polia', n: 'Elevações laterais na polia a um braço', p: ['deltoide_lat'], s: [], e: 'cabos', t: 'I', r: [12, 20], inc: 2.5, uni: 'braco', pt: ['ombro-lateral'] },
+    { id: 'elevacao-lateral-inclinado', n: 'Elevação lateral inclinado no banco a um braço', p: ['deltoide_lat'], s: [], e: 'halteres', t: 'I', r: [12, 20], inc: 1, uni: 'braco', pt: ['ombro-lateral'] },
     { id: 'elevacoes-laterais-maquina', n: 'Elevações laterais na máquina', p: ['deltoide_lat'], s: [], e: 'maquina', t: 'I', r: [12, 20], inc: 5, pt: ['ombro-lateral'] },
     { id: 'elevacoes-frontais', n: 'Elevações à frente com halteres', p: ['deltoide_ant'], s: [], e: 'halteres', t: 'I', r: [12, 15], inc: 1, pt: ['ombro-anterior'] },
+    { id: 'elevacao-frontal-polia-uni', n: 'Elevação à frente na polia a um braço', p: ['deltoide_ant'], s: [], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, uni: 'braco', pt: ['ombro-anterior'] },
     { id: 'crucifixo-invertido', n: 'Aberturas invertidas com halteres', p: ['deltoide_post'], s: ['trapezio'], e: 'halteres', t: 'I', r: [12, 20], inc: 1, pt: ['ombro-posterior'] },
     { id: 'crucifixo-invertido-maquina', n: 'Aberturas invertidas na máquina', p: ['deltoide_post'], s: ['trapezio'], e: 'maquina', t: 'I', r: [12, 20], inc: 5, pt: ['ombro-posterior'] },
-    { id: 'remada-alta', n: 'Remada alta', p: ['deltoide_lat', 'trapezio'], s: ['biceps'], e: 'barra', t: 'C', r: [10, 15], inc: 2.5, pt: ['ombro-lateral', 'costas-trapezio'] },
+    { id: 'crucifixo-invertido-polia-uni', n: 'Abertura invertida na polia a um braço', p: ['deltoide_post'], s: ['trapezio'], e: 'cabos', t: 'I', r: [12, 20], inc: 2.5, uni: 'braco', pt: ['ombro-posterior'] },
+    { id: 'remada-alta', n: 'Remada alta', p: ['deltoide_lat', 'trapezio'], s: ['biceps'], e: 'barra', t: 'C', r: [10, 15], inc: 2.5, pg: 'pronada', lg: 'media', pt: ['ombro-lateral', 'costas-trapezio'] },
 
     // ---------------- BÍCEPS ----------------
-    { id: 'rosca-direta-barra', n: 'Curl de bíceps com barra', p: ['biceps'], s: ['antebraco'], e: 'barra', t: 'I', r: [8, 12], inc: 2.5, pt: ['biceps-completo'] },
-    { id: 'rosca-barra-w', n: 'Curl com barra W', p: ['biceps'], s: ['antebraco'], e: 'barra', t: 'I', r: [8, 12], inc: 2.5, pt: ['biceps-completo'] },
-    { id: 'rosca-alternada', n: 'Curl alternado com halteres', p: ['biceps'], s: ['antebraco'], e: 'halteres', t: 'I', r: [10, 14], inc: 2, pt: ['biceps-completo'] },
-    { id: 'rosca-martelo', n: 'Curl martelo', p: ['biceps', 'antebraco'], s: [], e: 'halteres', t: 'I', r: [10, 14], inc: 2, pt: ['biceps-braquial', 'antebraco-extensores'] },
-    { id: 'rosca-scott', n: 'Curl no banco Scott', p: ['biceps'], s: [], e: 'barra', t: 'I', r: [10, 14], inc: 2.5, pt: ['biceps-completo'] },
-    { id: 'rosca-concentrada', n: 'Curl concentrado', p: ['biceps'], s: [], e: 'halteres', t: 'I', r: [10, 15], inc: 2, pt: ['biceps-longa'] },
-    { id: 'rosca-polia', n: 'Curl na polia baixa', p: ['biceps'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, pt: ['biceps-completo'] },
-    { id: 'rosca-inclinada', n: 'Curl no banco inclinado', p: ['biceps'], s: [], e: 'halteres', t: 'I', r: [10, 14], inc: 2, pt: ['biceps-longa'] },
+    { id: 'rosca-direta-barra', n: 'Curl de bíceps com barra', p: ['biceps'], s: ['antebraco'], e: 'barra', t: 'I', r: [8, 12], inc: 2.5, pg: 'supinada', lg: 'media', pt: ['biceps-completo'] },
+    { id: 'rosca-barra-w', n: 'Curl com barra W', p: ['biceps'], s: ['antebraco'], e: 'barra', t: 'I', r: [8, 12], inc: 2.5, pg: 'supinada', lg: 'fechada', pt: ['biceps-completo'] },
+    { id: 'rosca-alternada', n: 'Curl alternado com halteres', p: ['biceps'], s: ['antebraco'], e: 'halteres', t: 'I', r: [10, 14], inc: 2, pg: 'supinada', pt: ['biceps-completo'] },
+    { id: 'rosca-martelo', n: 'Curl martelo', p: ['biceps', 'antebraco'], s: [], e: 'halteres', t: 'I', r: [10, 14], inc: 2, pg: 'neutra', pt: ['biceps-braquial', 'antebraco-extensores'] },
+    { id: 'rosca-martelo-corda', n: 'Curl martelo na polia com corda', p: ['biceps', 'antebraco'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, pg: 'corda', pt: ['biceps-braquial'] },
+    { id: 'rosca-inversa', n: 'Curl invertido com barra (pega pronada)', p: ['biceps', 'antebraco'], s: [], e: 'barra', t: 'I', r: [10, 15], inc: 2.5, pg: 'pronada', lg: 'media', pt: ['biceps-braquial', 'antebraco-extensores'] },
+    { id: 'rosca-scott', n: 'Curl no banco Scott', p: ['biceps'], s: [], e: 'barra', t: 'I', r: [10, 14], inc: 2.5, pg: 'supinada', lg: 'fechada', pt: ['biceps-completo'] },
+    { id: 'rosca-scott-uni', n: 'Curl no banco Scott a um braço com halter', p: ['biceps'], s: [], e: 'halteres', t: 'I', r: [10, 14], inc: 2, uni: 'braco', pg: 'supinada', pt: ['biceps-completo'] },
+    { id: 'rosca-concentrada', n: 'Curl concentrado', p: ['biceps'], s: [], e: 'halteres', t: 'I', r: [10, 15], inc: 2, uni: 'braco', pg: 'supinada', pt: ['biceps-longa'] },
+    { id: 'rosca-polia', n: 'Curl na polia baixa', p: ['biceps'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, pg: 'supinada', pt: ['biceps-completo'] },
+    { id: 'rosca-polia-uni', n: 'Curl de bíceps na polia a um braço', p: ['biceps'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, uni: 'braco', pg: 'supinada', pt: ['biceps-completo'] },
+    { id: 'rosca-polia-alta-uni', n: 'Curl na polia alta a um braço', p: ['biceps'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, uni: 'braco', pg: 'supinada', pt: ['biceps-longa'] },
+    { id: 'rosca-inclinada', n: 'Curl no banco inclinado', p: ['biceps'], s: [], e: 'halteres', t: 'I', r: [10, 14], inc: 2, pg: 'supinada', pt: ['biceps-longa'] },
+    { id: 'rosca-aranha', n: 'Curl aranha com o peito apoiado', p: ['biceps'], s: [], e: 'halteres', t: 'I', r: [10, 15], inc: 2, pg: 'supinada', pt: ['biceps-completo'] },
 
     // ---------------- TRÍCEPS ----------------
     { id: 'dips-triceps', n: 'Paralelas', p: ['triceps'], s: ['peito', 'deltoide_ant'], e: 'corporal', t: 'C', r: [6, 12], inc: 2.5, bw: true, pt: ['triceps-forca'] },
-    { id: 'supino-fechado', n: 'Supino com pega fechada', p: ['triceps'], s: ['peito', 'deltoide_ant'], e: 'barra', t: 'C', r: [6, 10], inc: 2.5, pt: ['triceps-forca'] },
-    { id: 'triceps-polia-barra', n: 'Extensão de tríceps na polia com barra', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, pt: ['triceps-lateral'] },
-    { id: 'triceps-polia-corda', n: 'Extensão de tríceps na polia com corda', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, pt: ['triceps-lateral'] },
-    { id: 'triceps-testa', n: 'Tríceps à testa com barra W', p: ['triceps'], s: [], e: 'barra', t: 'I', r: [8, 12], inc: 2.5, pt: ['triceps-longa'] },
+    { id: 'supino-fechado', n: 'Supino com pega fechada', p: ['triceps'], s: ['peito', 'deltoide_ant'], e: 'barra', t: 'C', r: [6, 10], inc: 2.5, pg: 'pronada', lg: 'fechada', pt: ['triceps-forca'] },
+    { id: 'triceps-polia-barra', n: 'Extensão de tríceps na polia com barra', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, pg: 'pronada', lg: 'fechada', pt: ['triceps-lateral'] },
+    { id: 'triceps-polia-corda', n: 'Extensão de tríceps na polia com corda', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, pg: 'corda', pt: ['triceps-lateral'] },
+    { id: 'triceps-polia-corda-uni', n: 'Extensão de tríceps na polia com corda a um braço', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, uni: 'braco', pg: 'corda', pt: ['triceps-lateral'] },
+    { id: 'triceps-polia-uni-supinada', n: 'Extensão de tríceps na polia a um braço em pega supinada', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, uni: 'braco', pg: 'supinada', pt: ['triceps-lateral'] },
+    { id: 'triceps-testa', n: 'Tríceps à testa com barra W', p: ['triceps'], s: [], e: 'barra', t: 'I', r: [8, 12], inc: 2.5, pg: 'pronada', lg: 'fechada', pt: ['triceps-longa'] },
     { id: 'triceps-acima-cabeca', n: 'Extensão de tríceps acima da cabeça', p: ['triceps'], s: [], e: 'halteres', t: 'I', r: [10, 15], inc: 2, pt: ['triceps-longa'] },
-    { id: 'triceps-kickback', n: 'Extensão de tríceps para trás com halteres', p: ['triceps'], s: [], e: 'halteres', t: 'I', r: [12, 15], inc: 1, pt: ['triceps-lateral'] },
+    { id: 'triceps-acima-cabeca-uni', n: 'Extensão de tríceps acima da cabeça a um braço', p: ['triceps'], s: [], e: 'halteres', t: 'I', r: [10, 15], inc: 2, uni: 'braco', pt: ['triceps-longa'] },
+    { id: 'triceps-polia-acima-cabeca', n: 'Extensão de tríceps acima da cabeça na polia', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, pg: 'corda', pt: ['triceps-longa'] },
+    { id: 'triceps-kickback', n: 'Extensão de tríceps para trás com halteres', p: ['triceps'], s: [], e: 'halteres', t: 'I', r: [12, 15], inc: 1, uni: 'braco', pg: 'neutra', pt: ['triceps-lateral'] },
+    { id: 'triceps-kickback-polia', n: 'Extensão de tríceps para trás na polia a um braço', p: ['triceps'], s: [], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, uni: 'braco', pg: 'neutra', pt: ['triceps-lateral'] },
     { id: 'triceps-maquina', n: 'Extensão de tríceps na máquina', p: ['triceps'], s: [], e: 'maquina', t: 'I', r: [10, 15], inc: 5, pt: ['triceps-lateral'] },
     { id: 'flexoes-diamante', n: 'Flexões em diamante', p: ['triceps'], s: ['peito'], e: 'corporal', t: 'C', r: [10, 20], inc: 2.5, bw: true, pt: ['triceps-forca'] },
 
     // ---------------- ANTEBRAÇO ----------------
-    { id: 'rosca-punho', n: 'Flexão de punho com barra', p: ['antebraco'], s: [], e: 'barra', t: 'I', r: [15, 20], inc: 2.5, pt: ['antebraco-flexores'] },
-    { id: 'rosca-punho-invertida', n: 'Extensão de punho com barra', p: ['antebraco'], s: [], e: 'barra', t: 'I', r: [15, 20], inc: 2.5, pt: ['antebraco-extensores'] },
-    { id: 'farmers-walk', n: 'Transporte de halteres (farmer walk)', p: ['antebraco', 'trapezio'], s: ['abdominais', 'gluteos'], e: 'halteres', t: 'C', r: [30, 60], inc: 5, m: 'tempo', pt: ['antebraco-pega', 'hibrido-transporte'] },
+    { id: 'rosca-punho', n: 'Flexão de punho com barra', p: ['antebraco'], s: [], e: 'barra', t: 'I', r: [15, 20], inc: 2.5, pg: 'supinada', pt: ['antebraco-flexores'] },
+    { id: 'rosca-punho-halter-uni', n: 'Flexão de punho a um braço com halter', p: ['antebraco'], s: [], e: 'halteres', t: 'I', r: [15, 20], inc: 1, uni: 'braco', pg: 'supinada', pt: ['antebraco-flexores'] },
+    { id: 'rosca-punho-invertida', n: 'Extensão de punho com barra', p: ['antebraco'], s: [], e: 'barra', t: 'I', r: [15, 20], inc: 2.5, pg: 'pronada', pt: ['antebraco-extensores'] },
+    { id: 'farmers-walk', n: 'Transporte de halteres (farmer walk)', p: ['antebraco', 'trapezio'], s: ['abdominais', 'gluteos'], e: 'halteres', t: 'C', r: [30, 60], inc: 5, m: 'tempo', pg: 'neutra', pt: ['antebraco-pega', 'hibrido-transporte'] },
+    { id: 'transporte-mala', n: 'Transporte de mala a um lado', p: ['antebraco', 'abdominais'], s: ['trapezio', 'gluteos'], e: 'halteres', t: 'C', r: [20, 45], inc: 4, m: 'tempo', uni: 'lado', pg: 'neutra', pt: ['antebraco-pega', 'abdominais-obliquos', 'hibrido-transporte'] },
+    { id: 'pega-disco', n: 'Segurar disco com os dedos', p: ['antebraco'], s: [], e: 'disco', t: 'I', r: [20, 45], inc: 1.25, m: 'tempo', pt: ['antebraco-pega'] },
 
     // ---------------- QUADRÍCEPS ----------------
     { id: 'agachamento-barra', n: 'Agachamento com barra', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais', 'lombar', 'abdominais'], e: 'barra', t: 'C', r: [5, 8], inc: 5, pt: ['pernas-quadriceps', 'pernas-gluteos'] },
     { id: 'agachamento-frontal', n: 'Agachamento frontal', p: ['quadriceps'], s: ['gluteos', 'abdominais'], e: 'barra', t: 'C', r: [5, 8], inc: 2.5, pt: ['pernas-quadriceps'] },
-    { id: 'agachamento-bulgaro', n: 'Agachamento búlgaro', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, pt: ['pernas-quadriceps', 'pernas-gluteos'] },
+    { id: 'agachamento-bulgaro', n: 'Agachamento búlgaro', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, uni: 'perna', pt: ['pernas-quadriceps', 'pernas-gluteos'] },
     { id: 'goblet-squat', n: 'Agachamento com halter ao peito', p: ['quadriceps', 'gluteos'], s: ['abdominais', 'adutores'], e: 'halteres', t: 'C', r: [10, 15], inc: 2.5, pt: ['pernas-quadriceps'] },
     { id: 'prensa-pernas', n: 'Prensa de pernas', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'maquina', t: 'C', r: [8, 15], inc: 10, pt: ['pernas-quadriceps', 'pernas-gluteos'] },
+    { id: 'prensa-uni', n: 'Prensa de pernas a uma perna', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'maquina', t: 'C', r: [10, 15], inc: 5, uni: 'perna', pt: ['pernas-quadriceps', 'pernas-gluteos'] },
     { id: 'hack-squat', n: 'Agachamento na máquina hack', p: ['quadriceps'], s: ['gluteos'], e: 'maquina', t: 'C', r: [8, 12], inc: 5, pt: ['pernas-quadriceps'] },
     { id: 'extensao-pernas', n: 'Extensão de pernas na máquina', p: ['quadriceps'], s: [], e: 'maquina', t: 'I', r: [12, 15], inc: 5, pt: ['pernas-quadriceps'] },
-    { id: 'afundos-halteres', n: 'Afundos com halteres', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'halteres', t: 'C', r: [10, 12], inc: 2, pt: ['pernas-quadriceps', 'pernas-gluteos'] },
-    { id: 'afundos-caminhando', n: 'Afundos a caminhar', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'halteres', t: 'C', r: [10, 16], inc: 2, pt: ['pernas-quadriceps', 'pernas-gluteos'] },
-    { id: 'step-up', n: 'Subida ao banco com halteres', p: ['quadriceps', 'gluteos'], s: [], e: 'halteres', t: 'C', r: [10, 12], inc: 2, pt: ['pernas-quadriceps', 'pernas-gluteos'] },
+    { id: 'extensao-pernas-uni', n: 'Extensão de pernas a uma perna', p: ['quadriceps'], s: [], e: 'maquina', t: 'I', r: [12, 15], inc: 2.5, uni: 'perna', pt: ['pernas-quadriceps'] },
+    { id: 'afundos-halteres', n: 'Afundos com halteres', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'halteres', t: 'C', r: [10, 12], inc: 2, uni: 'perna', pt: ['pernas-quadriceps', 'pernas-gluteos'] },
+    { id: 'afundo-reverso', n: 'Afundo para trás', p: ['gluteos', 'quadriceps'], s: ['isquiotibiais'], e: 'halteres', t: 'C', r: [10, 12], inc: 2, uni: 'perna', pt: ['pernas-gluteos', 'pernas-quadriceps'] },
+    { id: 'afundo-lateral', n: 'Afundo lateral', p: ['adutores', 'quadriceps'], s: ['gluteos'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, uni: 'perna', pt: ['pernas-adutores', 'pernas-quadriceps'] },
+    { id: 'afundos-caminhando', n: 'Afundos a caminhar', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais'], e: 'halteres', t: 'C', r: [10, 16], inc: 2, uni: 'perna', pt: ['pernas-quadriceps', 'pernas-gluteos'] },
+    { id: 'step-up', n: 'Subida ao banco com halteres', p: ['quadriceps', 'gluteos'], s: [], e: 'halteres', t: 'C', r: [10, 12], inc: 2, uni: 'perna', pt: ['pernas-quadriceps', 'pernas-gluteos'] },
+    { id: 'agachamento-pistola', n: 'Agachamento a uma perna (pistola)', p: ['quadriceps', 'gluteos'], s: ['abdominais', 'isquiotibiais'], e: 'corporal', t: 'C', r: [3, 8], inc: 2.5, bw: true, uni: 'perna', pt: ['pernas-quadriceps'] },
+    { id: 'agachamento-uma-perna-caixa', n: 'Agachamento a uma perna para a caixa', p: ['quadriceps', 'gluteos'], s: ['isquiotibiais', 'abdominais'], e: 'caixa', t: 'C', r: [6, 12], inc: 2, uni: 'perna', pt: ['pernas-quadriceps', 'pernas-gluteos'] },
     { id: 'sumo-squat-halter', n: 'Agachamento sumo com halter', p: ['quadriceps', 'gluteos'], s: ['adutores', 'isquiotibiais'], e: 'halteres', t: 'C', r: [10, 15], inc: 2.5, pt: ['pernas-adutores', 'pernas-gluteos'] },
 
     // ---------------- ISQUIOTIBIAIS, GLÚTEOS E ADUTORES ----------------
     { id: 'flexao-pernas-deitado', n: 'Flexão de pernas deitado na máquina', p: ['isquiotibiais'], s: ['gemeos'], e: 'maquina', t: 'I', r: [10, 15], inc: 5, pt: ['pernas-isquiotibiais'] },
     { id: 'flexao-pernas-sentado', n: 'Flexão de pernas sentado na máquina', p: ['isquiotibiais'], s: [], e: 'maquina', t: 'I', r: [10, 15], inc: 5, pt: ['pernas-isquiotibiais'] },
+    { id: 'flexao-pernas-uni', n: 'Flexão de pernas a uma perna na máquina', p: ['isquiotibiais'], s: ['gemeos'], e: 'maquina', t: 'I', r: [10, 15], inc: 2.5, uni: 'perna', pt: ['pernas-isquiotibiais'] },
     { id: 'good-morning', n: 'Bom dia com barra', p: ['isquiotibiais', 'lombar'], s: ['gluteos'], e: 'barra', t: 'C', r: [8, 12], inc: 2.5, pt: ['pernas-isquiotibiais', 'costas-lombar'] },
     { id: 'nordic-curl', n: 'Flexão nórdica', p: ['isquiotibiais'], s: [], e: 'corporal', t: 'I', r: [5, 10], inc: 2.5, bw: true, pt: ['pernas-isquiotibiais'] },
+    { id: 'peso-morto-uni', n: 'Peso morto romeno a uma perna', p: ['isquiotibiais', 'gluteos'], s: ['lombar', 'abdominais'], e: 'halteres', t: 'C', r: [8, 12], inc: 2, uni: 'perna', pt: ['pernas-isquiotibiais', 'pernas-gluteos'] },
     { id: 'hip-thrust', n: 'Elevação da bacia com barra', p: ['gluteos'], s: ['isquiotibiais'], e: 'barra', t: 'C', r: [8, 12], inc: 5, pt: ['pernas-gluteos'] },
+    { id: 'hip-thrust-uni', n: 'Elevação da bacia a uma perna', p: ['gluteos'], s: ['isquiotibiais', 'abdominais'], e: 'corporal', t: 'C', r: [10, 15], inc: 2.5, bw: true, uni: 'perna', pt: ['pernas-gluteos'] },
     { id: 'ponte-gluteos', n: 'Ponte de glúteos no chão', p: ['gluteos'], s: ['isquiotibiais'], e: 'corporal', t: 'I', r: [12, 20], inc: 2.5, bw: true, pt: ['pernas-gluteos'] },
     { id: 'abducao-anca', n: 'Abdução de anca na máquina', p: ['gluteos'], s: [], e: 'maquina', t: 'I', r: [12, 20], inc: 5, pt: ['pernas-gluteos'] },
+    { id: 'abducao-anca-polia', n: 'Abdução de anca na polia a uma perna', p: ['gluteos'], s: [], e: 'cabos', t: 'I', r: [12, 20], inc: 2.5, uni: 'perna', pt: ['pernas-gluteos'] },
     { id: 'aducao-anca', n: 'Adução de anca na máquina', p: ['adutores'], s: [], e: 'maquina', t: 'I', r: [12, 20], inc: 5, pt: ['pernas-adutores'] },
-    { id: 'coice-polia', n: 'Extensão de anca na polia', p: ['gluteos'], s: ['isquiotibiais'], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, pt: ['pernas-gluteos'] },
+    { id: 'coice-polia', n: 'Extensão de anca na polia', p: ['gluteos'], s: ['isquiotibiais'], e: 'cabos', t: 'I', r: [12, 15], inc: 2.5, uni: 'perna', pt: ['pernas-gluteos'] },
     { id: 'peso-morto-pernas-rigidas', n: 'Peso morto de pernas esticadas', p: ['isquiotibiais', 'gluteos'], s: ['lombar'], e: 'barra', t: 'C', r: [8, 12], inc: 2.5, pt: ['pernas-isquiotibiais'] },
-    { id: 'agachamento-cossaco', n: 'Agachamento cossaco', p: ['adutores', 'quadriceps'], s: ['gluteos'], e: 'corporal', t: 'C', r: [8, 12], inc: 2, bw: true, pt: ['pernas-adutores'] },
+    { id: 'agachamento-cossaco', n: 'Agachamento cossaco', p: ['adutores', 'quadriceps'], s: ['gluteos'], e: 'corporal', t: 'C', r: [8, 12], inc: 2, bw: true, uni: 'perna', pt: ['pernas-adutores'] },
 
     // ---------------- GÉMEOS ----------------
     { id: 'gemeos-pe', n: 'Elevação de gémeos de pé', p: ['gemeos'], s: [], e: 'maquina', t: 'I', r: [12, 20], inc: 5, pt: ['pernas-gemeos'] },
     { id: 'gemeos-sentado', n: 'Elevação de gémeos sentado', p: ['gemeos'], s: [], e: 'maquina', t: 'I', r: [12, 20], inc: 5, pt: ['pernas-gemeos'] },
     { id: 'gemeos-prensa', n: 'Elevação de gémeos na prensa', p: ['gemeos'], s: [], e: 'maquina', t: 'I', r: [12, 20], inc: 10, pt: ['pernas-gemeos'] },
+    { id: 'gemeos-uni', n: 'Elevação de gémeos a uma perna', p: ['gemeos'], s: [], e: 'corporal', t: 'I', r: [12, 20], inc: 2.5, bw: true, uni: 'perna', pt: ['pernas-gemeos'] },
 
     // ---------------- ABDOMINAIS E LOMBAR ----------------
     { id: 'prancha', n: 'Prancha', p: ['abdominais'], s: ['lombar', 'gluteos'], e: 'corporal', t: 'I', r: [30, 90], inc: 2.5, bw: true, m: 'tempo', pt: ['abdominais-estabilizacao'] },
-    { id: 'prancha-lateral', n: 'Prancha lateral', p: ['abdominais'], s: [], e: 'corporal', t: 'I', r: [20, 60], inc: 2.5, bw: true, m: 'tempo', pt: ['abdominais-obliquos', 'abdominais-estabilizacao'] },
+    { id: 'prancha-lateral', n: 'Prancha lateral', p: ['abdominais'], s: [], e: 'corporal', t: 'I', r: [20, 60], inc: 2.5, bw: true, m: 'tempo', uni: 'lado', pt: ['abdominais-obliquos', 'abdominais-estabilizacao'] },
     { id: 'crunch', n: 'Abdominais no chão', p: ['abdominais'], s: [], e: 'corporal', t: 'I', r: [15, 25], inc: 2.5, bw: true, pt: ['abdominais-superiores'] },
     { id: 'crunch-polia', n: 'Abdominais ajoelhado na polia', p: ['abdominais'], s: [], e: 'cabos', t: 'I', r: [12, 20], inc: 2.5, pt: ['abdominais-superiores'] },
     { id: 'elevacao-pernas-suspenso', n: 'Elevação de pernas na barra', p: ['abdominais'], s: [], e: 'corporal', t: 'I', r: [8, 15], inc: 2.5, bw: true, pt: ['abdominais-inferiores'] },
@@ -331,7 +418,9 @@
     { id: 'dead-bug', n: 'Insecto morto (dead bug)', p: ['abdominais'], s: [], e: 'corporal', t: 'I', r: [10, 16], inc: 2.5, bw: true, pt: ['abdominais-estabilizacao'] },
     { id: 'bird-dog', n: 'Cão de caça (bird dog)', p: ['lombar', 'abdominais'], s: ['gluteos'], e: 'corporal', t: 'I', r: [10, 16], inc: 2.5, bw: true, pt: ['abdominais-estabilizacao', 'costas-lombar'] },
     { id: 'superman', n: 'Superman no chão', p: ['lombar'], s: ['gluteos'], e: 'corporal', t: 'I', r: [12, 20], inc: 2.5, bw: true, pt: ['costas-lombar'] },
-    { id: 'pallof-press', n: 'Press Pallof na polia', p: ['abdominais'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, pt: ['abdominais-obliquos', 'abdominais-estabilizacao'] },
+    { id: 'pallof-press', n: 'Press Pallof na polia', p: ['abdominais'], s: [], e: 'cabos', t: 'I', r: [10, 15], inc: 2.5, uni: 'lado', pt: ['abdominais-obliquos', 'abdominais-estabilizacao'] },
+    { id: 'flexao-lateral-halter', n: 'Flexão lateral com halter', p: ['abdominais'], s: ['lombar'], e: 'halteres', t: 'I', r: [12, 20], inc: 2, uni: 'lado', pg: 'neutra', pt: ['abdominais-obliquos'] },
+    { id: 'crunch-bicicleta', n: 'Abdominais em bicicleta', p: ['abdominais'], s: [], e: 'corporal', t: 'I', r: [16, 30], inc: 2.5, bw: true, pt: ['abdominais-obliquos', 'abdominais-inferiores'] },
     { id: 'hollow-hold', n: 'Barquinho (hollow hold)', p: ['abdominais'], s: [], e: 'corporal', t: 'I', r: [20, 60], inc: 2.5, bw: true, m: 'tempo', pt: ['abdominais-inferiores', 'abdominais-estabilizacao'] },
 
     // ---------------- CORRIDA ----------------
@@ -395,7 +484,7 @@
     'triceps-polia-corda': 1, 'supino-fechado': 2, 'triceps-testa': 2,
     // costas
     'puxada-frontal': 1, 'remada-curvada-barra': 1, 'elevacoes-pronada': 2, 'remada-baixa-polia': 2,
-    'encolhimentos-halteres': 1,
+    'remada-halter-uni': 2, 'encolhimentos-halteres': 1,
     // braços
     'rosca-direta-barra': 1, 'rosca-martelo': 2, 'rosca-punho': 1,
     // pernas
@@ -576,7 +665,7 @@
   });
 
   global.CATALOGO = {
-    MUSCLES, ZONAS, GRUPOS, EQUIPAMENTO, OBJETIVOS, METRICAS,
-    EXERCISES, SPLITS, CIRCUITOS, FORMATOS, PRINCIPAIS
+    MUSCLES, ZONAS, GRUPOS, EQUIPAMENTO, PEGAS, LARGURAS, UNILATERAL, UNI_AJUDA,
+    OBJETIVOS, METRICAS, EXERCISES, SPLITS, CIRCUITOS, FORMATOS, PRINCIPAIS
   };
 })(window);

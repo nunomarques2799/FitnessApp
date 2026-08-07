@@ -10,11 +10,11 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 | Ecrã | O que tem |
 |---|---|
 | **Hoje** | Objectivo de treino, sugestão do dia (força ou circuito), cobertura muscular dos últimos 7 dias |
-| **Treino** | Registo de séries e de rondas de circuito, cronómetro de descanso automático, deteção de recordes |
+| **Treino** | Registo de séries e de rondas de circuito, cronómetro de descanso opcional, deteção de recordes |
 | **Histórico** | Calendário do mês com os dias treinados, detalhe de cada sessão, editar/apagar/repetir |
-| **Exercícios** | 139 exercícios organizados por grupo muscular, com filtro da parte do músculo e instruções de execução |
+| **Exercícios** | 191 exercícios organizados por grupo muscular, com filtro da parte do músculo, da pega e instruções de execução |
 | **Progresso** | Volume por semana, condição física dos últimos 30 dias, distribuição muscular, recordes |
-| **Ajustes** | Objectivo, plano de treino, tempos de descanso, kg/lb, tema, exportar/importar cópia de segurança |
+| **Ajustes** | Objectivo, plano de treino, tempos de descanso, cronómetro, kg/lb, tema, exportar/importar cópia de segurança |
 
 ### Objectivos
 
@@ -39,6 +39,38 @@ sozinha e mede o descanso curto entre estações.
 Cada exercício regista-se na unidade que faz sentido: carga × repetições, só repetições, segundos,
 metros ou calorias da máquina. Os exercícios de condição física não entram na contagem de volume
 de musculação — aparecem no bloco **Condição física** do Progresso.
+
+### Um lado de cada vez
+
+47 exercícios trabalham **um braço ou uma perna de cada vez** — extensão de tríceps na corda a um
+braço, remada e puxada na polia a um braço, prensa e extensão de pernas a uma perna, peso morto
+romeno a uma perna, agachamento em pistola. Servem para corrigir diferenças entre lados e para
+apoiar o tronco em vez de o usar a fazer batota. Estão todos juntos no cartão **Um lado de cada
+vez**, na biblioteca e no selector de exercícios.
+
+Uma série conta o trabalho de um lado: faz o direito e o esquerdo antes de a marcares como feita,
+e escreve a carga de um lado só.
+
+### Pegas
+
+A mesma puxada muda de exercício conforme a pega, por isso cada exercício diz qual usa —
+**pronada**, **supinada**, **neutra**, **mista** ou **corda** — e, quando faz diferença, a largura
+das mãos. Dentro de um grupo muscular há um filtro por pega, com a explicação do que cada uma muda:
+a pega supinada mete mais bíceps e puxa a parte de baixo dos dorsais, a pronada larga insiste na
+parte de fora, a neutra é a mais amiga do ombro.
+
+### Mudar o nome dos exercícios
+
+Se tratas um exercício por outro nome, muda-o: **abre o exercício → Mudar o nome**, ou nas opções
+do exercício durante o treino. Passa a aparecer assim em todo o lado e os registos antigos
+mantêm-se. O nome original fica guardado — a procura continua a encontrar o exercício pelos dois
+nomes, e há sempre um botão para o repor.
+
+### Cronómetro de descanso
+
+No início de cada treino a app pergunta se queres contar o descanso. Enquanto não responderes, não
+aparece cronómetro nenhum. Podes ligá-lo ou desligá-lo a meio, nas opções do treino, e em
+**Ajustes → Descanso entre séries** fixas a resposta: *Perguntar*, *Sempre* ou *Nunca*.
 
 ### Figura dos músculos
 
@@ -116,7 +148,8 @@ Fica com ícone próprio, abre em ecrã inteiro sem barra do Safari e funciona s
 
 Os dados vivem no armazenamento do Safari. Desaparecem se apagares a app do ecrã principal
 ou limpares os dados do site. **Ajustes → Exportar treinos** gera um ficheiro `.json`
-que podes guardar no iCloud Drive; **Importar** repõe tudo (juntar ou substituir).
+que podes guardar no iCloud Drive; **Importar** repõe tudo (juntar ou substituir) — treinos,
+exercícios teus, definições e os nomes que deste aos exercícios.
 
 Vale a pena exportar uma vez por mês.
 
@@ -131,7 +164,7 @@ manifest.webmanifest    metadados para o ecrã principal
 sw.js                   service worker — faz a app funcionar offline
 icons/                  ícones PNG gerados
 js/
-  exercises.js          catálogo: 16 músculos, 9 grupos com partes, 139 exercícios, 6 planos, 7 circuitos
+  exercises.js          catálogo: 16 músculos, 9 grupos com partes, 191 exercícios, pegas, 6 planos, 7 circuitos
   execucao.js           passos de execução e erro mais comum de cada exercício
   anatomia.js           figura humana em SVG com os músculos trabalhados
   store.js              dados em localStorage + motor de sugestão e estatísticas

@@ -51,6 +51,56 @@
     </p>`;
   }
 
+  /* ---------- pega e exercícios de um lado de cada vez ---------- */
+
+  /** Nome curto da pega, com a largura quando faz diferença */
+  function textoPega(ex) {
+    if (!ex || !ex.pg) return '';
+    const p = CATALOGO.PEGAS[ex.pg];
+    if (!p) return '';
+    const l = ex.lg && CATALOGO.LARGURAS[ex.lg];
+    return l ? `${p.curto} ${l.name.toLowerCase()}` : p.curto;
+  }
+
+  function etiquetaUni(ex) {
+    return ex && ex.uni ? (CATALOGO.UNILATERAL[ex.uni] || CATALOGO.UNILATERAL.lado) : null;
+  }
+
+  /** Chips com o que distingue este exercício dos parecidos */
+  function chipsExercicio(ex) {
+    const uni = etiquetaUni(ex);
+    const pega = textoPega(ex);
+    return `<span class="chip chip--primaria">${esc(CATALOGO.EQUIPAMENTO[ex.e] || ex.e)}</span>
+      <span class="chip">${ex.t === 'C' ? 'Composto' : 'Isolamento'}</span>
+      ${pega ? `<span class="chip">${icone('pega', 13)}${esc(pega)}</span>` : ''}
+      ${uni ? `<span class="chip chip--aviso">${icone('corpo', 13)}${esc(uni.name)}</span>` : ''}`;
+  }
+
+  /** Explicação da pega e do trabalho a um lado, para os painéis de detalhe */
+  function notasPega(ex) {
+    if (!ex) return '';
+    const p = ex.pg && CATALOGO.PEGAS[ex.pg];
+    const l = ex.lg && CATALOGO.LARGURAS[ex.lg];
+    const uni = etiquetaUni(ex);
+    if (!p && !uni) return '';
+    return `<div class="cartao cartao--plano mt3">
+      ${p ? `<p class="texto-corpo" style="font-size:var(--t-md)"><strong>${esc(p.name)}</strong> — ${esc(p.desc)}</p>` : ''}
+      ${l ? `<p class="texto-corpo mt2" style="font-size:var(--t-md)"><strong>Pega ${esc(l.name.toLowerCase())}</strong> — ${esc(l.desc)}</p>` : ''}
+      ${uni ? `<p class="texto-corpo ${p ? 'mt2' : ''}" style="font-size:var(--t-md)"><strong>${esc(uni.name)}</strong> — ${esc(CATALOGO.UNI_AJUDA)}</p>` : ''}
+    </div>`;
+  }
+
+  /** Filtros por pega, só com as pegas que existem na lista */
+  function filtrosPega(lista, activa) {
+    const pegas = Store.pegasDe(lista);
+    if (pegas.length < 2) return '';
+    return `<div class="filtros" role="group" aria-label="Filtrar por pega">
+      <button type="button" class="filtro" data-pega="" aria-pressed="${!activa}">Todas as pegas</button>
+      ${pegas.map(k => `<button type="button" class="filtro" data-pega="${k}"
+        aria-pressed="${activa === k}">${esc(CATALOGO.PEGAS[k].curto)}</button>`).join('')}
+    </div>`;
+  }
+
   /** Item de exercício para listas, com figura dos músculos trabalhados */
   function exercicioItem(ex, opts) {
     opts = opts || {};
@@ -58,6 +108,8 @@
     const musc = nomesMusculos(ex.p).join(' e ');
     const rec = Store.indiceRecordes()[ex.id];
     const etiqueta = Store.melhorEtiqueta(ex, rec);
+    const uni = etiquetaUni(ex);
+    const pega = textoPega(ex);
     return `<div class="lista__i lista__i--ex">
       <button type="button" class="lista__princ" data-ex="${ex.id}">
         ${Anatomia.miniDoExercicio(ex)}
@@ -66,6 +118,8 @@
           <span class="lista__s">
             <span>${esc(musc)}</span>
             <span class="chip">${esc(CATALOGO.EQUIPAMENTO[ex.e] || ex.e)}</span>
+            ${pega ? `<span class="chip">${esc(pega)}</span>` : ''}
+            ${uni ? `<span class="chip chip--aviso">${esc(uni.chip)}</span>` : ''}
             ${etiqueta ? `<span class="chip chip--primaria num">${esc(etiqueta)}</span>` : ''}
           </span>
         </span>
@@ -154,6 +208,40 @@
     return p ? `<p class="cartao__sub mb3">${icone('info', 14)} ${esc(p.desc)}</p>` : '';
   }
 
+  /* ---------- listas fora dos grupos musculares ---------- */
+
+  /** Cartões de Favoritos, Unilaterais e Os meus, para o fim da grelha */
+  function cartoesEspeciais() {
+    const n = k => listaEspecial(k).length;
+    const cartao = (k, ic, nome) => `<button type="button" class="grupo-c grupo-c--simples" data-especial="${k}">
+        <span class="grupo-c__ic">${icone(ic, 26)}</span>
+        <span class="grupo-c__n">${esc(nome)}</span>
+        <span class="grupo-c__s num">${n(k)} exercícios</span>
+      </button>`;
+    return cartao('fav', 'estrela', 'Favoritos') +
+      cartao('uni', 'corpo', 'Um lado de cada vez') +
+      cartao('meus', 'editar', 'Os meus');
+  }
+
+  function listaEspecial(k) {
+    if (k === 'fav') return Store.todosExercicios().filter(e => Store.state.favoritos.includes(e.id));
+    if (k === 'uni') return Store.exerciciosUnilaterais();
+    return Store.todosExercicios().filter(e => e.custom);
+  }
+
+  function tituloDeEspecial(k) {
+    if (k === 'fav') return 'Favoritos';
+    if (k === 'uni') return 'Um lado de cada vez';
+    return 'Os meus exercícios';
+  }
+
+  /** Procura pelo nome — encontra também pelo nome original, se o mudaste */
+  function procurarExercicios(termo) {
+    const q = normalizar(termo);
+    return Store.todosExercicios().filter(e =>
+      normalizar(e.n).includes(q) || (e.nomeOriginal && normalizar(e.nomeOriginal).includes(q)));
+  }
+
   /* =============================================================
      Selector de exercícios: grupo muscular → parte → exercício
      ============================================================= */
@@ -161,7 +249,8 @@
     opts = opts || {};
     let grupo = opts.grupo || null;
     let parte = opts.parte || null;
-    let especial = null;             // 'fav' | 'meus'
+    let pega = null;
+    let especial = null;             // 'fav' | 'meus' | 'uni'
     let procura = '';
 
     const s = UI.sheet({
@@ -184,32 +273,24 @@
       if (especial) return desenharResultados(filtrarEspecial(), tituloEspecial());
       if (grupo) return desenharGrupo();
       cont.innerHTML = `<p class="seccao__tit mb3">Escolhe o grupo muscular</p>
-        ${grelhaGrupos(`
-          <button type="button" class="grupo-c grupo-c--simples" data-especial="fav">
-            <span class="grupo-c__ic">${icone('estrela', 26)}</span>
-            <span class="grupo-c__n">Favoritos</span>
-            <span class="grupo-c__s num">${Store.state.favoritos.length} exercícios</span>
-          </button>
-          <button type="button" class="grupo-c grupo-c--simples" data-especial="meus">
-            <span class="grupo-c__ic">${icone('editar', 26)}</span>
-            <span class="grupo-c__n">Os meus</span>
-            <span class="grupo-c__s num">${Store.state.exerciciosCustom.length} exercícios</span>
-          </button>`)}`;
+        ${grelhaGrupos(cartoesEspeciais())}`;
     }
 
     function desenharGrupo() {
       const g = Store.GRUPOS[grupo];
-      const lista = Store.exerciciosDoGrupo(grupo, parte);
+      const todos = Store.exerciciosDoGrupo(grupo, parte);
+      const lista = pega ? todos.filter(e => e.pg === pega) : todos;
       cont.innerHTML = `<div class="entre mb3">
           <button type="button" class="btn btn--fantasma btn--pequeno" data-voltar-grupos>${icone('esquerda', 18)}Grupos</button>
           <h3 class="grupo-tit grupo-tit--livre">${esc(g.name)}</h3>
         </div>
         ${filtrosParte(grupo, parte)}
         ${descricaoParte(grupo, parte)}
+        ${filtrosPega(todos, pega)}
         ${lista.length
           ? `<p class="seccao__tit mb3">${lista.length} exercício${lista.length > 1 ? 's' : ''}</p>
              <div class="lista">${lista.map(e => exercicioItem(e, { accao: 'add' })).join('')}</div>`
-          : vazio({ icone: 'procurar', titulo: 'Nada nesta parte', sub: 'Escolhe outra parte do músculo ou cria um exercício.' })}`;
+          : vazio({ icone: 'procurar', titulo: 'Nada com este filtro', sub: 'Escolhe outra parte do músculo ou outra pega.' })}`;
     }
 
     function desenharResultados(lista, titulo) {
@@ -227,16 +308,9 @@
         <div class="lista">${lista.slice(0, 120).map(e => exercicioItem(e, { accao: 'add' })).join('')}</div>`;
     }
 
-    function filtrarProcura() {
-      const q = normalizar(procura);
-      return Store.todosExercicios().filter(e => normalizar(e.n).includes(q));
-    }
-    function filtrarEspecial() {
-      return especial === 'fav'
-        ? Store.todosExercicios().filter(e => Store.state.favoritos.includes(e.id))
-        : Store.state.exerciciosCustom.slice();
-    }
-    function tituloEspecial() { return especial === 'fav' ? 'Favoritos' : 'Os meus exercícios'; }
+    function filtrarProcura() { return procurarExercicios(procura); }
+    function filtrarEspecial() { return listaEspecial(especial); }
+    function tituloEspecial() { return tituloDeEspecial(especial); }
 
     input.addEventListener('input', () => {
       clearTimeout(input._t);
@@ -248,17 +322,25 @@
       if (det) return detalhes(det.dataset.detalhe, { aoAdicionar: aoEscolher });
 
       const g = e.target.closest('[data-grupo]');
-      if (g) { grupo = g.dataset.grupo; parte = null; especial = null; UI.haptic('leve'); return desenhar(); }
+      if (g) { grupo = g.dataset.grupo; parte = null; pega = null; especial = null; UI.haptic('leve'); return desenhar(); }
 
       const esp = e.target.closest('[data-especial]');
-      if (esp) { especial = esp.dataset.especial; grupo = null; UI.haptic('leve'); return desenhar(); }
+      if (esp) { especial = esp.dataset.especial; grupo = null; pega = null; UI.haptic('leve'); return desenhar(); }
 
       const v = e.target.closest('[data-voltar-grupos]');
-      if (v) { grupo = null; parte = null; especial = null; UI.haptic('leve'); return desenhar(); }
+      if (v) { grupo = null; parte = null; pega = null; especial = null; UI.haptic('leve'); return desenhar(); }
 
       const p = e.target.closest('[data-parte]');
       if (p) {
         parte = p.dataset.parte || null;
+        pega = null;
+        UI.haptic('leve');
+        return desenharGrupo();
+      }
+
+      const pg = e.target.closest('[data-pega]');
+      if (pg) {
+        pega = pg.dataset.pega || null;
         UI.haptic('leve');
         return desenharGrupo();
       }
@@ -302,8 +384,7 @@
       html: `${Anatomia.doExercicio(ex)}
 
         <div class="linha mb3" style="flex-wrap:wrap;gap:var(--e2)">
-          <span class="chip chip--primaria">${esc(CATALOGO.EQUIPAMENTO[ex.e] || ex.e)}</span>
-          <span class="chip">${ex.t === 'C' ? 'Composto' : 'Isolamento'}</span>
+          ${chipsExercicio(ex)}
           <span class="chip num">${reps[0]}–${reps[1]} ${esc(unidade)}</span>
           ${ex.cond ? '<span class="chip chip--aviso">Condição física</span>' : ''}
           ${ex.custom ? '<span class="chip chip--sucesso">Personalizado</span>' : ''}
@@ -319,6 +400,8 @@
           <div><p class="aviso-cx__t">Erro mais comum</p><p class="aviso-cx__s">${esc(info.erro)}</p></div>
         </div>` : ''}
 
+        ${notasPega(ex)}
+
         <h3 class="seccao__tit mt4 mb3">Como registar</h3>
         <p class="texto-corpo">Cada série pede <strong>${esc(met.a.label.toLowerCase())}</strong>
           e <strong>${esc(met.b.label.toLowerCase())}</strong>.</p>
@@ -327,7 +410,11 @@
           <div class="stats">
             ${stat(Store.textoRecorde(rec, ex), 'melhor série')}
             ${stat(rec.sessoes, rec.sessoes === 1 ? 'sessão' : 'sessões')}
-          </div>` : ''}`,
+          </div>` : ''}
+
+        <button type="button" class="btn btn--fantasma btn--bloco mt4" data-renomear>
+          ${icone('editar', 18)}Mudar o nome deste exercício
+        </button>`,
       rodape: `<button type="button" class="btn btn--secundario" data-hist>${icone('grafico', 18)}Histórico</button>
         ${podeJuntar ? `<button type="button" class="btn btn--primario" data-add>${icone('mais', 18)}Escolher este</button>` : ''}`
     });
@@ -335,6 +422,10 @@
     sh.painel.querySelector('[data-hist]').addEventListener('click', () => {
       UI.fecharSheet();
       App.ir('exercicio/' + exId);
+    });
+    sh.painel.querySelector('[data-renomear]').addEventListener('click', () => {
+      UI.fecharSheet();
+      setTimeout(() => renomearExercicio(exId, opts.aoRenomear), 240);
     });
     const add = sh.painel.querySelector('[data-add]');
     if (add) add.addEventListener('click', () => {
@@ -393,6 +484,63 @@
       aoEscolher(b.dataset.circuito);
     });
     return sh;
+  }
+
+  /* =============================================================
+     Mudar o nome de um exercício
+     Serve para tratar cada exercício pelo nome que usas no ginásio.
+     O nome original fica guardado e pode ser reposto.
+     ============================================================= */
+  function renomearExercicio(exId, aoMudar) {
+    const ex = Store.exercicio(exId);
+    if (!ex) return;
+    const original = ex.nomeOriginal || ex.n;
+    const mudado = Store.nomeProprio(exId);
+
+    const s = UI.sheet({
+      titulo: 'Mudar o nome',
+      html: `<div class="campo">
+          <label class="campo__l" for="rn-nome">Nome do exercício</label>
+          <input class="entrada" id="rn-nome" value="${esc(ex.n)}" autocomplete="off"
+                 data-auto-focus aria-describedby="rn-ajuda">
+          <p class="campo__ajuda" id="rn-ajuda">Passa a aparecer assim em todo o lado — nos treinos,
+            no histórico e nas sugestões. Os registos que já fizeste mantêm-se.</p>
+          <p class="campo__erro" hidden data-erro role="alert"></p>
+        </div>
+        ${mudado ? `<p class="cartao__sub">${icone('info', 14)} Nome original: ${esc(original)}</p>
+          <button type="button" class="btn btn--fantasma btn--bloco mt3" data-repor>Repor o nome original</button>` : ''}`,
+      rodape: `<button type="button" class="btn btn--fantasma" data-cancelar>Cancelar</button>
+               <button type="button" class="btn btn--primario" data-guardar>Guardar</button>`
+    });
+
+    const campo = s.painel.querySelector('#rn-nome');
+    const erro = s.painel.querySelector('[data-erro]');
+
+    function aplicar(nome) {
+      const novo = Store.renomearExercicio(exId, nome);
+      UI.fecharSheet();
+      UI.haptic('sucesso');
+      UI.toast(`Passa a chamar-se ${novo}`, 'sucesso');
+      if (aoMudar) aoMudar(exId);
+      else App.render();
+    }
+
+    s.painel.querySelector('[data-cancelar]').addEventListener('click', () => UI.fecharSheet());
+    s.painel.querySelector('[data-guardar]').addEventListener('click', () => {
+      const nome = campo.value.trim();
+      if (!nome) {
+        erro.hidden = false;
+        erro.innerHTML = icone('aviso', 15) + 'O exercício tem de ter um nome.';
+        campo.focus();
+        return;
+      }
+      aplicar(nome);
+    });
+    campo.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); s.painel.querySelector('[data-guardar]').click(); }
+    });
+    const repor = s.painel.querySelector('[data-repor]');
+    if (repor) repor.addEventListener('click', () => aplicar(''));
   }
 
   /* =============================================================
@@ -515,7 +663,10 @@
   global.Comp = {
     ESTADOS, normalizar, nomesMusculos,
     musculo, legendaMusculos, exercicioItem, treinoItem, vazio, stat,
+    textoPega, etiquetaUni, chipsExercicio, notasPega, filtrosPega,
+    cartoesEspeciais, listaEspecial, tituloDeEspecial, procurarExercicios,
     grupoCartao, grelhaGrupos, filtrosParte, descricaoParte,
-    escolherExercicio, detalhes, escolherCircuito, circuitoCartao, criarExercicio
+    escolherExercicio, detalhes, escolherCircuito, circuitoCartao,
+    criarExercicio, renomearExercicio
   };
 })(window);

@@ -76,9 +76,10 @@ window.Vistas = window.Vistas || {};
           sub: 'Vai a Hoje para começares o treino sugerido, um circuito ou um treino livre.'
         });
       }
-      if (a.tipo === 'circuito') return renderCircuito(a);
+      if (a.tipo === 'circuito') return escolhaCronometro(a) + renderCircuito(a);
 
-      return `<div data-exercicios>${a.entradas.map(cartaoExercicio).join('') || estadoVazio()}</div>
+      return escolhaCronometro(a) +
+        `<div data-exercicios>${a.entradas.map(cartaoExercicio).join('') || estadoVazio()}</div>
         <button type="button" class="btn btn--secundario btn--bloco btn--grande mt4" data-add-ex>
           ${icone('mais', 20)}Adicionar exercício
         </button>
@@ -108,10 +109,19 @@ window.Vistas = window.Vistas || {};
       const addEx = raiz.querySelector('[data-add-ex]');
       if (addEx) addEx.addEventListener('click', adicionarExercicio);
 
+      raiz.querySelectorAll('[data-timer]').forEach(b => b.addEventListener('click', () => {
+        Store.definirDescanso(b.dataset.timer === 'sim');
+        UI.haptic('medio');
+        UI.toast(b.dataset.timer === 'sim'
+          ? 'O descanso passa a ser contado sozinho'
+          : 'Treino sem cronómetro. Podes ligá-lo nas opções do treino.');
+        App.render();
+      }));
+
       const lista = raiz.querySelector('[data-exercicios]');
       lista.addEventListener('click', e => {
         const det = e.target.closest('[data-detalhe]');
-        if (det) return Comp.detalhes(det.dataset.detalhe);
+        if (det) return Comp.detalhes(det.dataset.detalhe, { aoRenomear: () => redesenhar() });
         const ok = e.target.closest('[data-ok]');
         if (ok) return alternarSerie(+ok.dataset.i, +ok.dataset.s);
         const addS = e.target.closest('[data-add-serie]');
@@ -153,6 +163,31 @@ window.Vistas = window.Vistas || {};
       sub: 'Adiciona o primeiro exercício para começares a registar séries.',
       accao: 'Adicionar exercício'
     });
+  }
+
+  /**
+   * Perguntar uma vez, no início do treino, se queres o cronómetro.
+   * Só aparece com o modo "perguntar" e enquanto não escolheres —
+   * até lá, o descanso não é contado. Em Ajustes podes fixar a resposta.
+   */
+  function escolhaCronometro(a) {
+    if (a.descansoAuto != null) return '';
+    const circuito = a.tipo === 'circuito';
+    return `<section class="cartao cartao--plano mb3" data-cartao-timer>
+      <div class="linha">
+        <span style="color:var(--primaria-txt)">${icone('cronometro', 24)}</span>
+        <div class="crescer">
+          <p style="font-weight:650">Queres cronómetro de descanso?</p>
+          <p class="cartao__sub">${circuito
+            ? 'Conta sozinho os segundos entre estações e entre rondas.'
+            : `Conta sozinho ${UI.mmss(Store.state.settings.descanso)} nos compostos e ${UI.mmss(Store.state.settings.descansoIsolamento)} no isolamento, sempre que marcas uma série.`}</p>
+        </div>
+      </div>
+      <div class="linha mt3" style="gap:var(--e2)">
+        <button type="button" class="btn btn--primario crescer" data-timer="sim">${icone('cronometro', 18)}Contar descanso</button>
+        <button type="button" class="btn btn--secundario crescer" data-timer="nao">Sem cronómetro</button>
+      </div>
+    </section>`;
   }
 
   /* ---------- campos de registo ---------- */
@@ -381,6 +416,7 @@ window.Vistas = window.Vistas || {};
 
   /** Descanso adequado: entre estações num circuito, entre séries num treino de força */
   function descansar(a, ex, si) {
+    if (!Store.comDescanso(a)) return;      // treino sem cronómetro
     if (a.tipo === 'circuito') {
       const fecha = rondaCompleta(a, si);
       const seg = fecha ? (a.descansoRonda || 0) : (a.descansoEstacao || Store.state.settings.descansoCircuito || 20);
@@ -481,6 +517,7 @@ window.Vistas = window.Vistas || {};
         <div class="pilha">
           <button type="button" class="btn btn--secundario btn--bloco" data-como>${icone('info', 18)}Como se faz</button>
           <button type="button" class="btn btn--secundario btn--bloco" data-hist>${icone('grafico', 18)}Ver histórico e recordes</button>
+          <button type="button" class="btn btn--secundario btn--bloco" data-renomear>${icone('editar', 18)}Mudar o nome do exercício</button>
           <button type="button" class="btn btn--secundario btn--bloco" data-trocar>${icone('duplicar', 18)}Trocar por outro exercício</button>
           <div class="linha" style="gap:var(--e2)">
             <button type="button" class="btn btn--secundario crescer" data-sobe ${i === 0 ? 'disabled' : ''}>${icone('cima', 18)}Subir</button>
@@ -498,6 +535,10 @@ window.Vistas = window.Vistas || {};
       setTimeout(() => Comp.detalhes(entrada.exId), 240);
     });
     sh.painel.querySelector('[data-hist]').addEventListener('click', () => { UI.fecharSheet(); App.ir('exercicio/' + entrada.exId); });
+    sh.painel.querySelector('[data-renomear]').addEventListener('click', () => {
+      UI.fecharSheet();
+      setTimeout(() => Comp.renomearExercicio(entrada.exId, () => redesenhar()), 240);
+    });
     sh.painel.querySelector('[data-trocar]').addEventListener('click', () => {
       UI.fecharSheet();
       setTimeout(() => Comp.escolherExercicio(id => {
@@ -541,6 +582,7 @@ window.Vistas = window.Vistas || {};
   function sheetOpcoes() {
     const a = Store.state.ativo;
     if (!a) return;
+    const liga = Store.comDescanso(a);
     const sh = UI.sheet({
       titulo: 'Opções do treino',
       html: `<div class="campo">
@@ -550,6 +592,20 @@ window.Vistas = window.Vistas || {};
         <div class="campo">
           <label class="campo__l" for="t-notas">Notas</label>
           <textarea class="area" id="t-notas" placeholder="Como correu o treino?">${esc(a.notas || '')}</textarea>
+        </div>
+        <div class="cartao cartao--plano mb3">
+          <button type="button" class="troca" data-troca-timer role="switch" aria-checked="${liga}"
+                  aria-label="Cronómetro de descanso" aria-describedby="t-timer-a">
+            <span class="crescer" style="text-align:left">
+              <span class="troca__t" style="display:block">Cronómetro de descanso</span>
+              <span class="troca__s" style="display:block" id="t-timer-a">${a.tipo === 'circuito'
+                ? 'Conta o tempo entre estações e entre rondas'
+                : `Arranca sozinho ao marcares uma série feita (${UI.mmss(Store.state.settings.descanso)} nos compostos)`}</span>
+            </span>
+            <span class="interruptor" aria-hidden="true"></span>
+          </button>
+          <p class="campo__ajuda" style="margin-top:var(--e2)">Vale só para este treino.
+            Para não voltares a ser perguntado, escolhe em Ajustes → Descanso entre séries.</p>
         </div>
         ${a.tipo === 'circuito' ? `<p class="campo__ajuda mb3">
           Descanso entre estações: ${a.descansoEstacao || 0} segundos. Entre rondas: ${a.descansoRonda || 0} segundos.</p>` : ''}
@@ -563,6 +619,19 @@ window.Vistas = window.Vistas || {};
       document.getElementById('cab-titulo').textContent = a.nome;
     });
     notas.addEventListener('input', () => { a.notas = notas.value; Store.guardar(); });
+
+    const troca = sh.painel.querySelector('[data-troca-timer]');
+    troca.addEventListener('click', () => {
+      const novo = !Store.comDescanso(a);
+      Store.definirDescanso(novo);
+      troca.setAttribute('aria-checked', String(novo));
+      UI.haptic('leve');
+      App.desenharBarraInferior();
+      // a pergunta do início já não faz sentido depois de responderes aqui
+      const cartao = document.querySelector('#conteudo [data-cartao-timer]');
+      if (cartao) cartao.remove();
+    });
+
     sh.painel.querySelector('[data-descartar]').addEventListener('click', () => { UI.fecharSheet(); descartar(); });
   }
 
