@@ -149,6 +149,30 @@
     desenharBarraInferior();
   }
 
+  /* ---------- treino esquecido ----------
+     Quem se esquece de terminar o treino acaba com sessões de 14 horas no
+     histórico. Passadas as horas definidas em Ajustes sem nenhum registo,
+     a app fecha-o com a duração até à última série marcada.  */
+  let relogioEsquecido = null;
+
+  function avisarFecho(r) {
+    if (r.descartado) {
+      UI.toast('Treino esquecido descartado — não tinha séries marcadas');
+    } else {
+      UI.toast(`Treino fechado sozinho · ${UI.fmtDuracao(r.treino.duracao)} até à última série`);
+    }
+  }
+
+  /** Fecha o treino esquecido, avisa e leva-te para onde faz sentido. */
+  function tratarEsquecido() {
+    const r = Store.fecharPorInactividade();
+    if (!r) return false;
+    avisarFecho(r);
+    if (analisar().nome === 'treino') ir(r.treino ? 'sessao/' + r.treino.id : 'hoje', true);
+    else render();
+    return true;
+  }
+
   /* ---------- arranque ---------- */
   function nav() {
     document.getElementById('nav').innerHTML = TABS.map(t =>
@@ -181,17 +205,26 @@
 
     // retoma o cronómetro ao voltar do segundo plano
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) { tick(); desenharBarraInferior(); }
+      if (document.hidden) return;
+      if (tratarEsquecido()) return;
+      tick(); desenharBarraInferior();
     });
 
+    // o treino pode ter ficado aberto de ontem: fecha-o antes de desenhar
+    const esquecido = Store.fecharPorInactividade();
+
     render();
+
+    if (esquecido) setTimeout(() => avisarFecho(esquecido), 500);
+    clearInterval(relogioEsquecido);
+    relogioEsquecido = setInterval(tratarEsquecido, 60000);
 
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       navigator.serviceWorker.register('sw.js').catch(() => { /* offline não disponível */ });
     }
   }
 
-  global.App = { ir, voltar, render, iniciarDescanso, desenharBarraInferior, aplicarTema, TABS };
+  global.App = { ir, voltar, render, iniciarDescanso, desenharBarraInferior, aplicarTema, tratarEsquecido, TABS };
   global.Vistas = global.Vistas || {};
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);

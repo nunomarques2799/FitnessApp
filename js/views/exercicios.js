@@ -312,10 +312,17 @@ window.Vistas = window.Vistas || {};
         Comp.stat(rec.sessoes, rec.sessoes === 1 ? 'sessão' : 'sessões');
     }
 
+    const corpo = Store.pesoCorporal();
+    const relativa = corpo && rec.rmValor && !rec.semCarga && met !== 'distancia' && met !== 'calorias'
+      ? `<p class="cartao__sub mt2">Isso é <strong>${esc(UI.fmt(rec.rmValor / corpo, 2))}×</strong> o teu peso
+         (${esc(Store.U.fmt(corpo))}).</p>`
+      : '';
+
     return `<section class="seccao">
       <div class="seccao__cab"><h2 class="seccao__tit">Recordes pessoais</h2></div>
       <div class="stats">${caixas}</div>
       <p class="cartao__sub mt3">Melhor registo: ${esc(Store.textoRecorde(rec, ex))}</p>
+      ${relativa}
     </section>`;
   }
 
@@ -390,8 +397,9 @@ window.Vistas = window.Vistas || {};
     if (met === 'distancia') return `${UI.fmt(s.m, 0)} m${s.seg ? ' · ' + UI.mmss(s.seg) : ''}`;
     if (met === 'calorias') return `${UI.fmt(s.cal, 0)} cal${s.seg ? ' · ' + UI.mmss(s.seg) : ''}`;
     if (met === 'tempo') return `${s.reps || 0} s${s.kg ? ' · ' + Store.U.fmt(s.kg) : ''}`;
-    if (!s.kg) return `${s.reps || 0} repetições`;
-    return `${Store.U.fmt(s.kg, true)}×${s.reps}`;
+    const rir = s.rir != null ? ` · RIR ${s.rir}` : '';
+    if (!s.kg) return `${s.reps || 0} repetições${rir}`;
+    return `${Store.U.fmt(s.kg, true)}×${s.reps}${rir}`;
   }
 
   Vistas.exercicios.textoSerie = textoSerie;

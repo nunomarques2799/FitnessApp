@@ -14,8 +14,36 @@ window.Vistas = window.Vistas || {};
       const s = Store.state.settings;
       const split = CATALOGO.SPLITS[s.split] || CATALOGO.SPLITS.ppl;
       const prox = Store.proximoDiaSplit();
+      const peso = Store.pesoCorporal();
+      const pesos = Store.historicoPeso();
+      const varPeso = Store.variacaoPeso(30);
+      const horasFecho = s.fecharAuto || 4;
+      const longos = Store.treinosLongos(horasFecho);
 
       return `
+        <section class="seccao">
+          <div class="seccao__cab"><h2 class="seccao__tit">Perfil</h2></div>
+          <div class="cartao">
+            <label class="campo__l" for="a-peso">Peso corporal (${esc(Store.U.label())})</label>
+            <div class="linha mt2">
+              <input class="entrada crescer" id="a-peso" type="text" inputmode="decimal" autocomplete="off"
+                     value="${peso != null ? esc(Store.U.fmt(peso, true)) : ''}" placeholder="por exemplo, 78"
+                     aria-describedby="a-peso-a">
+              <button type="button" class="btn btn--primario" data-guardar-peso>Guardar</button>
+            </div>
+            <p class="campo__ajuda" id="a-peso-a">${peso != null
+              ? `Última pesagem ${esc(Store.D.relativo(Store.state.perfil.pesoEm))}, a ${esc(Store.D.curto(Store.state.perfil.pesoEm))}.${
+                  varPeso === null ? '' : ` Nos últimos 30 dias: ${varPeso > 0 ? '+' : ''}${esc(UI.fmt(Store.U.mostrar(varPeso)))} ${esc(Store.U.label())}.`}`
+              : 'Fica só neste telemóvel, como tudo o resto. Serve para veres a evolução no Progresso e para comparares a tua força com o teu peso.'}</p>
+            ${pesos.length > 1 ? `<hr class="divisor">
+              <span class="campo__l">Últimas pesagens</span>
+              <div class="linha mt2" style="flex-wrap:wrap;gap:6px">
+                ${pesos.slice(-6).reverse().map(x => `<span class="chip num">${esc(Store.D.curto(x.data))} · ${esc(Store.U.fmt(x.kg))}</span>`).join('')}
+              </div>
+              <p class="campo__ajuda">Guarda um valor por dia. O gráfico completo está em Progresso.</p>` : ''}
+          </div>
+        </section>
+
         <section class="seccao">
           <div class="seccao__cab"><h2 class="seccao__tit">Objectivo</h2></div>
           <div class="pilha">
@@ -138,6 +166,39 @@ window.Vistas = window.Vistas || {};
         </section>
 
         <section class="seccao">
+          <div class="seccao__cab"><h2 class="seccao__tit">Durante o treino</h2></div>
+          <div class="cartao mb3">
+            ${troca('rir', 'Registar RIR', 'Coluna extra em cada série, para as repetições que sobraram', s.rir)}
+            <p class="campo__ajuda">
+              RIR são as <strong>repetições em reserva</strong>: quantas ainda conseguias fazer quando
+              paraste a série. 0 é falha total; 2 é o ponto habitual para ganhar músculo sem te arrasares.
+              Se registares 3 ou mais em todas as séries de um exercício, a app sugere subir a carga na
+              sessão seguinte, sem esperar que chegues ao topo das repetições.
+            </p>
+          </div>
+          <div class="cartao">
+            <label class="campo__l" for="a-fechar">Fechar o treino sozinho</label>
+            <select class="select mt2" id="a-fechar" data-fechar-auto aria-describedby="a-fechar-a">
+              ${[2, 3, 4, 6, 8].map(h => `<option value="${h}" ${s.fecharAuto === h ? 'selected' : ''}>Ao fim de ${h} horas sem registos</option>`).join('')}
+              <option value="0" ${!s.fecharAuto ? 'selected' : ''}>Nunca fechar sozinho</option>
+            </select>
+            <p class="campo__ajuda" id="a-fechar-a">
+              Se te esqueceres de terminar o treino, a app fecha-o e guarda-o com a duração até à
+              <strong>última série que marcaste</strong> — em vez de ficar a contar a noite toda.
+              Um treino sem nenhuma série marcada é descartado.
+            </p>
+            ${longos.length ? `<hr class="divisor">
+              <p class="campo__ajuda" style="margin:0 0 var(--e3)">
+                Tens <strong>${longos.length}</strong> treino${longos.length > 1 ? 's' : ''} no histórico
+                com mais de ${horasFecho} horas. Podes trocar essas durações por uma estimativa feita a
+                partir das séries registadas — a original fica guardada.</p>
+              <button type="button" class="btn btn--secundario btn--bloco" data-corrigir-duracoes>
+                ${icone('relogio', 18)}Corrigir ${longos.length} duraç${longos.length > 1 ? 'ões' : 'ão'}
+              </button>` : ''}
+          </div>
+        </section>
+
+        <section class="seccao">
           <div class="seccao__cab"><h2 class="seccao__tit">Aparência e unidades</h2></div>
           <div class="cartao">
             <div class="campo" style="margin-bottom:var(--e4)">
@@ -171,7 +232,7 @@ window.Vistas = window.Vistas || {};
               <button type="button" class="btn btn--secundario btn--bloco" data-importar>${icone('carregar', 20)}Importar de ficheiro</button>
               <input type="file" accept="application/json,.json" hidden data-ficheiro>
             </div>
-            <p class="cartao__sub mt3 num">${Store.state.treinos.length} treinos · ${Store.state.exerciciosCustom.length} exercícios personalizados</p>
+            <p class="cartao__sub mt3 num">${Store.state.treinos.length} treinos · ${Store.state.exerciciosCustom.length} exercícios personalizados${pesos.length ? ` · ${pesos.length} pesagens` : ''}</p>
           </div>
         </section>
 
@@ -198,6 +259,53 @@ window.Vistas = window.Vistas || {};
 
     montar(raiz) {
       const s = Store.state.settings;
+
+      const campoPeso = raiz.querySelector('#a-peso');
+      function guardarPeso() {
+        const v = UI.lerNumero(campoPeso.value);
+        if (v === null) { UI.toast('Escreve o teu peso primeiro', 'erro'); UI.haptic('erro'); return; }
+        const kg = Store.U.paraKg(v);
+        if (!(kg >= 20 && kg <= 400)) { UI.toast('Esse peso não parece certo', 'erro'); UI.haptic('erro'); return; }
+        Store.definirPeso(kg);
+        campoPeso.blur();
+        UI.haptic('sucesso');
+        UI.toast(`Peso registado: ${Store.U.fmt(kg)}`, 'sucesso');
+        App.render();
+      }
+      raiz.querySelector('[data-guardar-peso]').addEventListener('click', guardarPeso);
+      campoPeso.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); guardarPeso(); }
+      });
+
+      raiz.querySelector('[data-fechar-auto]').addEventListener('change', e => {
+        s.fecharAuto = +e.target.value;
+        Store.guardar(true);
+        UI.haptic('leve');
+        UI.toast(s.fecharAuto
+          ? `O treino fecha sozinho ao fim de ${s.fecharAuto} horas paradas`
+          : 'O treino nunca fecha sozinho');
+        if (!App.tratarEsquecido()) App.render();
+      });
+
+      const corrigir = raiz.querySelector('[data-corrigir-duracoes]');
+      if (corrigir) corrigir.addEventListener('click', async () => {
+        const horas = s.fecharAuto || 4;
+        const alvo = Store.treinosLongos(horas);
+        if (!alvo.length) return;
+        const ex = alvo[0];
+        if (!(await UI.confirmar({
+          titulo: `Corrigir ${alvo.length} duraç${alvo.length > 1 ? 'ões' : 'ão'}?`,
+          msg: `Cada treino com mais de ${horas} horas passa a ter a duração estimada a partir das séries `
+            + `registadas. Por exemplo, "${ex.nome}" passa de ${UI.fmtDuracao(ex.duracao)} para `
+            + `${UI.fmtDuracao(Store.estimarDuracao(ex))}. A duração original fica guardada e podes `
+            + 'sempre acertá-la à mão no detalhe de cada treino.',
+          ok: 'Corrigir'
+        }))) return;
+        const n = Store.corrigirDuracoes(horas);
+        UI.haptic('sucesso');
+        UI.toast(n > 1 ? `${n} durações corrigidas` : 'Duração corrigida', 'sucesso');
+        App.render();
+      });
 
       raiz.querySelectorAll('[data-objetivo]').forEach(b => b.addEventListener('click', () => {
         const o = Store.aplicarObjetivo(b.dataset.objetivo);

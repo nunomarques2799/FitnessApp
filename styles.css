@@ -299,6 +299,9 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .chip--aviso    { background: var(--aviso-suave);   color: var(--aviso-txt); }
 .chip--perigo   { background: var(--perigo-suave);  color: var(--perigo-txt); }
 .chip--contorno { background: transparent; border-color: var(--borda-forte); }
+/* chips com frase inteira — dobram de linha em vez de sair do ecrã */
+.chip--multilinha { white-space: normal; text-align: left; align-items: flex-start; }
+.chip--multilinha .ic { flex: none; margin-top: 1px; }
 
 .filtros {
   display: flex; gap: var(--e2); overflow-x: auto; padding: var(--e1) var(--e4) var(--e3);
@@ -400,6 +403,9 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 .serie-cab span:nth-child(2), .serie-cab span:nth-child(3) { text-align: center; }
 .serie { min-height: 52px; }
+/* com RIR entra mais uma coluna estreita antes do botão de concluir */
+.serie-cab--rir, .serie--rir { grid-template-columns: 32px 1fr 1fr 46px 46px; }
+.serie-cab--rir span:nth-child(4) { text-align: center; }
 .serie--feita .campo-num { background: var(--sucesso-suave); border-color: color-mix(in srgb, var(--sucesso) 40%, transparent); }
 .serie__n {
   font-size: var(--t-md); font-weight: 700; color: var(--txt-2);
@@ -421,6 +427,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .campo-num::-webkit-outer-spin-button, .campo-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .campo-num:focus { outline: none; border-color: var(--primaria); background: var(--sup-3); }
 .campo-num::placeholder { color: var(--txt-3); font-weight: 500; }
+.campo-num--rir { font-size: 15px; padding: 0; }
 
 .serie__ok {
   width: 44px; height: 44px; border-radius: var(--r1);

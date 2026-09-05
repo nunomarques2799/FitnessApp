@@ -65,9 +65,11 @@
         avisoSonoro: true,
         vibrar: true,
         timerModo: 'perguntar', // perguntar | sempre | nunca — cronómetro de descanso
+        fecharAuto: 4,          // horas sem registos até a app fechar o treino sozinho (0 = nunca)
+        rir: true,              // registar repetições em reserva em cada série
         equipamento: null       // null = tudo disponível
       },
-      perfil: { peso: null },
+      perfil: { peso: null, pesoEm: null, pesos: [] },
       exerciciosCustom: [],
       nomes: {},                // exId → nome escolhido por ti
       favoritos: [],
@@ -96,6 +98,7 @@
         const omissoes = base.settings;
         state = Object.assign(base, dados);
         state.settings = Object.assign({}, omissoes, dados.settings || {});
+        state.perfil = normalizarPerfil(dados.perfil);
         if (!state.nomes) state.nomes = {};
       }
     } catch (e) {
@@ -139,6 +142,79 @@
       return semUnidade ? s : s + ' ' + U.label();
     }
   };
+
+  /* ---------- perfil ---------- */
+
+  /**
+   * Põe o perfil na forma actual, venha de onde vier: garante a lista de
+   * pesagens, recupera um peso guardado sem dia (dados antigos) e deixa
+   * `peso` e `pesoEm` sempre a apontar para a pesagem mais recente.
+   */
+  function normalizarPerfil(dados) {
+    const p = Object.assign({ peso: null, pesoEm: null, pesos: [] }, dados || {});
+    if (!Array.isArray(p.pesos)) p.pesos = [];
+    if (p.peso != null && !p.pesos.length) p.pesos = [{ data: p.pesoEm || D.hoje(), kg: p.peso }];
+    p.pesos.sort((a, b) => b.data.localeCompare(a.data));
+    p.peso = p.pesos.length ? p.pesos[0].kg : null;
+    p.pesoEm = p.pesos.length ? p.pesos[0].data : null;
+    return p;
+  }
+
+  /** Peso corporal mais recente, em kg (null enquanto não for registado) */
+  function pesoCorporal() {
+    const p = state.perfil || {};
+    return p.peso != null ? p.peso : null;
+  }
+
+  /**
+   * Regista o peso corporal (kg). Guarda um valor por dia — voltar a pesar-te
+   * no mesmo dia corrige o registo em vez de criar outro.
+   */
+  function definirPeso(kg, data) {
+    const p = state.perfil || (state.perfil = { peso: null, pesoEm: null, pesos: [] });
+    if (!Array.isArray(p.pesos)) p.pesos = [];
+    if (kg == null) { p.peso = null; p.pesoEm = null; guardar(true); return null; }
+    const v = Math.round(kg * 10) / 10;
+    const dia = data || D.hoje();
+    const i = p.pesos.findIndex(x => x.data === dia);
+    if (i >= 0) p.pesos[i].kg = v; else p.pesos.push({ data: dia, kg: v });
+    p.pesos.sort((a, b) => b.data.localeCompare(a.data));
+    if (p.pesos.length > 400) p.pesos.length = 400;
+    p.peso = p.pesos[0].kg;
+    p.pesoEm = p.pesos[0].data;
+    guardar(true);
+    return v;
+  }
+
+  /** Apaga o registo de peso de um dia */
+  function apagarPeso(data) {
+    const p = state.perfil || {};
+    if (!Array.isArray(p.pesos)) return;
+    p.pesos = p.pesos.filter(x => x.data !== data);
+    p.peso = p.pesos.length ? p.pesos[0].kg : null;
+    p.pesoEm = p.pesos.length ? p.pesos[0].data : null;
+    guardar(true);
+  }
+
+  /** Histórico de peso, do mais antigo para o mais recente */
+  function historicoPeso(dias) {
+    const lista = ((state.perfil || {}).pesos || []).slice().sort((a, b) => a.data.localeCompare(b.data));
+    if (!dias) return lista;
+    const limite = D.maisDias(D.hoje(), -dias + 1);
+    return lista.filter(x => x.data >= limite);
+  }
+
+  /** Variação de peso nos últimos N dias, em kg (null se não houver com que comparar) */
+  function variacaoPeso(dias) {
+    const lista = historicoPeso();
+    if (lista.length < 2) return null;
+    const limite = D.maisDias(D.hoje(), -(dias || 30) + 1);
+    const antigos = lista.filter(x => x.data < limite);
+    const base = antigos.length ? antigos[antigos.length - 1] : lista[0];
+    const ultimo = lista[lista.length - 1];
+    if (base.data === ultimo.data) return null;
+    return Math.round((ultimo.kg - base.kg) * 10) / 10;
+  }
 
   /* ---------- objectivo ---------- */
   function objetivo() {
@@ -402,6 +478,7 @@
       tipo: 'forca',
       notas: '',
       descansoAuto: descansoInicial(),
+      ultimoRegisto: Date.now(),
       entradas: (exercicioIds || []).map(criarEntrada)
     };
     guardar(true);
@@ -425,6 +502,7 @@
       descansoEstacao: c.descansoEstacao,
       descansoRonda: c.descansoRonda,
       descansoAuto: descansoInicial(),
+      ultimoRegisto: Date.now(),
       notas: '',
       entradas: c.estacoes.map(e => criarEntradaCircuito(e, c.rondas))
     };
@@ -459,15 +537,26 @@
     return { exId, series, notas: '' };
   }
 
-  function terminarTreino() {
+  /**
+   * Fecha o treino a decorrer. A hora de fim só é passada pelo fecho
+   * automático, para o treino esquecido ficar com a duração até à última
+   * série e não com as horas que passaram até alguém reabrir a app.
+   */
+  function terminarTreino(fimMs) {
     const a = state.ativo;
     if (!a) return null;
     a.entradas = a.entradas
       .map(e => ({ ...e, series: e.series.filter(s => s.feita) }))
       .filter(e => e.series.length);
     if (!a.entradas.length) { state.ativo = null; state.timer = null; guardar(true); return null; }
-    a.fim = Date.now();
-    a.duracao = Math.round((a.fim - a.inicio) / 1000);
+    const auto = fimMs != null;
+    a.fim = auto ? fimMs : Date.now();
+    a.duracao = Math.max(0, Math.round((a.fim - a.inicio) / 1000));
+    if (auto) {
+      a.fechadoAuto = true;
+      // treino começado antes de existir marca da última série: estima pelo registo
+      if (a.duracao < 60) { a.duracao = estimarDuracao(a); a.fim = a.inicio + a.duracao * 1000; }
+    }
     state.treinos.unshift(a);
     state.treinos.sort((x, y) => y.data.localeCompare(x.data) || y.inicio - x.inicio);
     state.ativo = null;
@@ -481,6 +570,78 @@
   function apagarTreino(id) {
     state.treinos = state.treinos.filter(t => t.id !== id);
     guardar(true);
+  }
+
+  /* ---------- duração e fecho automático ---------- */
+
+  /** Marca que houve registo no treino a decorrer (relógio do fecho automático) */
+  function marcarActividade() {
+    if (state.ativo) state.ativo.ultimoRegisto = Date.now();
+  }
+
+  /**
+   * Duração plausível de um treino a partir do que ficou registado:
+   * cada série custa o descanso previsto mais o tempo de execução.
+   * Serve para os treinos que ficaram abertos e para corrigir o histórico.
+   */
+  function estimarDuracao(t) {
+    const series = seriesTreino(t);
+    if (!series) return 0;
+    const descanso = t.tipo === 'circuito'
+      ? (t.descansoEstacao || state.settings.descansoCircuito || 20)
+      : Math.round(((state.settings.descanso || 180) + (state.settings.descansoIsolamento || 120)) / 2);
+    return Math.min(4 * 3600, Math.max(300, series * (descanso + 45)));
+  }
+
+  /** Treinos guardados com duração acima de um limite de horas */
+  function treinosLongos(horas) {
+    const limite = Math.max(1, horas || 4) * 3600;
+    return state.treinos.filter(t => (t.duracao || 0) > limite);
+  }
+
+  /** Troca as durações absurdas por uma estimativa. A original fica guardada. */
+  function corrigirDuracoes(horas) {
+    const alvo = treinosLongos(horas);
+    alvo.forEach(t => {
+      if (t.duracaoOriginal == null) t.duracaoOriginal = t.duracao;
+      t.duracao = estimarDuracao(t);
+      t.duracaoEstimada = true;
+      if (t.inicio) t.fim = t.inicio + t.duracao * 1000;
+    });
+    if (alvo.length) guardar(true);
+    return alvo.length;
+  }
+
+  /** Corrige à mão a duração de um treino guardado (segundos) */
+  function definirDuracao(id, segundos) {
+    const t = state.treinos.find(x => x.id === id);
+    if (!t) return null;
+    if (t.duracaoOriginal == null) t.duracaoOriginal = t.duracao;
+    t.duracao = Math.max(0, Math.round(segundos));
+    t.duracaoEstimada = false;
+    if (t.inicio) t.fim = t.inicio + t.duracao * 1000;
+    guardar(true);
+    return t.duracao;
+  }
+
+  /**
+   * Fecha o treino que ficou esquecido: passadas as horas definidas sem
+   * nenhum registo, guarda-o com a duração até à última série marcada.
+   * Se não chegou a haver série nenhuma, descarta-o.
+   * Devolve o que aconteceu, ou null se não havia nada a fazer.
+   */
+  function fecharPorInactividade() {
+    const a = state.ativo;
+    if (!a) return null;
+    const horas = state.settings.fecharAuto;
+    if (!horas) return null;
+    const ultima = a.ultimoRegisto || a.inicio;
+    if (Date.now() - ultima < horas * 3600000) return null;
+    const nome = a.nome;
+    const feitas = a.entradas.reduce((n, e) => n + e.series.filter(s => s.feita).length, 0);
+    if (!feitas) { descartarTreino(); return { nome, descartado: true }; }
+    const t = terminarTreino(ultima);
+    return t ? { nome, treino: t } : { nome, descartado: true };
   }
 
   /* ---------- métricas ---------- */
@@ -698,7 +859,12 @@
     return r.reps ? `${r.reps} repetições` : null;
   }
 
-  /** Progressão sugerida: sobe carga se completou todas as séries no topo do intervalo */
+  /**
+   * Progressão sugerida. Sobe a carga em dois casos:
+   * — completaste todas as séries no topo do intervalo (dupla progressão);
+   * — registaste RIR e sobraram 3 ou mais repetições em todas as séries,
+   *   já dentro do intervalo — a carga está a ficar leve antes do tempo.
+   */
   function sugerirProgressao(exId) {
     const ex = exercicio(exId);
     if (!ex || !comCarga(ex)) return null;
@@ -710,11 +876,16 @@
     const kgBase = Math.max(...uteis.map(s => s.kg || 0));
     if (!kgBase) return null;
     const todasNoTopo = uteis.every(s => (s.reps || 0) >= reps[1] && (s.kg || 0) >= kgBase);
+    const margem = uteis.every(s => s.rir != null) ? Math.min(...uteis.map(s => s.rir)) : null;
+    const folga = margem != null && margem >= 3 && uteis.every(s => (s.reps || 0) >= reps[0]);
+    const subir = todasNoTopo || folga;
     return {
-      subir: todasNoTopo,
-      kg: todasNoTopo ? kgBase + (ex.inc || 2.5) : kgBase,
+      subir,
+      motivo: subir ? (todasNoTopo ? 'topo' : 'folga') : null,
+      margem,
+      kg: subir ? kgBase + (ex.inc || 2.5) : kgBase,
       anterior: kgBase,
-      reps: todasNoTopo ? reps[0] : Math.max(...uteis.map(s => s.reps || 0))
+      reps: subir ? reps[0] : Math.max(...uteis.map(s => s.reps || 0))
     };
   }
 
@@ -945,9 +1116,15 @@
       (dados.exerciciosCustom || []).forEach(e => { if (!cids.has(e.id)) state.exerciciosCustom.push(e); });
       // nomes próprios: o que já está neste telemóvel manda
       state.nomes = Object.assign({}, dados.nomes || {}, state.nomes || {});
+      // peso corporal: junta os dias que faltam, sem mexer nos que já cá estão
+      const meu = normalizarPerfil(state.perfil);
+      const dias = new Set(meu.pesos.map(p => p.data));
+      normalizarPerfil(dados.perfil).pesos.forEach(p => { if (!dias.has(p.data)) meu.pesos.push(p); });
+      state.perfil = normalizarPerfil(meu);
     } else {
       state = Object.assign(estadoInicial(), dados);
       state.settings = Object.assign(estadoInicial().settings, dados.settings || {});
+      state.perfil = normalizarPerfil(dados.perfil);
     }
     invalidarIndice();
     guardar(true);
@@ -965,6 +1142,7 @@
     get state() { return state; },
     D, U, MUSCLES, GRUPOS, SPLITS, OBJETIVOS, CIRCUITOS, METRICAS,
     carregar, guardar, aoMudar,
+    pesoCorporal, definirPeso, apagarPeso, historicoPeso, variacaoPeso,
     objetivo, aplicarObjetivo, usaCircuitos,
     musculosActivos, ignorado, alvoDe, repsDe,
     metricaDe, chaveAlvo, comCarga, serieVazia, serieBase, serieUtil,
@@ -973,6 +1151,7 @@
     exerciciosDoGrupo, contagemPorGrupo, exerciciosUnilaterais, pegasDe,
     comDescanso, definirDescanso,
     comecarTreino, comecarCircuito, criarEntrada, terminarTreino, descartarTreino, apagarTreino,
+    marcarActividade, fecharPorInactividade, estimarDuracao, treinosLongos, corrigirDuracoes, definirDuracao,
     um1RM, volumeTreino, seriesTreino, trabalhoCardio, seriesPorMusculo, estadoMusculos,
     ultimaPerformance, historicoExercicio, recordes, indiceRecordes, textoRecorde, melhorEtiqueta,
     sugerirProgressao, sugerirTreino, sugerirCircuito, circuitosSugeridos, proximoDiaSplit,

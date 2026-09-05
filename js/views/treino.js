@@ -151,7 +151,9 @@ window.Vistas = window.Vistas || {};
         const serie = Store.state.ativo.entradas[i].series[s];
         const v = UI.lerNumero(c.value);
         if (campo === 'kg') serie.kg = v === null ? null : Store.U.paraKg(v);
+        else if (campo === 'rir') serie.rir = v === null ? null : Math.max(0, Math.min(10, Math.round(v)));
         else serie[campo] = v === null ? null : Math.round(v);
+        Store.marcarActividade();
         Store.guardar();
       });
     }
@@ -206,16 +208,34 @@ window.Vistas = window.Vistas || {};
       aria-label="${esc(rotulo(campo))} da série ${si + 1}">`;
   }
 
+  /**
+   * O exercício leva coluna de RIR — repetições que ainda tinhas em reserva?
+   * Só na musculação: em cardio, tempos e circuitos não quer dizer nada.
+   */
+  function comRir(ex) {
+    return !!(Store.state.settings.rir && ex && !ex.cond && !ex.tempo && !circuito() && Store.comCarga(ex));
+  }
+
+  function campoRir(s, i, si, ants) {
+    const ant = ants && ants.rir != null ? String(ants.rir) : '–';
+    return `<input class="campo-num campo-num--rir" data-campo="rir" data-i="${i}" data-s="${si}"
+      type="text" inputmode="numeric" enterkeyhint="done" maxlength="2"
+      value="${s.rir != null ? s.rir : ''}" placeholder="${esc(ant)}"
+      aria-label="Repetições em reserva da série ${si + 1}">`;
+  }
+
   function linhaSerie(ex, s, i, si, ants) {
     const met = Store.metricaDe(ex);
     const aquecimento = s.tipo === 'aquecimento';
-    return `<div class="serie ${s.feita ? 'serie--feita' : ''}">
+    const coluna = comRir(ex);
+    return `<div class="serie ${coluna ? 'serie--rir' : ''} ${s.feita ? 'serie--feita' : ''}">
       <button type="button" class="serie__n" data-menu-serie data-i="${i}" data-s="${si}"
               aria-label="Opções da série ${si + 1}">
         ${aquecimento ? 'A' : si + 1}${s.tipo === 'falha' ? '<small>F</small>' : ''}
       </button>
       ${campoHtml(met.a, s, i, si, ants)}
       ${campoHtml(met.b, s, i, si, ants)}
+      ${coluna ? (aquecimento ? '<span aria-hidden="true"></span>' : campoRir(s, i, si, ants)) : ''}
       <button type="button" class="serie__ok" data-ok data-i="${i}" data-s="${si}"
               aria-pressed="${!!s.feita}" aria-label="${s.feita ? 'Anular' : 'Concluir'} série ${si + 1}">
         ${icone('check', 20)}
@@ -253,11 +273,11 @@ window.Vistas = window.Vistas || {};
         <button type="button" class="btn-icone" data-menu-ex data-i="${i}" aria-label="Opções de ${esc(ex.n)}">${icone('opcoes', 20)}</button>
       </header>
 
-      ${prog && prog.subir ? `<p class="chip chip--sucesso" style="margin:0 var(--e4) var(--e2)">${icone('seta', 13)}Sugestão: sobe para ${Store.U.fmt(prog.kg)}</p>` : ''}
+      ${prog && prog.subir ? `<p class="chip chip--sucesso chip--multilinha" style="margin:0 var(--e4) var(--e2)">${icone('seta', 13)}Sugestão: sobe para ${Store.U.fmt(prog.kg)}${prog.motivo === 'folga' ? ` — sobraram ${prog.margem} repetições` : ''}</p>` : ''}
       ${rec ? `<p class="chip" style="margin:0 var(--e4) var(--e2)">${icone('trofeu', 13)}Recorde ${esc(Store.textoRecorde(rec, ex))}</p>` : ''}
 
-      <div class="serie-cab" aria-hidden="true">
-        <span>Série</span><span>${esc(rotulo(met.a))}</span><span>${esc(rotulo(met.b))}</span><span></span>
+      <div class="serie-cab ${comRir(ex) ? 'serie-cab--rir' : ''}" aria-hidden="true">
+        <span>Série</span><span>${esc(rotulo(met.a))}</span><span>${esc(rotulo(met.b))}</span>${comRir(ex) ? '<span>RIR</span>' : ''}<span></span>
       </div>
       ${entrada.series.map((s, si) => linhaSerie(ex, s, i, si, ult && ult.series[si])).join('')}
       <footer class="exercicio__rodape">
@@ -400,6 +420,7 @@ window.Vistas = window.Vistas || {};
       s.feita = false;
       UI.haptic('leve');
     }
+    Store.marcarActividade();
     Store.guardar();
 
     if (a.tipo === 'circuito' && s.feita && rondaCompleta(a, ronda)) {
@@ -432,6 +453,7 @@ window.Vistas = window.Vistas || {};
     const ex = Store.exercicio(entrada.exId);
     const ult = entrada.series[entrada.series.length - 1];
     entrada.series.push(ult ? { ...Store.serieVazia(ex), ...copiaValores(ex, ult) } : Store.serieBase(ex));
+    Store.marcarActividade();
     Store.guardar();
     UI.haptic('leve');
     redesenhar();
@@ -455,6 +477,7 @@ window.Vistas = window.Vistas || {};
       e.series.push(nova);
     });
     ronda = totalRondas(a) - 1;
+    Store.marcarActividade();
     Store.guardar(true);
     UI.haptic('medio');
     App.render();
@@ -470,12 +493,25 @@ window.Vistas = window.Vistas || {};
   function sheetSerie(i, si) {
     const entrada = Store.state.ativo.entradas[i];
     const s = entrada.series[si];
+    const ex = Store.exercicio(entrada.exId);
     const circuitoAtivo = !!circuito();
+    const comReserva = comRir(ex) && s.tipo !== 'aquecimento';
     const tipos = [['normal', 'Série normal'], ['aquecimento', 'Aquecimento (não conta para o volume)'], ['falha', 'Até à falha']];
 
     const sh = UI.sheet({
       titulo: circuitoAtivo ? `Ronda ${si + 1}` : `Série ${si + 1}`,
       html: `<div class="pilha">
+        ${comReserva ? `<div>
+          <span class="campo__l" id="rir-l">Repetições em reserva (RIR)</span>
+          <div class="filtros mt2" style="flex-wrap:wrap;overflow:visible;padding:0;margin:0" role="group" aria-labelledby="rir-l">
+            ${[0, 1, 2, 3, 4, 5].map(v => `<button type="button" class="filtro" data-rir="${v}"
+              aria-pressed="${s.rir === v}" aria-label="${v} repetições em reserva">${v}</button>`).join('')}
+            <button type="button" class="filtro" data-rir="" aria-pressed="${s.rir == null}">Sem registo</button>
+          </div>
+          <p class="campo__ajuda">Quantas repetições ainda conseguias fazer quando paraste.
+            0 é falha total; 2 é o ponto habitual para ganhar músculo sem te arrasares.</p>
+          <hr class="divisor">
+        </div>` : ''}
         ${circuitoAtivo ? '' : tipos.map(([v, l]) => `<button type="button" class="lista__i" style="border-radius:var(--r2);border:1px solid var(--borda)" data-tipo="${v}">
           <span class="lista__corpo"><span class="lista__t">${esc(l)}</span></span>
           ${s.tipo === v ? `<span class="lista__fim" style="color:var(--primaria-txt)">${icone('check', 20)}</span>` : ''}
@@ -483,6 +519,12 @@ window.Vistas = window.Vistas || {};
         <button type="button" class="btn btn--perigo-fantasma btn--bloco mt3" data-remover>${icone('lixo', 18)}Remover ${circuitoAtivo ? 'esta ronda' : 'série'}</button>
       </div>`
     });
+
+    sh.painel.querySelectorAll('[data-rir]').forEach(b => b.addEventListener('click', () => {
+      s.rir = b.dataset.rir === '' ? null : +b.dataset.rir;
+      Store.marcarActividade();
+      Store.guardar(); UI.fecharSheet(); UI.haptic('leve'); redesenhar();
+    }));
 
     sh.painel.querySelectorAll('[data-tipo]').forEach(b => b.addEventListener('click', () => {
       s.tipo = b.dataset.tipo;
@@ -493,7 +535,6 @@ window.Vistas = window.Vistas || {};
         Store.state.ativo.entradas.forEach(e => { if (e.series.length > 1) e.series.splice(si, 1); });
         ronda = Math.max(0, Math.min(ronda, totalRondas(Store.state.ativo) - 1));
       } else {
-        const ex = Store.exercicio(entrada.exId);
         entrada.series.splice(si, 1);
         if (!entrada.series.length) entrada.series.push(Store.serieBase(ex));
       }
@@ -572,6 +613,7 @@ window.Vistas = window.Vistas || {};
   function adicionarExercicio() {
     Comp.escolherExercicio(id => {
       Store.state.ativo.entradas.push(Store.criarEntrada(id));
+      Store.marcarActividade();
       Store.guardar(true);
       redesenhar();
       UI.haptic('sucesso');

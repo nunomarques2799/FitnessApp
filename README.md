@@ -10,11 +10,11 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 | Ecrã | O que tem |
 |---|---|
 | **Hoje** | Objectivo de treino, sugestão do dia (força ou circuito), cobertura muscular dos últimos 7 dias |
-| **Treino** | Registo de séries e de rondas de circuito, cronómetro de descanso opcional, deteção de recordes |
+| **Treino** | Registo de séries e de rondas de circuito, repetições em reserva, cronómetro de descanso opcional, deteção de recordes |
 | **Histórico** | Calendário do mês com os dias treinados, detalhe de cada sessão, editar/apagar/repetir |
 | **Exercícios** | 191 exercícios organizados por grupo muscular, com filtro da parte do músculo, da pega e instruções de execução |
-| **Progresso** | Volume por semana, condição física dos últimos 30 dias, distribuição muscular, recordes |
-| **Ajustes** | Objectivo, plano de treino, tempos de descanso, cronómetro, kg/lb, tema, exportar/importar cópia de segurança |
+| **Progresso** | Volume por semana, peso corporal, condição física dos últimos 30 dias, distribuição muscular, recordes |
+| **Ajustes** | Peso corporal, objectivo, plano de treino, tempos de descanso, cronómetro, RIR, fecho automático, kg/lb, tema, exportar/importar cópia de segurança |
 
 ### Objectivos
 
@@ -72,6 +72,44 @@ No início de cada treino a app pergunta se queres contar o descanso. Enquanto n
 aparece cronómetro nenhum. Podes ligá-lo ou desligá-lo a meio, nas opções do treino, e em
 **Ajustes → Descanso entre séries** fixas a resposta: *Perguntar*, *Sempre* ou *Nunca*.
 
+### Repetições em reserva (RIR)
+
+Cada série tem uma coluna **RIR**: quantas repetições ainda conseguias fazer quando paraste.
+0 é falha total; 2 é o ponto habitual para ganhar músculo sem te arrasares. Escreves o número
+directamente na linha da série, ou tocas no número da série e escolhes ao toque — aí está também
+a explicação. É opcional: as séries sem RIR continuam a contar como sempre.
+
+Serve para dois efeitos. Fica no histórico, ao lado da carga e das repetições, para saberes
+quão perto do limite treinaste. E entra na progressão: se registares **3 ou mais em todas as
+séries** de um exercício, já dentro do intervalo de repetições, a app sugere subir a carga na
+sessão seguinte sem esperar que chegues ao topo — a carga está a ficar leve antes do tempo.
+
+Podes desligar a coluna em **Ajustes → Durante o treino**. Não aparece em circuitos, nem em
+corridas, remo, pranchas e afins, onde não quer dizer nada.
+
+### O treino fecha-se sozinho
+
+Se te esqueceres de terminar o treino, ele deixa de ficar a contar a noite toda. Ao fim de
+**4 horas sem nenhum registo** (ajustável entre 2 e 8 horas, ou desligável, em
+**Ajustes → Durante o treino**), a app fecha-o e guarda-o com a duração até à **última série que
+marcaste**. Um treino que ficou aberto sem nenhuma série marcada é descartado.
+
+O treino fica assinalado no histórico, para saberes que aquela duração não foi medida até ao fim.
+
+Para os treinos absurdos que já lá estão, **Ajustes → Durante o treino → Corrigir durações**
+troca-os por uma estimativa feita a partir das séries registadas (cada série custa o descanso
+previsto mais o tempo de execução). A duração original fica guardada, e no menu de cada treino
+podes sempre acertar os minutos à mão.
+
+### Peso corporal
+
+**Ajustes → Perfil** guarda o teu peso, um valor por dia. O **Progresso** mostra a evolução em
+gráfico e a diferença dos últimos 30 dias, e a página de cada exercício passa a dizer quanto é
+o teu máximo estimado em relação ao teu peso (`1,4× o teu peso`). Pesa-te sempre à mesma hora,
+de manhã e em jejum, senão o gráfico anda aos saltos por causa da comida e da água.
+
+Como tudo o resto, fica só no telemóvel e vai dentro da cópia de segurança.
+
 ### Figura dos músculos
 
 Todos os exercícios mostram uma figura humana de frente e de costas, com os músculos principais a
@@ -89,6 +127,7 @@ reutilizado com `<use>`, para que centenas de figuras não pesem na página.
 4. Se algum músculo estiver **7 ou mais dias sem estímulo**, mete um exercício desse grupo mesmo que não seja do dia.
 5. Se na última sessão completaste todas as séries no topo do intervalo, **sugere subir a carga**
    e volta ao fundo do intervalo. É dupla progressão: sobes as repetições, depois sobes o peso.
+   Com RIR registado, também sugere subir quando sobraram 3 ou mais repetições em todas as séries.
 
 Os alvos semanais por músculo seguem a referência de 10 a 20 séries para hipertrofia
 (peito 16, dorsais 18, quadríceps 16, bíceps e tríceps 14…). O selector **Volume semanal alvo**
@@ -149,7 +188,7 @@ Fica com ícone próprio, abre em ecrã inteiro sem barra do Safari e funciona s
 Os dados vivem no armazenamento do Safari. Desaparecem se apagares a app do ecrã principal
 ou limpares os dados do site. **Ajustes → Exportar treinos** gera um ficheiro `.json`
 que podes guardar no iCloud Drive; **Importar** repõe tudo (juntar ou substituir) — treinos,
-exercícios teus, definições e os nomes que deste aos exercícios.
+exercícios teus, definições, o peso corporal e os nomes que deste aos exercícios.
 
 Vale a pena exportar uma vez por mês.
 
@@ -167,7 +206,7 @@ js/
   exercises.js          catálogo: 16 músculos, 9 grupos com partes, 191 exercícios, pegas, 6 planos, 7 circuitos
   execucao.js           passos de execução e erro mais comum de cada exercício
   anatomia.js           figura humana em SVG com os músculos trabalhados
-  store.js              dados em localStorage + motor de sugestão e estatísticas
+  store.js              dados em localStorage + perfil, motor de sugestão e estatísticas
   ui.js                 ícones SVG, sheets, toasts, vibração, som
   charts.js             gráficos SVG sem bibliotecas
   components.js         peças de interface reutilizadas

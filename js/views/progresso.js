@@ -18,13 +18,13 @@ window.Vistas = window.Vistas || {};
 
     render() {
       if (!Store.state.treinos.length) {
-        return Comp.vazio({
+        return pesoCorporal() + Comp.vazio({
           icone: 'grafico', titulo: 'Sem dados para mostrar',
           sub: 'Depois do primeiro treino aparecem aqui gráficos de volume, distribuição muscular e recordes.',
           accao: 'Começar a treinar'
         });
       }
-      return resumo() + graficoSemanal() + condicaoFisica() + distribuicao() + topExercicios() + recordesRecentes();
+      return resumo() + graficoSemanal() + pesoCorporal() + condicaoFisica() + distribuicao() + topExercicios() + recordesRecentes();
     },
 
     montar(raiz) {
@@ -32,6 +32,7 @@ window.Vistas = window.Vistas || {};
       if (b) return b.addEventListener('click', () => App.ir('hoje'));
 
       raiz.addEventListener('click', e => {
+        if (e.target.closest('[data-ir-peso]')) return App.ir('ajustes');
         const det = e.target.closest('[data-detalhe]');
         if (det) return Comp.detalhes(det.dataset.detalhe);
         const m = e.target.closest('[data-metrica]');
@@ -112,6 +113,35 @@ window.Vistas = window.Vistas || {};
       <div class="filtros mt3" role="group" aria-label="Período">
         ${[4, 8, 12, 26].map(n => `<button type="button" class="filtro" data-semanas="${n}" aria-pressed="${semanas === n}">${n} semanas</button>`).join('')}
       </div>
+    </section>`;
+  }
+
+  /** Peso corporal: onde está agora e como se moveu */
+  function pesoCorporal() {
+    const hist = Store.historicoPeso();
+    if (!hist.length) return '';
+    const actual = hist[hist.length - 1];
+    const dif = Store.variacaoPeso(30);
+    const pontos = hist.slice(-14).map(x => ({
+      label: Store.D.curto(x.data),
+      valor: Math.round(Store.U.mostrar(x.kg) * 10) / 10,
+      curto: UI.fmt(Store.U.mostrar(x.kg)),
+      aria: `${UI.fmt(Store.U.mostrar(x.kg))} ${Store.U.label()}`
+    }));
+
+    return `<section class="seccao">
+      <div class="seccao__cab"><h2 class="seccao__tit">Peso corporal</h2>
+        <button type="button" class="seccao__accao" data-ir-peso>Registar</button></div>
+      <div class="stats mb3">
+        ${Comp.stat(Store.U.fmt(actual.kg, true), Store.D.relativo(actual.data).toLowerCase(), Store.U.label())}
+        ${Comp.stat(dif === null ? '—' : (dif > 0 ? '+' : '') + UI.fmt(Store.U.mostrar(dif)), '30 dias', dif === null ? '' : Store.U.label())}
+        ${Comp.stat(hist.length, hist.length === 1 ? 'pesagem' : 'pesagens')}
+      </div>
+      ${pontos.length > 1 ? `<div class="cartao">
+        ${Charts.linha(pontos, { aria: `Peso corporal nas últimas ${pontos.length} pesagens` })}
+        <p class="cartao__sub mt3">Últimas ${pontos.length} pesagens. Pesa-te sempre à mesma hora —
+          de manhã, em jejum — senão o gráfico anda aos saltos por causa da comida e da água.</p>
+      </div>` : '<p class="campo__ajuda">Com duas pesagens aparece aqui o gráfico da evolução.</p>'}
     </section>`;
   }
 

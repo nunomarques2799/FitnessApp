@@ -155,7 +155,13 @@ window.Vistas = window.Vistas || {};
       const cardio = Store.trabalhoCardio(t);
       const circuito = t.tipo === 'circuito';
 
+      const duvidosa = t.fechadoAuto || t.duracaoEstimada;
+
       return `${circuito ? `<p class="chip chip--primaria mb3">${icone('chama', 13)}Circuito · ${t.rondas || '—'} rondas previstas</p>` : ''}
+        ${duvidosa ? `<p class="chip chip--aviso chip--multilinha mb3">${icone('relogio', 13)}${t.fechadoAuto
+          ? 'Treino fechado sozinho — duração contada até à última série'
+          : 'Duração estimada a partir das séries'}${t.duracaoOriginal != null
+          ? ` (registava ${esc(UI.fmtDuracao(t.duracaoOriginal))})` : ''}</p>` : ''}
         <section class="stats mb3">
           ${Comp.stat(UI.fmtDuracao(t.duracao).replace(' min', ''), t.duracao && t.duracao >= 3600 ? 'duração' : 'minutos')}
           ${Comp.stat(t.entradas.length, circuito ? 'estações' : 'exercícios')}
@@ -260,6 +266,14 @@ window.Vistas = window.Vistas || {};
           <input class="entrada" id="s-data" type="date" value="${esc(t.data)}">
         </div>
         <div class="campo">
+          <label class="campo__l" for="s-dur">Duração (minutos)</label>
+          <input class="entrada" id="s-dur" type="text" inputmode="numeric" autocomplete="off"
+                 value="${Math.round((t.duracao || 0) / 60)}" aria-describedby="s-dur-a">
+          <p class="campo__ajuda" id="s-dur-a">Pelas séries registadas, este treino deve ter demorado
+            à volta de ${esc(UI.fmtDuracao(Store.estimarDuracao(t)))}.${t.duracaoOriginal != null
+              ? ` O relógio marcou ${esc(UI.fmtDuracao(t.duracaoOriginal))}.` : ''}</p>
+        </div>
+        <div class="campo">
           <label class="campo__l" for="s-notas">Notas</label>
           <textarea class="area" id="s-notas" placeholder="Como correu?">${esc(t.notas || '')}</textarea>
         </div>
@@ -272,6 +286,8 @@ window.Vistas = window.Vistas || {};
       const d = s.painel.querySelector('#s-data').value;
       if (d) t.data = d;
       t.notas = s.painel.querySelector('#s-notas').value;
+      const min = UI.lerNumero(s.painel.querySelector('#s-dur').value);
+      if (min !== null && min >= 0) Store.definirDuracao(t.id, Math.round(min * 60));
       Store.state.treinos.sort((x, y) => y.data.localeCompare(x.data) || (y.inicio || 0) - (x.inicio || 0));
       Store.guardar(true);
       UI.fecharSheet();
