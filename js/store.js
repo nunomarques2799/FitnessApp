@@ -283,6 +283,24 @@
     return Math.floor(Math.max(0, D.desdeHoje(desde)) / 7) + 1;
   }
 
+  /**
+   * Última sessão de um exercício feita já dentro do plano.
+   * Enquanto não houver uma, a carga escrita no plano vale mais do que o
+   * histórico antigo: quem subia a carga de série para série deixou lá um
+   * máximo que só aguentou uma vez, e a progressão leria isso como sendo
+   * a carga de trabalho.
+   */
+  function ultimaNoPlano(exId) {
+    const P = plano();
+    if (!P) return null;
+    for (const t of state.treinos) {
+      if (t.planoId !== P.id) continue;
+      const e = t.entradas.find(x => x.exId === exId);
+      if (e && e.series.filter(serieUtil).length) return { data: t.data, series: e.series, treinoId: t.id };
+    }
+    return null;
+  }
+
   /** Incremento de carga: o do plano se o exercício lá estiver, senão o do catálogo */
   function incrementoDe(ex) {
     if (!ex) return 2.5;
@@ -593,7 +611,9 @@
   function criarEntradaPlano(x) {
     const ex = x.ex;
     const n = Math.max(1, x.series || state.settings.seriesPorExercicio || 3);
-    const ult = ultimaPerformance(ex.id);
+    // na estreia dentro do plano ninguém copia as repetições antigas: elas
+    // vinham de séries em rampa e não dizem respeito a esta carga
+    const ult = x.estreia ? null : ultimaNoPlano(ex.id);
     const antes = ult ? ult.series.filter(s => s.tipo !== 'aquecimento') : [];
     const reps = x.reps || repsDe(ex);
     const chave = chaveAlvo(ex);
@@ -1091,33 +1111,38 @@
     const dia = P.dia(indice);
     const exercicios = [];
 
-    function juntar(ex, base) {
-      const prog = sugerirProgressao(ex.id);
-      exercicios.push(Object.assign({
-        ex, musculo: (ex.p || [])[0],
-        series: state.settings.seriesPorExercicio || 3,
-        reps: repsDe(ex),
-        kg: prog ? prog.kg : null,
-        subir: prog ? prog.subir : false,
-        anterior: prog ? prog.anterior : null
-      }, base || {}, prog ? { kg: prog.kg, subir: prog.subir, anterior: prog.anterior } : {}));
-    }
-
     if (dia.livre) {
       const usados = new Set();
       dia.livre.forEach(m => {
         if (exercicios.length >= 4) return;
         const ex = melhorExercicioPara(m, usados, state.settings.equipamento);
-        if (ex) { usados.add(ex.id); juntar(ex, { musculo: m }); }
+        if (!ex) return;
+        usados.add(ex.id);
+        const prog = sugerirProgressao(ex.id);
+        exercicios.push({
+          ex, musculo: m,
+          series: state.settings.seriesPorExercicio || 3,
+          reps: repsDe(ex),
+          kg: prog ? prog.kg : null,
+          subir: prog ? prog.subir : false,
+          anterior: prog ? prog.anterior : null
+        });
       });
     }
 
     dia.exercicios.forEach(p => {
       const ex = exercicio(p.ex);
       if (!ex) return;
-      juntar(ex, {
-        prescricao: p, series: p.series, reps: p.reps,
-        kg: p.kg != null ? p.kg : null, max: !!p.max, nota: p.nota || null
+      // a progressão só entra depois de o exercício ter sido feito dentro do plano
+      const prog = ultimaNoPlano(p.ex) ? sugerirProgressao(p.ex) : null;
+      exercicios.push({
+        ex, musculo: (ex.p || [])[0], prescricao: p,
+        series: p.series, reps: p.reps,
+        kg: prog ? prog.kg : (p.kg != null ? p.kg : null),
+        subir: prog ? prog.subir : false,
+        anterior: prog ? prog.anterior : null,
+        estreia: !prog,
+        max: !!p.max, nota: p.nota || null
       });
     });
 
@@ -1264,9 +1289,13 @@
     const exercicios = P.exerciciosDoPlano().map(id => {
       const ex = exercicio(id);
       const p = P.prescricao(id);
-      const hist = historicoExercicio(id);
+      // só conta o que foi feito dentro do plano — é isso que se está a seguir
+      const hist = historicoExercicio(id).filter(h => {
+        const t = state.treinos.find(x => x.id === h.treinoId);
+        return t && t.planoId === P.id;
+      });
       const ult = hist[0] || null;
-      const prog = sugerirProgressao(id);
+      const prog = ult ? sugerirProgressao(id) : null;
       const uteis = ult ? ult.series.filter(serieUtil) : [];
       const actual = uteis.length ? Math.max(...uteis.map(s => s.kg || 0)) : null;
       const inc = (p && p.inc) || (ex && ex.inc) || 2.5;
@@ -1502,7 +1531,7 @@
     pesoCorporal, definirPeso, apagarPeso, historicoPeso, variacaoPeso,
     objetivo, aplicarObjetivo, usaCircuitos,
     plano, planoActivo, activarPlano, prescricao, proximoDiaPlano, semanaDoPlano,
-    incrementoDe, sugerirPlano, comecarPlano, estadoPlano, relatorioPlano,
+    incrementoDe, sugerirPlano, comecarPlano, estadoPlano, relatorioPlano, ultimaNoPlano,
     musculosActivos, ignorado, alvoDe, repsDe,
     metricaDe, chaveAlvo, comCarga, serieVazia, serieBase, serieUtil,
     todosExercicios, exercicio, criarExercicio, apagarExercicioCustom, alternarFavorito,

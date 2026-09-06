@@ -20,21 +20,24 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 ## O plano embutido
 
 A app traz um plano concreto lá dentro — [`js/plano.js`](js/plano.js) — e é ele que manda enquanto
-estiver ligado em **Ajustes → Plano de treino embutido**. Cinco dias em roda, sem estarem presos a
-dias da semana:
+estiver ligado em **Ajustes → Plano de treino embutido**. Quatro dias em roda, sem estarem presos a
+dias da semana, 20 séries cada:
 
-| Dia | O que é | Exercícios |
+| Dia | O que é | Séries |
 |---|---|---|
-| **A** | Costas e bíceps | 6 |
-| **B** | Peito, tríceps e deltoide lateral | 5 |
-| **C** | Pernas | a tua sessão, mais o core do plano |
-| **D** | Costas e ombros | 6 |
-| **E** | Peito e braços | 5 |
+| **A** | Costas e bíceps | 20 |
+| **B** | Peito, tríceps e deltoide lateral | 20 |
+| **C** | Pernas e core | 20 |
+| **D** | Ombros e costas | 20 |
 
 Cada exercício traz o número de séries, o intervalo de repetições, a **carga de partida** e o
-incremento daquela máquina. As cargas escritas são o **chão da primeira sessão**: a partir daí quem
-manda é o que registas, com a dupla progressão de sempre. O dia C é livre — a app escolhe os
-exercícios de pernas como faria normalmente e o plano só acrescenta o insecto morto e a prancha no fim.
+incremento daquela máquina. As cargas escritas são o **chão da estreia**: enquanto o exercício não
+for feito dentro do plano, é o número do plano que aparece. A partir da primeira sessão manda o que
+registas, com a dupla progressão de sempre.
+
+Esta separação existe por uma razão concreta: quem sobe a carga de série para série deixa no
+histórico um máximo que só aguentou uma vez. Se a progressão lesse esse número, propunha cargas
+que não se aguentam em quatro séries seguidas.
 
 Ligar o plano adopta também os descansos que ele manda (3 minutos nos compostos, 90 segundos nos
 isolamentos). Desligá-lo devolve a app ao motor de sugestão normal, com a divisão e os músculos em atraso.
@@ -42,12 +45,15 @@ isolamentos). Desligá-lo devolve a app ao motor de sugestão normal, com a divi
 ### Monitorizar ao longo do tempo
 
 O ecrã **Plano** mostra em que semana vais, quantas vezes fizeste cada dia, e — o que interessa —
-a **carga de cada exercício contra o chão do plano**, em degraus ganhos. O volume é medido sobre a
-última rotação completa (as cinco sessões), não sobre sete dias: com uma roda de cinco dias, comparar
-com uma semana de calendário dava números que saltavam sem querer dizer nada.
+a **carga de cada exercício contra o chão do plano**, em degraus ganhos. Só conta o que foi feito
+dentro do plano; treinos anteriores não entram, senão os degraus não querem dizer nada.
 
-Há também o ponto de controlo da semana 4: se a puxada à frente e o supino inclinado com halteres
-não tiverem subido um incremento, o travão é a comida ou o sono, não o plano.
+O volume é medido sobre a última rotação completa (as quatro sessões), não sobre sete dias: com uma
+roda que não está presa a dias da semana, comparar com uma semana de calendário dava números que
+saltavam sem querer dizer nada.
+
+Há também o ponto de controlo da semana 4, sobre os dois exercícios que o plano elegeu como
+referência.
 
 ### Rever o plano ao fim da semana
 
