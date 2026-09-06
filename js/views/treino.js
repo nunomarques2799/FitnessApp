@@ -278,6 +278,7 @@ window.Vistas = window.Vistas || {};
       ${prog && prog.subir ? `<p class="chip chip--sucesso chip--multilinha" style="margin:0 var(--e4) var(--e2)">${icone('seta', 13)}Sugestão: sobe para ${Store.U.fmt(prog.kg)}${prog.motivo === 'folga' ? ` — sobraram ${prog.margem} repetições` : ''}</p>` : ''}
       ${rec ? `<p class="chip" style="margin:0 var(--e4) var(--e2)">${icone('trofeu', 13)}Recorde ${esc(Store.textoRecorde(rec, ex))}</p>` : ''}
       ${chipMaquina(ex, entrada, i)}
+      ${notaDoPlano(ex)}
 
       <div class="serie-cab ${comRir(ex) ? 'serie-cab--rir' : ''}" aria-hidden="true">
         <span>Série</span><span>${esc(rotulo(met.a))}</span><span>${esc(rotulo(met.b))}</span>${comRir(ex) ? '<span>RIR</span>' : ''}<span></span>
@@ -289,6 +290,13 @@ window.Vistas = window.Vistas || {};
         <span class="chip num">${entrada.series.filter(s => s.feita && s.tipo !== 'aquecimento').length}/${entrada.series.filter(s => s.tipo !== 'aquecimento').length} feitas</span>
       </footer>
     </article>`;
+  }
+
+  /** A indicação que o plano deixou escrita para este exercício */
+  function notaDoPlano(ex) {
+    const p = Store.prescricao(ex.id);
+    if (!p || !p.nota) return '';
+    return `<p class="chip chip--multilinha" style="margin:0 var(--e4) var(--e2)">${icone('info', 14)}${esc(p.nota)}</p>`;
   }
 
   /** Chip para dizer em que polia/máquina está a ser feito o exercício */

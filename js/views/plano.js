@@ -57,12 +57,15 @@ window.Vistas = window.Vistas || {};
   function proximoCartao(e) {
     const sug = Store.sugerirPlano();
     if (!sug) return '';
-    const linhas = sug.exercicios.map(x => `<li class="entre" style="padding:var(--e2) 0;border-bottom:1px solid var(--borda)">
-      <span class="crescer truncar" style="font-weight:600;font-size:var(--t-md)">${esc(x.ex.n)}</span>
-      <span class="num" style="font-size:var(--t-sm);color:var(--txt-2);white-space:nowrap">
-        ${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}${x.max ? ' · máximo' : x.kg ? ' · ' + Store.U.fmt(x.kg) : ''}
-        ${x.subir ? `<span class="chip chip--sucesso" style="margin-left:4px">${icone('seta', 11)}subir</span>` : ''}
+    const linhas = sug.exercicios.map(x => `<li style="padding:var(--e2) 0;border-bottom:1px solid var(--borda)">
+      <span class="entre">
+        <span class="crescer truncar" style="font-weight:600;font-size:var(--t-md)">${esc(x.ex.n)}</span>
+        <span class="num" style="font-size:var(--t-sm);color:var(--txt-2);white-space:nowrap">
+          ${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}${x.max ? ' · máximo' : x.kg ? ' · ' + Store.U.fmt(x.kg) : ''}
+          ${x.subir ? `<span class="chip chip--sucesso" style="margin-left:4px">${icone('seta', 11)}subir</span>` : ''}
+        </span>
       </span>
+      ${x.nota ? `<span class="cartao__sub" style="display:block;margin-top:2px">${esc(x.nota)}</span>` : ''}
     </li>`).join('');
 
     return `<section class="cartao cartao--destaque mb3">

@@ -22,7 +22,7 @@
   const PLANO = {
     id: 'nuno-2026-09',
     nome: 'Plano do Nuno',
-    versao: 3,
+    versao: 4,
     criadoEm: '2026-09-05',
     revisto: '2026-09-06',
     origem: 'Construído a partir dos 23 treinos registados entre 31 de Julho e 6 de Setembro de 2026',
@@ -30,7 +30,11 @@
     rotacao: 'Quatro dias em roda, sem estarem presos a dias da semana',
     descanso: { composto: 180, isolamento: 90 },
     rir: [1, 2],                // deixar 1 a 2 em reserva; última série de cada exercício 0 a 1
-    notasDaRevisao: 'Versão 3. A extensão de tríceps acima da cabeça saiu — magoava o ombro — e '
+    notasDaRevisao: 'Versão 4. As cargas das barras passam a contar o peso da própria barra: '
+      + 'agachamento de 60 para 75 kg (barra olímpica de 20) e tríceps à testa de 20 para 25 '
+      + '(barra W de 10). Os registos antigos ficam como estavam, em discos — só contam para o '
+      + 'plano depois de o exercício ser feito lá dentro, por isso não se misturam. '
+      + 'Versão 3: a extensão de tríceps acima da cabeça saiu — magoava o ombro — e '
       + 'entrou o tríceps à testa com barra W, que trabalha a mesma cabeça longa do tríceps sem pôr '
       + 'o braço acima da cabeça. A extensão na polia pode ser feita com barra em V. '
       + 'Versão 2: o histórico mostrou 20 séries de peito por semana contra 10 de '
@@ -46,7 +50,8 @@
       'As cargas escritas são o chão, não o tecto. Vieram dos teus registos. Se uma série sair fácil, acrescenta repetições — não pares no número impresso.',
       'Dupla progressão: chega ao topo do intervalo em todas as séries, sobe um incremento e recomeça no fundo do intervalo.',
       'Deixa 1 a 2 repetições em reserva em todas as séries, menos na última de cada exercício, onde podes ir a 0 ou 1.',
-      'Nas polias, usa sempre a mesma máquina para o mesmo exercício e escreve nas notas qual foi. Duas polias com relações diferentes fazem os números saltar para o dobro, e a app fica sem saber se subiste ou desceste.',
+      'Nas polias, usa sempre a mesma máquina para o mesmo exercício e escolhe-a no chip do exercício. Duas polias com relações diferentes fazem os números saltar para o dobro, e a app fica sem saber se subiste ou desceste.',
+      'Nas barras, conta o peso da barra: a olímpica tem 20 kg e a barra W tem 10. Não muda nada para a progressão, mas sem isso o máximo estimado e a comparação com o teu peso ficam errados por 20 kg. As cargas escritas aqui já levam a barra dentro.',
       'Não trocar de exercícios durante 8 semanas. Registar todas as séries. Descanso de 2 a 3 minutos nos compostos, 90 segundos nos isolamentos.',
       'Para ganhar músculo a 72 kg, come acima da manutenção e dorme. Se o peso não subir umas 2 a 3 centenas de gramas por semana, não é o treino que está a travar.',
       'Dor na articulação — ombro, cotovelo, joelho — não é para aguentar. Troca-se o exercício por outro que faça o mesmo trabalho sem doer, e o plano continua. Se a dor ficar fora do treino, vai a alguém que te possa ver.'
@@ -102,7 +107,7 @@
           { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
           { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
           { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 7, nota: 'Barra em V ou barra direita, à tua escolha — mas escolhe uma e mantém-na, e escreve nas notas qual das polias usaste' },
-          { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 20, inc: 2.5, nota: 'Substitui a extensão acima da cabeça, que te magoava o ombro. Trabalha a mesma parte do tríceps sem levar o braço acima da cabeça. A carga é um palpite — acerta-a na primeira sessão para 10 a 12 repetições com 2 em reserva' }
+          { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 25, inc: 2.5, nota: 'Substitui a extensão acima da cabeça, que te magoava o ombro: trabalha a mesma parte do tríceps sem levar o braço acima da cabeça. Barra W de 10 kg incluída — 25 kg são a barra mais 7,5 de cada lado. A carga é um palpite: acerta-a na primeira sessão para 10 a 12 repetições com 2 em reserva' }
         ]
       },
       {
@@ -110,7 +115,7 @@
         nome: 'Pernas e core',
         aquecimento: 'Prensa de pernas 79 × 15.',
         exercicios: [
-          { ex: 'agachamento-barra', series: 3, reps: [6, 10], kg: 60, inc: 5 },
+          { ex: 'agachamento-barra', series: 3, reps: [6, 10], kg: 75, inc: 5, nota: 'Barra de 20 kg incluída — 75 kg são a barra mais 27,5 de cada lado' },
           { ex: 'prensa-pernas', series: 3, reps: [10, 12], kg: 127, inc: 7 },
           { ex: 'flexao-pernas-sentado', series: 4, reps: [10, 12], kg: 66, inc: 7 },
           { ex: 'extensao-pernas', series: 3, reps: [12, 15], kg: 66, inc: 7 },
