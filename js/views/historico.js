@@ -237,6 +237,7 @@ window.Vistas = window.Vistas || {};
         <div class="crescer">
           <h2 class="exercicio__n">${esc(nome)}</h2>
           <p class="exercicio__meta num">${esc(resumo)}</p>
+          ${entrada.maq ? `<p class="exercicio__meta">${icone('ajustes', 12)} ${esc(entrada.maq)}</p>` : ''}
         </div>
         ${ex ? `<button type="button" class="btn-icone" data-ex="${ex.id}" aria-label="Ver histórico de ${esc(nome)}">${icone('grafico', 20)}</button>` : ''}
       </header>

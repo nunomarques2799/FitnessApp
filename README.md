@@ -121,6 +121,17 @@ No início de cada treino a app pergunta se queres contar o descanso. Enquanto n
 aparece cronómetro nenhum. Podes ligá-lo ou desligá-lo a meio, nas opções do treino, e em
 **Ajustes → Descanso entre séries** fixas a resposta: *Perguntar*, *Sempre* ou *Nunca*.
 
+### Duas polias, dois históricos
+
+Um ginásio com duas polias de relações diferentes dá leituras que chegam a ser o dobro para o mesmo
+esforço, e a progressão fica sem saber se subiste ou se mudaste de máquina. Em
+**Ajustes → Durante o treino → Máquinas e polias** dás nomes às máquinas; durante o treino, os
+exercícios de polia e de máquina levam um chip para dizeres qual estás a usar.
+
+Escolher a máquina faz duas coisas: enche já as séries por fazer com a carga que usaste **nessa**
+máquina da última vez, e passa a comparar o histórico só dentro dela. A máquina fica no registo, no
+detalhe da sessão e no relatório da semana.
+
 ### Repetições em reserva (RIR)
 
 Cada série tem uma coluna **RIR**: quantas repetições ainda conseguias fazer quando paraste.

@@ -66,6 +66,7 @@
         vibrar: true,
         timerModo: 'perguntar', // perguntar | sempre | nunca — cronómetro de descanso
         plano: 'nuno-2026-09',  // plano embutido a seguir (null = a app sugere sozinha)
+        maquinas: ['Polia 1', 'Polia 2'],  // polias/máquinas do ginásio que dão números diferentes
         fecharAuto: 4,          // horas sem registos até a app fechar o treino sozinho (0 = nunca)
         rir: true,              // registar repetições em reserva em cada série
         equipamento: null       // null = tudo disponível
@@ -290,13 +291,15 @@
    * máximo que só aguentou uma vez, e a progressão leria isso como sendo
    * a carga de trabalho.
    */
-  function ultimaNoPlano(exId) {
+  function ultimaNoPlano(exId, maq) {
     const P = plano();
     if (!P) return null;
     for (const t of state.treinos) {
       if (t.planoId !== P.id) continue;
       const e = t.entradas.find(x => x.exId === exId);
-      if (e && e.series.filter(serieUtil).length) return { data: t.data, series: e.series, treinoId: t.id };
+      if (!e || !e.series.filter(serieUtil).length) continue;
+      if (maq && (e.maq || null) !== maq) continue;
+      return { data: t.data, series: e.series, treinoId: t.id, maq: e.maq || null };
     }
     return null;
   }
@@ -365,6 +368,17 @@
     if (m === 'distancia') return 'm';
     if (m === 'calorias') return 'cal';
     return 'reps';       // peso, tempo (segundos) e reps
+  }
+
+  /**
+   * O exercício faz-se numa máquina que pode variar de números?
+   * Duas polias com relações diferentes dão leituras que chegam a ser o
+   * dobro para o mesmo esforço, por isso convém dizer qual foi.
+   */
+  function usaMaquina(ex) {
+    if (!ex) return false;
+    const e = ex.e;
+    return (e === 'cabos' || e === 'maquina' || e === 'corda') && (state.settings.maquinas || []).length > 0;
   }
 
   /** O exercício mede-se em carga? (conta para volume e recordes de peso) */
@@ -716,6 +730,31 @@
 
   /* ---------- duração e fecho automático ---------- */
 
+  /**
+   * Escolhe a máquina de um exercício do treino a decorrer. As séries que
+   * ainda não estão feitas passam a levar a carga do histórico dessa
+   * máquina — é para isso que serve dizer qual é.
+   * Devolve a carga que ficou, ou null se não havia histórico dessa máquina.
+   */
+  function definirMaquina(i, maq) {
+    const a = state.ativo;
+    if (!a || !a.entradas[i]) return null;
+    const entrada = a.entradas[i];
+    entrada.maq = maq || null;
+    let kg = null;
+    const ex = exercicio(entrada.exId);
+    if (maq && ex && comCarga(ex)) {
+      const prog = sugerirProgressao(entrada.exId, maq);
+      if (prog && prog.kg) {
+        kg = prog.kg;
+        entrada.series.forEach(s => { if (!s.feita) s.kg = kg; });
+      }
+    }
+    marcarActividade();
+    guardar(true);
+    return kg;
+  }
+
   /** Marca que houve registo no treino a decorrer (relógio do fecho automático) */
   function marcarActividade() {
     if (state.ativo) state.ativo.ultimoRegisto = Date.now();
@@ -885,12 +924,18 @@
     });
   }
 
-  /** Última sessão registada de um exercício */
-  function ultimaPerformance(exId, excluirId) {
+  /**
+   * Última sessão registada de um exercício.
+   * Com `maq`, só conta as sessões feitas nessa máquina — comparar a polia
+   * dura com a leve faria a progressão saltar sem razão nenhuma.
+   */
+  function ultimaPerformance(exId, excluirId, maq) {
     for (const t of state.treinos) {
       if (excluirId && t.id === excluirId) continue;
       const e = t.entradas.find(x => x.exId === exId);
-      if (e && e.series.length) return { data: t.data, series: e.series, treinoId: t.id };
+      if (!e || !e.series.length) continue;
+      if (maq && (e.maq || null) !== maq) continue;
+      return { data: t.data, series: e.series, treinoId: t.id, maq: e.maq || null };
     }
     return null;
   }
@@ -915,7 +960,7 @@
         const rm = um1RM(s.kg, s.reps);
         if (!melhor || rm > melhor.rm) melhor = { rm, kg: s.kg, reps: s.reps };
       });
-      out.push({ data: t.data, treinoId: t.id, series: uteis, volume: vol, melhor, total });
+      out.push({ data: t.data, treinoId: t.id, series: uteis, volume: vol, melhor, total, maq: e.maq || null });
     });
     return out;
   }
@@ -1007,10 +1052,10 @@
    * — registaste RIR e sobraram 3 ou mais repetições em todas as séries,
    *   já dentro do intervalo — a carga está a ficar leve antes do tempo.
    */
-  function sugerirProgressao(exId) {
+  function sugerirProgressao(exId, maq) {
     const ex = exercicio(exId);
     if (!ex || !comCarga(ex)) return null;
-    const ult = ultimaPerformance(exId);
+    const ult = ultimaPerformance(exId, null, maq);
     if (!ult) return null;
     const uteis = ult.series.filter(serieUtil);
     if (!uteis.length) return null;
@@ -1133,8 +1178,10 @@
     dia.exercicios.forEach(p => {
       const ex = exercicio(p.ex);
       if (!ex) return;
-      // a progressão só entra depois de o exercício ter sido feito dentro do plano
-      const prog = ultimaNoPlano(p.ex) ? sugerirProgressao(p.ex) : null;
+      // a progressão só entra depois de o exercício ter sido feito dentro do plano,
+      // e compara com a última vez na mesma máquina
+      const noPlano = ultimaNoPlano(p.ex);
+      const prog = noPlano ? sugerirProgressao(p.ex, noPlano.maq || undefined) : null;
       exercicios.push({
         ex, musculo: (ex.p || [])[0], prescricao: p,
         series: p.series, reps: p.reps,
@@ -1303,6 +1350,7 @@
       return {
         id, ex, prescricao: p, inc, chao,
         nome: ex ? ex.n : id,
+        maq: ult ? ult.maq : null,
         sessoes: hist.length,
         ultima: ult ? ult.data : null,
         actual,
@@ -1414,7 +1462,7 @@
           return `${carga}${v}${s.rir != null ? ` (RIR ${s.rir})` : ''}`;
         });
         const alvo = p ? ` — plano ${p.kg != null ? U.fmt(p.kg) + ', ' : ''}${p.series}×${p.reps[0]}-${p.reps[1]}` : '';
-        L.push(`- ${ex ? ex.n : e.exId}: ${partes.join(', ')}${alvo}`);
+        L.push(`- ${ex ? ex.n : e.exId}${e.maq ? ` [${e.maq}]` : ''}: ${partes.join(', ')}${alvo}`);
         if (e.notas) L.push(`  Nota: ${e.notas}`);
       });
       if (t.notas) L.push(`Notas da sessão: ${t.notas}`);
@@ -1533,7 +1581,7 @@
     plano, planoActivo, activarPlano, prescricao, proximoDiaPlano, semanaDoPlano,
     incrementoDe, sugerirPlano, comecarPlano, estadoPlano, relatorioPlano, ultimaNoPlano,
     musculosActivos, ignorado, alvoDe, repsDe,
-    metricaDe, chaveAlvo, comCarga, serieVazia, serieBase, serieUtil,
+    metricaDe, chaveAlvo, comCarga, usaMaquina, definirMaquina, serieVazia, serieBase, serieUtil,
     todosExercicios, exercicio, criarExercicio, apagarExercicioCustom, alternarFavorito,
     renomearExercicio, nomeProprio,
     exerciciosDoGrupo, contagemPorGrupo, exerciciosUnilaterais, pegasDe,

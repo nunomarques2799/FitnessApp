@@ -130,6 +130,8 @@ window.Vistas = window.Vistas || {};
         if (men) return sheetExercicio(+men.dataset.i);
         const men2 = e.target.closest('[data-menu-serie]');
         if (men2) return sheetSerie(+men2.dataset.i, +men2.dataset.s);
+        const maq = e.target.closest('[data-maquina]');
+        if (maq) return sheetMaquina(+maq.dataset.i);
         const vazioB = e.target.closest('[data-vazio-accao]');
         if (vazioB) return adicionarExercicio();
         const r = e.target.closest('[data-ronda]');
@@ -275,6 +277,7 @@ window.Vistas = window.Vistas || {};
 
       ${prog && prog.subir ? `<p class="chip chip--sucesso chip--multilinha" style="margin:0 var(--e4) var(--e2)">${icone('seta', 13)}Sugestão: sobe para ${Store.U.fmt(prog.kg)}${prog.motivo === 'folga' ? ` — sobraram ${prog.margem} repetições` : ''}</p>` : ''}
       ${rec ? `<p class="chip" style="margin:0 var(--e4) var(--e2)">${icone('trofeu', 13)}Recorde ${esc(Store.textoRecorde(rec, ex))}</p>` : ''}
+      ${chipMaquina(ex, entrada, i)}
 
       <div class="serie-cab ${comRir(ex) ? 'serie-cab--rir' : ''}" aria-hidden="true">
         <span>Série</span><span>${esc(rotulo(met.a))}</span><span>${esc(rotulo(met.b))}</span>${comRir(ex) ? '<span>RIR</span>' : ''}<span></span>
@@ -286,6 +289,16 @@ window.Vistas = window.Vistas || {};
         <span class="chip num">${entrada.series.filter(s => s.feita && s.tipo !== 'aquecimento').length}/${entrada.series.filter(s => s.tipo !== 'aquecimento').length} feitas</span>
       </footer>
     </article>`;
+  }
+
+  /** Chip para dizer em que polia/máquina está a ser feito o exercício */
+  function chipMaquina(ex, entrada, i) {
+    if (!Store.usaMaquina(ex)) return '';
+    const m = entrada.maq;
+    return `<button type="button" class="chip ${m ? 'chip--contorno' : 'chip--aviso'}" style="margin:0 var(--e4) var(--e2)"
+      data-maquina data-i="${i}" aria-label="${m ? 'Máquina: ' + esc(m) + '. Trocar' : 'Escolher a máquina'}">
+      ${icone('ajustes', 13)}${m ? esc(m) : 'Que máquina?'}
+    </button>`;
   }
 
   /* ---------- treino em circuito ---------- */
@@ -490,6 +503,37 @@ window.Vistas = window.Vistas || {};
     UI.toast(`Cronómetro a contar ${a.minutos} minutos`);
   }
 
+  function sheetMaquina(i) {
+    const entrada = Store.state.ativo.entradas[i];
+    const ex = Store.exercicio(entrada.exId);
+    const lista = Store.state.settings.maquinas || [];
+
+    const sh = UI.sheet({
+      titulo: 'Máquina',
+      html: `<p class="texto-corpo mb3">Em que máquina estás a fazer ${esc(ex ? ex.n : 'este exercício')}?
+          A app passa a comparar cada máquina só com o histórico dela, e enche já as séries por fazer
+          com a carga que usaste lá da última vez.</p>
+        <div class="pilha">
+          ${lista.map(m => `<button type="button" class="lista__i" style="border-radius:var(--r2);border:1px solid var(--borda)" data-escolher="${esc(m)}">
+            <span class="lista__corpo"><span class="lista__t">${esc(m)}</span></span>
+            ${entrada.maq === m ? `<span class="lista__fim" style="color:var(--primaria-txt)">${icone('check', 20)}</span>` : ''}
+          </button>`).join('')}
+          <button type="button" class="btn btn--fantasma btn--bloco mt2" data-escolher="">Não registar máquina</button>
+        </div>
+        <p class="campo__ajuda">Os nomes mudam-se em Ajustes → Durante o treino.</p>`
+    });
+
+    sh.painel.querySelectorAll('[data-escolher]').forEach(b => b.addEventListener('click', () => {
+      const escolha = b.dataset.escolher || null;
+      const kg = Store.definirMaquina(i, escolha);
+      UI.fecharSheet();
+      UI.haptic('leve');
+      if (escolha && kg) UI.toast(`${escolha}: cargas postas a ${Store.U.fmt(kg)}`, 'sucesso');
+      else if (escolha) UI.toast(`${escolha} — ainda sem histórico nesta máquina`);
+      redesenhar();
+    }));
+  }
+
   function sheetSerie(i, si) {
     const entrada = Store.state.ativo.entradas[i];
     const s = entrada.series[si];
@@ -556,6 +600,7 @@ window.Vistas = window.Vistas || {};
           <p class="campo__ajuda" id="ex-notas-a">Fica guardado no histórico deste treino.</p>
         </div>
         <div class="pilha">
+          ${Store.usaMaquina(ex) ? `<button type="button" class="btn btn--secundario btn--bloco" data-maq-b>${icone('ajustes', 18)}Máquina${entrada.maq ? ': ' + esc(entrada.maq) : ''}</button>` : ''}
           <button type="button" class="btn btn--secundario btn--bloco" data-como>${icone('info', 18)}Como se faz</button>
           <button type="button" class="btn btn--secundario btn--bloco" data-hist>${icone('grafico', 18)}Ver histórico e recordes</button>
           <button type="button" class="btn btn--secundario btn--bloco" data-renomear>${icone('editar', 18)}Mudar o nome do exercício</button>
@@ -570,6 +615,12 @@ window.Vistas = window.Vistas || {};
 
     const area = sh.painel.querySelector('#ex-notas');
     area.addEventListener('input', () => { entrada.notas = area.value; Store.guardar(); });
+
+    const maqB = sh.painel.querySelector('[data-maq-b]');
+    if (maqB) maqB.addEventListener('click', () => {
+      UI.fecharSheet();
+      setTimeout(() => sheetMaquina(i), 240);
+    });
 
     sh.painel.querySelector('[data-como]').addEventListener('click', () => {
       UI.fecharSheet();

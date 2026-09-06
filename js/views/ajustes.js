@@ -193,6 +193,23 @@ window.Vistas = window.Vistas || {};
               sessão seguinte, sem esperar que chegues ao topo das repetições.
             </p>
           </div>
+          <div class="cartao mb3">
+            <span class="campo__l">Máquinas e polias</span>
+            <p class="campo__ajuda" style="margin:0 0 var(--e3)">
+              Se o ginásio tem duas polias com relações diferentes, dá-lhes nomes aqui. Durante o
+              treino dizes qual usaste, e a app passa a comparar cada uma só com o histórico dela —
+              deixa de parecer que subiste ou desceste só por teres mudado de máquina.
+            </p>
+            <div class="pilha">
+              ${(s.maquinas || []).map((m, i) => `<div class="linha">
+                <input class="entrada crescer" data-maq-nome="${i}" value="${esc(m)}" autocomplete="off"
+                       aria-label="Nome da máquina ${i + 1}">
+                <button type="button" class="btn-icone" data-maq-apagar="${i}" aria-label="Apagar ${esc(m)}">${icone('lixo', 20)}</button>
+              </div>`).join('')}
+            </div>
+            <button type="button" class="btn btn--secundario btn--bloco mt2" data-maq-juntar>${icone('mais', 18)}Juntar máquina</button>
+            ${(s.maquinas || []).length ? '' : '<p class="campo__ajuda">Sem máquinas na lista, a app não pergunta nada durante o treino.</p>'}
+          </div>
           <div class="cartao">
             <label class="campo__l" for="a-fechar">Fechar o treino sozinho</label>
             <select class="select mt2" id="a-fechar" data-fechar-auto aria-describedby="a-fechar-a">
@@ -292,6 +309,31 @@ window.Vistas = window.Vistas || {};
       raiz.querySelector('[data-guardar-peso]').addEventListener('click', guardarPeso);
       campoPeso.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); guardarPeso(); }
+      });
+
+      raiz.querySelectorAll('[data-maq-nome]').forEach(inp => inp.addEventListener('change', () => {
+        const i = +inp.dataset.maqNome;
+        const novo = inp.value.trim();
+        if (!novo) { inp.value = s.maquinas[i]; return; }
+        s.maquinas[i] = novo;
+        Store.guardar(true);
+        UI.toast('Nome guardado', 'sucesso');
+      }));
+
+      raiz.querySelectorAll('[data-maq-apagar]').forEach(b => b.addEventListener('click', () => {
+        s.maquinas.splice(+b.dataset.maqApagar, 1);
+        Store.guardar(true);
+        UI.haptic('medio');
+        App.render();
+      }));
+
+      const juntarMaq = raiz.querySelector('[data-maq-juntar]');
+      if (juntarMaq) juntarMaq.addEventListener('click', () => {
+        if (!s.maquinas) s.maquinas = [];
+        s.maquinas.push('Máquina ' + (s.maquinas.length + 1));
+        Store.guardar(true);
+        UI.haptic('leve');
+        App.render();
       });
 
       raiz.querySelector('[data-fechar-auto]').addEventListener('change', e => {
