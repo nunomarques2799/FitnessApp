@@ -39,7 +39,13 @@
 
     if (rotaActual) scrolls[rotaActual] = global.scrollY;
 
-    const main = document.getElementById('conteudo');
+    // As vistas penduram ouvintes delegados no próprio <main>, e trocar-lhe o
+    // innerHTML não os apaga. Sem isto acumulava-se um ouvinte por cada render:
+    // um toque acabava a disparar o mesmo tratador várias vezes. Trocar o
+    // elemento por um gémeo vazio leva os ouvintes antigos com ele.
+    const antigo = document.getElementById('conteudo');
+    const main = antigo.cloneNode(false);
+    antigo.replaceWith(main);
     const cab = document.getElementById('cabecalho');
 
     document.getElementById('cab-titulo').textContent = vista.titulo ? vista.titulo(arg) : '';

@@ -35,12 +35,11 @@ window.Vistas = window.Vistas || {};
       raiz.addEventListener('click', e => {
         const nav = e.target.closest('[data-mes]');
         if (nav) {
-          mesActual.setMonth(mesActual.getMonth() + (+nav.dataset.mes));
-          mesActual = new Date(mesActual);
+          // dia 1 antes de mudar de mês: senão, estando em dia 31, saltava
+          // por cima dos meses curtos
+          mesActual = new Date(mesActual.getFullYear(), mesActual.getMonth() + (+nav.dataset.mes), 1);
           UI.haptic('leve');
-          const alvo = document.getElementById('conteudo');
-          alvo.innerHTML = Vistas.historico.render();
-          Vistas.historico.montar(alvo);
+          App.render();
           return;
         }
         const dia = e.target.closest('[data-dia]');
