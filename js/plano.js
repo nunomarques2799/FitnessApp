@@ -22,7 +22,7 @@
   const PLANO = {
     id: 'nuno-2026-09',
     nome: 'Plano do Nuno',
-    versao: 2,
+    versao: 3,
     criadoEm: '2026-09-05',
     revisto: '2026-09-06',
     origem: 'Construído a partir dos 23 treinos registados entre 31 de Julho e 6 de Setembro de 2026',
@@ -30,7 +30,10 @@
     rotacao: 'Quatro dias em roda, sem estarem presos a dias da semana',
     descanso: { composto: 180, isolamento: 90 },
     rir: [1, 2],                // deixar 1 a 2 em reserva; última série de cada exercício 0 a 1
-    notasDaRevisao: 'Versão 2. O histórico mostrou 20 séries de peito por semana contra 10 de '
+    notasDaRevisao: 'Versão 3. A extensão de tríceps acima da cabeça saiu — magoava o ombro — e '
+      + 'entrou o tríceps à testa com barra W, que trabalha a mesma cabeça longa do tríceps sem pôr '
+      + 'o braço acima da cabeça. A extensão na polia pode ser feita com barra em V. '
+      + 'Versão 2: o histórico mostrou 20 séries de peito por semana contra 10 de '
       + 'costas — o dobro do que devia ser, e ao contrário do que as fotos pedem. As costas passam '
       + 'de 10 para 17 séries e de uma para duas sessões por semana; o peito desce para 10. '
       + 'Deltoide posterior sobe de 2 para 6, lateral de 6 para 8. As pernas deixam de ser um dia '
@@ -45,7 +48,8 @@
       'Deixa 1 a 2 repetições em reserva em todas as séries, menos na última de cada exercício, onde podes ir a 0 ou 1.',
       'Nas polias, usa sempre a mesma máquina para o mesmo exercício e escreve nas notas qual foi. Duas polias com relações diferentes fazem os números saltar para o dobro, e a app fica sem saber se subiste ou desceste.',
       'Não trocar de exercícios durante 8 semanas. Registar todas as séries. Descanso de 2 a 3 minutos nos compostos, 90 segundos nos isolamentos.',
-      'Para ganhar músculo a 72 kg, come acima da manutenção e dorme. Se o peso não subir umas 2 a 3 centenas de gramas por semana, não é o treino que está a travar.'
+      'Para ganhar músculo a 72 kg, come acima da manutenção e dorme. Se o peso não subir umas 2 a 3 centenas de gramas por semana, não é o treino que está a travar.',
+      'Dor na articulação — ombro, cotovelo, joelho — não é para aguentar. Troca-se o exercício por outro que faça o mesmo trabalho sem doer, e o plano continua. Se a dor ficar fora do treino, vai a alguém que te possa ver.'
     ],
 
     /* Séries por rotação previstas por grupo */
@@ -97,8 +101,8 @@
           { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 45, inc: 7 },
           { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
           { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
-          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 7, nota: 'Escreve nas notas qual das polias usaste' },
-          { ex: 'triceps-acima-cabeca', series: 3, reps: [10, 15], kg: 30, inc: 2 }
+          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 7, nota: 'Barra em V ou barra direita, à tua escolha — mas escolhe uma e mantém-na, e escreve nas notas qual das polias usaste' },
+          { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 20, inc: 2.5, nota: 'Substitui a extensão acima da cabeça, que te magoava o ombro. Trabalha a mesma parte do tríceps sem levar o braço acima da cabeça. A carga é um palpite — acerta-a na primeira sessão para 10 a 12 repetições com 2 em reserva' }
         ]
       },
       {
