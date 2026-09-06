@@ -65,11 +65,13 @@
         avisoSonoro: true,
         vibrar: true,
         timerModo: 'perguntar', // perguntar | sempre | nunca — cronómetro de descanso
+        plano: 'nuno-2026-09',  // plano embutido a seguir (null = a app sugere sozinha)
         fecharAuto: 4,          // horas sem registos até a app fechar o treino sozinho (0 = nunca)
         rir: true,              // registar repetições em reserva em cada série
         equipamento: null       // null = tudo disponível
       },
       perfil: { peso: null, pesoEm: null, pesos: [] },
+      planoDesde: null,         // dia em que o plano começou, para contar as semanas
       exerciciosCustom: [],
       nomes: {},                // exId → nome escolhido por ti
       favoritos: [],
@@ -103,6 +105,13 @@
       }
     } catch (e) {
       console.error('Falha a ler dados locais', e);
+    }
+    // primeira vez com o plano ligado — telemóvel novo ou dados antigos:
+    // marca o dia em que começou e adopta os descansos que ele manda
+    if (state.settings.plano && !state.planoDesde) {
+      state.planoDesde = D.hoje();
+      adoptarDescansoDoPlano();
+      guardar(true);
     }
     return state;
   }
@@ -216,6 +225,71 @@
     return Math.round((ultimo.kg - base.kg) * 10) / 10;
   }
 
+  /* ---------- plano de treino ----------
+     Quando há plano activo, é ele que manda: define os exercícios de
+     cada dia, o intervalo de repetições e o incremento de carga. As
+     cargas escritas no plano são só o chão da primeira sessão — a
+     partir daí quem manda é o histórico.  */
+
+  function plano() {
+    const P = global.PLANO;
+    return P && state.settings.plano === P.id ? P : null;
+  }
+
+  function planoActivo() { return !!plano(); }
+
+  /**
+   * Liga ou desliga o plano. Ao ligar, marca o dia em que começou e
+   * adopta os tempos de descanso que o plano manda.
+   */
+  function activarPlano(liga) {
+    const P = global.PLANO;
+    if (!P) return false;
+    state.settings.plano = liga ? P.id : null;
+    if (liga) {
+      if (!state.planoDesde) state.planoDesde = D.hoje();
+      adoptarDescansoDoPlano();
+    }
+    guardar(true);
+    return liga;
+  }
+
+  function adoptarDescansoDoPlano() {
+    const P = global.PLANO;
+    if (!P || !P.descanso) return;
+    state.settings.descanso = P.descanso.composto;
+    state.settings.descansoIsolamento = P.descanso.isolamento;
+  }
+
+  /** Prescrição de um exercício no plano activo, ou null */
+  function prescricao(exId) {
+    const P = plano();
+    return P ? P.prescricao(exId) : null;
+  }
+
+  /** Próximo dia da roda, a seguir ao último dia do plano que fizeste */
+  function proximoDiaPlano() {
+    const P = plano();
+    if (!P) return null;
+    const ultimo = state.treinos.find(t => t.planoId === P.id && typeof t.planoDia === 'number');
+    const indice = ultimo ? (ultimo.planoDia + 1) % P.total : 0;
+    return { indice, dia: P.dia(indice), ultimo: ultimo || null };
+  }
+
+  /** Semana do plano em que estás (1 na primeira) */
+  function semanaDoPlano() {
+    if (!planoActivo()) return 0;
+    const desde = state.planoDesde || D.hoje();
+    return Math.floor(Math.max(0, D.desdeHoje(desde)) / 7) + 1;
+  }
+
+  /** Incremento de carga: o do plano se o exercício lá estiver, senão o do catálogo */
+  function incrementoDe(ex) {
+    if (!ex) return 2.5;
+    const p = prescricao(ex.id);
+    return (p && p.inc) || ex.inc || 2.5;
+  }
+
   /* ---------- objectivo ---------- */
   function objetivo() {
     return OBJETIVOS[state.settings.objetivo] || OBJETIVOS.musculo;
@@ -289,6 +363,8 @@
   function repsDe(ex) {
     const alvo = state.settings.repsAlvo;
     if (!ex) return alvo || [8, 12];
+    const p = prescricao(ex.id);
+    if (p && p.reps) return p.reps;
     if (ex.cond || !comCarga(ex) || ex.tempo || !alvo) return ex.r;
     if (ex.m === 'reps') return ex.r;
     if (ex.r[0] >= alvo[1]) return ex.r;   // gémeos, abdominais, elevações laterais…
@@ -483,6 +559,52 @@
     };
     guardar(true);
     return state.ativo;
+  }
+
+  /**
+   * Começa o próximo dia do plano. Cada exercício entra com o número de
+   * séries previsto e a mesma carga em todas — subir série a série é o
+   * que o plano manda evitar.
+   */
+  function comecarPlano(indiceEscolhido) {
+    const P = plano();
+    if (!P) return null;
+    const sug = sugerirPlano(indiceEscolhido);
+    if (!sug) return null;
+    state.ativo = {
+      id: 'w' + Date.now(),
+      data: D.hoje(),
+      inicio: Date.now(),
+      nome: sug.nome,
+      tipo: 'forca',
+      planoId: P.id,
+      planoDia: sug.planoDia,
+      planoVersao: P.versao,
+      notas: '',
+      descansoAuto: descansoInicial(),
+      ultimoRegisto: Date.now(),
+      entradas: sug.exercicios.map(criarEntradaPlano)
+    };
+    guardar(true);
+    return state.ativo;
+  }
+
+  /** Entrada de um exercício prescrito: séries do plano, carga única */
+  function criarEntradaPlano(x) {
+    const ex = x.ex;
+    const n = Math.max(1, x.series || state.settings.seriesPorExercicio || 3);
+    const ult = ultimaPerformance(ex.id);
+    const antes = ult ? ult.series.filter(s => s.tipo !== 'aquecimento') : [];
+    const reps = x.reps || repsDe(ex);
+    const chave = chaveAlvo(ex);
+    const series = Array.from({ length: n }, (_, i) => {
+      const s = serieVazia(ex);
+      if (comCarga(ex) && !x.max && x.kg != null) s.kg = x.kg;
+      const ant = antes[i] || antes[antes.length - 1];
+      s[chave] = (x.subir || !ant || ant[chave] == null) ? (x.subir ? reps[0] : reps[1]) : ant[chave];
+      return s;
+    });
+    return { exId: ex.id, series, notas: '', plano: true };
   }
 
   /** Começa um treino em circuito a partir de um modelo do catálogo */
@@ -883,7 +1005,7 @@
       subir,
       motivo: subir ? (todasNoTopo ? 'topo' : 'folga') : null,
       margem,
-      kg: subir ? kgBase + (ex.inc || 2.5) : kgBase,
+      kg: subir ? kgBase + incrementoDe(ex) : kgBase,
       anterior: kgBase,
       reps: subir ? reps[0] : Math.max(...uteis.map(s => s.reps || 0))
     };
@@ -957,11 +1079,70 @@
   }
 
   /**
+   * Sugestão do próximo dia do plano embutido.
+   * Nos dias marcados como livres (as pernas) o plano só acrescenta o
+   * trabalho fixo do fim — os exercícios grandes ficam à escolha da app.
+   */
+  function sugerirPlano(indiceEscolhido) {
+    const P = plano();
+    if (!P) return null;
+    const prox = proximoDiaPlano();
+    const indice = indiceEscolhido != null ? indiceEscolhido : prox.indice;
+    const dia = P.dia(indice);
+    const exercicios = [];
+
+    function juntar(ex, base) {
+      const prog = sugerirProgressao(ex.id);
+      exercicios.push(Object.assign({
+        ex, musculo: (ex.p || [])[0],
+        series: state.settings.seriesPorExercicio || 3,
+        reps: repsDe(ex),
+        kg: prog ? prog.kg : null,
+        subir: prog ? prog.subir : false,
+        anterior: prog ? prog.anterior : null
+      }, base || {}, prog ? { kg: prog.kg, subir: prog.subir, anterior: prog.anterior } : {}));
+    }
+
+    if (dia.livre) {
+      const usados = new Set();
+      dia.livre.forEach(m => {
+        if (exercicios.length >= 4) return;
+        const ex = melhorExercicioPara(m, usados, state.settings.equipamento);
+        if (ex) { usados.add(ex.id); juntar(ex, { musculo: m }); }
+      });
+    }
+
+    dia.exercicios.forEach(p => {
+      const ex = exercicio(p.ex);
+      if (!ex) return;
+      juntar(ex, {
+        prescricao: p, series: p.series, reps: p.reps,
+        kg: p.kg != null ? p.kg : null, max: !!p.max, nota: p.nota || null
+      });
+    });
+
+    return {
+      tipo: 'plano', plano: P, dia, planoDia: indice,
+      nome: `Dia ${dia.k} · ${dia.nome}`,
+      splitNome: P.nome,
+      aquecimento: dia.aquecimento || null,
+      nota: dia.nota || null,
+      livre: !!dia.livre,
+      exercicios, alerta: null
+    };
+  }
+
+  /**
    * Sugestão de treino para hoje.
-   * Combina o plano escolhido com os músculos em défice na última semana.
-   * Se o dia do plano for de circuito, devolve um treino híbrido.
+   * Com plano activo é o plano que manda. Sem ele, combina a divisão
+   * escolhida com os músculos em défice na última semana; se o dia da
+   * divisão for de circuito, devolve um treino híbrido.
    */
   function sugerirTreino() {
+    if (planoActivo()) {
+      const p = sugerirPlano();
+      if (p && p.exercicios.length) return p;
+    }
     const { split, splitKey, indice, dia } = proximoDiaSplit();
 
     if (dia.circuito) {
@@ -1057,6 +1238,182 @@
     };
   }
 
+  /* ---------- monitorização do plano ---------- */
+
+  /**
+   * Como está o plano: em que semana vai, que dias já fizeste, e para
+   * cada exercício a carga de partida, a carga de agora e quantos
+   * degraus subiste desde o início.
+   */
+  function estadoPlano() {
+    const P = plano();
+    if (!P) return null;
+    const sessoes = state.treinos.filter(t => t.planoId === P.id);
+    const limite7 = D.maisDias(D.hoje(), -6);
+
+    const dias = P.dias.map(d => {
+      const feitos = sessoes.filter(t => t.planoDia === d.indice);
+      return {
+        k: d.k, nome: d.nome, indice: d.indice, livre: !!d.livre,
+        total: feitos.length,
+        ultima: feitos.length ? feitos[0].data : null,
+        semana: feitos.filter(t => t.data >= limite7).length
+      };
+    });
+
+    const exercicios = P.exerciciosDoPlano().map(id => {
+      const ex = exercicio(id);
+      const p = P.prescricao(id);
+      const hist = historicoExercicio(id);
+      const ult = hist[0] || null;
+      const prog = sugerirProgressao(id);
+      const uteis = ult ? ult.series.filter(serieUtil) : [];
+      const actual = uteis.length ? Math.max(...uteis.map(s => s.kg || 0)) : null;
+      const inc = (p && p.inc) || (ex && ex.inc) || 2.5;
+      const chao = p && p.kg != null ? p.kg : null;
+      return {
+        id, ex, prescricao: p, inc, chao,
+        nome: ex ? ex.n : id,
+        sessoes: hist.length,
+        ultima: ult ? ult.data : null,
+        actual,
+        degraus: (chao != null && actual) ? Math.round((actual - chao) / inc) : null,
+        subir: prog ? prog.subir : false,
+        proxima: prog ? prog.kg : chao,
+        series: uteis
+      };
+    });
+
+    // Uma volta deste plano são as cinco sessões da roda, não sete dias.
+    // Comparar o previsto com os últimos sete dias dava números enganadores
+    // (cinco sessões numa semana, três na outra), por isso a conta é feita
+    // sobre a última rotação completa.
+    const idsDoPlano = new Set(P.exerciciosDoPlano());
+    const rotacao = sessoes.slice(0, P.total);
+    const grupoDe = id => {
+      const ex = exercicio(id);
+      const m = ex && (ex.p || [])[0];
+      const v = P.volumeAlvo.find(g => g.musculos.includes(m));
+      return v ? v.k : null;
+    };
+    const previsto = {}, feito = {};
+    P.volumeAlvo.forEach(v => { previsto[v.k] = 0; feito[v.k] = 0; });
+    P.dias.forEach(d => d.exercicios.forEach(p => {
+      const k = grupoDe(p.ex);
+      if (k) previsto[k] += p.series;
+    }));
+    let feitasRotacao = 0;
+    rotacao.forEach(t => t.entradas.forEach(e => {
+      if (!idsDoPlano.has(e.exId)) return;
+      const n = e.series.filter(serieUtil).length;
+      feitasRotacao += n;
+      const k = grupoDe(e.exId);
+      if (k) feito[k] += n;
+    }));
+
+    const controlo = P.controlo.exercicios.map(id => {
+      const e = exercicios.find(x => x.id === id);
+      return { id, nome: e ? e.nome : id, degraus: e ? e.degraus : null, subiu: !!(e && e.degraus >= 1) };
+    });
+
+    return {
+      plano: P,
+      semana: semanaDoPlano(),
+      desde: state.planoDesde,
+      proximo: proximoDiaPlano(),
+      sessoes: sessoes.length,
+      sessoesSemana: sessoes.filter(t => t.data >= limite7).length,
+      dias, exercicios,
+      seriesPrevistas: P.seriesPorSemana(),
+      seriesRotacao: feitasRotacao,
+      rotacaoSessoes: rotacao.length,
+      controlo,
+      volume: P.volumeAlvo.map(v => ({
+        k: v.k, nome: v.nome,
+        alvo: previsto[v.k],       // o que o plano prescreve mesmo
+        escrito: v.alvo,           // o número que vem escrito no plano
+        sets: feito[v.k]
+      }))
+    };
+  }
+
+  /**
+   * Relatório de uma semana em texto, para exportar e rever o plano.
+   * `recuar` = quantas semanas para trás (0 = a semana a correr).
+   */
+  function relatorioPlano(recuar) {
+    const P = plano();
+    const est = estadoPlano();
+    if (!P || !est) return '';
+    const base = D.maisDias(D.hoje(), -7 * (recuar || 0));
+    const ini = D.maisDias(base, -((D.parse(base).getDay() + 6) % 7));
+    const fim = D.maisDias(ini, 6);
+    const semana = Math.floor(Math.max(0, D.diasEntre(state.planoDesde || ini, ini)) / 7) + 1;
+    const sessoes = state.treinos.filter(t => t.data >= ini && t.data <= fim)
+      .slice().sort((a, b) => a.data.localeCompare(b.data) || (a.inicio || 0) - (b.inicio || 0));
+
+    const L = [];
+    L.push(`# ${P.nome} v${P.versao} — semana ${semana} (${D.curto(ini)} a ${D.curto(fim)})`);
+    L.push('');
+
+    const peso = pesoCorporal();
+    if (peso != null) {
+      const dif = variacaoPeso(30);
+      L.push(`Peso corporal: ${U.fmt(peso)}${dif === null ? '' : ` (${dif > 0 ? '+' : ''}${UI.fmt(U.mostrar(dif))} ${U.label()} em 30 dias)`}`);
+    }
+
+    const feitos = sessoes.filter(t => t.planoId === P.id).map(t => P.dia(t.planoDia).k);
+    const distintos = [...new Set(feitos)].sort();
+    const faltam = P.dias.map(d => d.k).filter(k => !distintos.includes(k));
+    const repetidos = distintos.filter(k => feitos.filter(x => x === k).length > 1);
+    L.push(`Sessões do plano: ${feitos.length}${feitos.length ? ' — ' + feitos.join(', ') : ''}`);
+    L.push(`Dias cobertos: ${distintos.length} de ${P.total}.${faltam.length ? ` Faltou ${faltam.join(', ')}.` : ''}${repetidos.length ? ` Repetiste ${repetidos.join(', ')}.` : ''}`);
+    const fora = sessoes.filter(t => t.planoId !== P.id);
+    if (fora.length) L.push(`Fora do plano: ${fora.length} treino${fora.length > 1 ? 's' : ''} (${fora.map(t => t.nome).join(', ')}).`);
+    L.push('');
+
+    sessoes.forEach(t => {
+      L.push(`## ${t.nome} — ${D.curto(t.data)} (${UI.fmtDuracao(t.duracao)})`);
+      t.entradas.forEach(e => {
+        const ex = exercicio(e.exId);
+        const p = P.prescricao(e.exId);
+        const uteis = e.series.filter(serieUtil);
+        if (!uteis.length) return;
+        const partes = uteis.map(s => {
+          const carga = s.kg ? U.fmt(s.kg, true) + '×' : '';
+          const v = ex && ex.tempo ? `${s.reps || 0}s` : (s.reps != null ? s.reps : '—');
+          return `${carga}${v}${s.rir != null ? ` (RIR ${s.rir})` : ''}`;
+        });
+        const alvo = p ? ` — plano ${p.kg != null ? U.fmt(p.kg) + ', ' : ''}${p.series}×${p.reps[0]}-${p.reps[1]}` : '';
+        L.push(`- ${ex ? ex.n : e.exId}: ${partes.join(', ')}${alvo}`);
+        if (e.notas) L.push(`  Nota: ${e.notas}`);
+      });
+      if (t.notas) L.push(`Notas da sessão: ${t.notas}`);
+      L.push('');
+    });
+
+    L.push('## Cargas · chão do plano, onde estás e degraus ganhos');
+    est.exercicios.forEach(x => {
+      if (x.chao == null) { L.push(`- ${x.nome}: peso do corpo · ${x.sessoes} ${x.sessoes === 1 ? 'sessão' : 'sessões'}`); return; }
+      L.push(`- ${x.nome}: ${U.fmt(x.chao)} → ${x.actual ? U.fmt(x.actual) : 'sem registo'}`
+        + `${x.degraus != null ? ` (${x.degraus >= 0 ? '+' : ''}${x.degraus} degrau${Math.abs(x.degraus) === 1 ? '' : 's'} de ${U.fmt(x.inc)})` : ''}`
+        + `${x.subir ? ' · a subir para ' + U.fmt(x.proxima) : ''}`);
+    });
+    L.push('');
+
+    L.push(`## Volume da última rotação (${est.rotacaoSessoes} de ${P.total} sessões)`);
+    L.push(est.volume.map(v => `${v.nome} ${v.sets}/${v.alvo}`).join(' · '));
+    L.push('');
+    L.push(`Séries do plano na última rotação: ${est.seriesRotacao} de ${est.seriesPrevistas} previstas.`);
+
+    if (est.semana >= P.controlo.semana) {
+      L.push('');
+      L.push(`## Controlo da semana ${P.controlo.semana}`);
+      est.controlo.forEach(c => L.push(`- ${c.nome}: ${c.degraus == null ? 'sem dados' : `${c.degraus >= 0 ? '+' : ''}${c.degraus} degraus`} — ${c.subiu ? 'subiu' : 'parado'}`));
+    }
+    return L.join('\n');
+  }
+
   /* ---------- estatísticas globais ---------- */
   function diasTreinados(dias) {
     const limite = D.maisDias(D.hoje(), -dias + 1);
@@ -1144,6 +1501,8 @@
     carregar, guardar, aoMudar,
     pesoCorporal, definirPeso, apagarPeso, historicoPeso, variacaoPeso,
     objetivo, aplicarObjetivo, usaCircuitos,
+    plano, planoActivo, activarPlano, prescricao, proximoDiaPlano, semanaDoPlano,
+    incrementoDe, sugerirPlano, comecarPlano, estadoPlano, relatorioPlano,
     musculosActivos, ignorado, alvoDe, repsDe,
     metricaDe, chaveAlvo, comCarga, serieVazia, serieBase, serieUtil,
     todosExercicios, exercicio, criarExercicio, apagarExercicioCustom, alternarFavorito,

@@ -17,6 +17,7 @@ window.Vistas = window.Vistas || {};
       const peso = Store.pesoCorporal();
       const pesos = Store.historicoPeso();
       const varPeso = Store.variacaoPeso(30);
+      const est = Store.estadoPlano();
       const horasFecho = s.fecharAuto || 4;
       const longos = Store.treinosLongos(horasFecho);
 
@@ -41,6 +42,22 @@ window.Vistas = window.Vistas || {};
                 ${pesos.slice(-6).reverse().map(x => `<span class="chip num">${esc(Store.D.curto(x.data))} · ${esc(Store.U.fmt(x.kg))}</span>`).join('')}
               </div>
               <p class="campo__ajuda">Guarda um valor por dia. O gráfico completo está em Progresso.</p>` : ''}
+          </div>
+        </section>
+
+        <section class="seccao">
+          <div class="seccao__cab"><h2 class="seccao__tit">Plano de treino embutido</h2></div>
+          <div class="cartao">
+            ${troca('plano', window.PLANO ? window.PLANO.nome : 'Plano', 'A app propõe os dias do plano em vez de escolher sozinha', !!s.plano)}
+            ${est ? `<hr class="divisor">
+              <div class="linha" style="flex-wrap:wrap;gap:6px">
+                <span class="chip num">Semana ${est.semana} de ${est.plano.semanas}</span>
+                <span class="chip num">${est.sessoes} sessões</span>
+                <span class="chip chip--primaria">A seguir: dia ${esc(est.proximo.dia.k)}</span>
+              </div>
+              <button type="button" class="btn btn--secundario btn--bloco mt3" data-ver-plano>${icone('lista', 18)}Abrir o plano</button>`
+            : `<p class="campo__ajuda">Com o plano desligado, a app volta a montar os treinos a partir da
+                divisão escolhida e dos músculos em atraso.</p>`}
           </div>
         </section>
 
@@ -389,12 +406,21 @@ window.Vistas = window.Vistas || {};
 
       raiz.querySelectorAll('[data-troca]').forEach(b => b.addEventListener('click', () => {
         const k = b.dataset.troca;
+        if (k === 'plano') {
+          const ligado = Store.activarPlano(!s.plano);
+          UI.haptic('medio');
+          UI.toast(ligado ? 'O plano passa a mandar nas sugestões' : 'Plano desligado');
+          return App.render();
+        }
         s[k] = !s[k];
         b.setAttribute('aria-checked', String(s[k]));
         Store.guardar();
         if (k === 'vibrar' && s[k]) UI.haptic('medio');
         if (k === 'avisoSonoro' && s[k]) UI.beep(1);
       }));
+
+      const verPlano = raiz.querySelector('[data-ver-plano]');
+      if (verPlano) verPlano.addEventListener('click', () => App.ir('plano'));
 
       raiz.querySelectorAll('[data-uni]').forEach(b => b.addEventListener('click', () => {
         s.unidade = b.dataset.uni;

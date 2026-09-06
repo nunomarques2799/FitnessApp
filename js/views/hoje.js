@@ -34,13 +34,13 @@ window.Vistas = window.Vistas || {};
         .filter(m => m.estado === 'atraso' || m.estado === 'nunca' || m.estado === 'indirecto')
         .sort((a, b) => (b.dias === null ? 999 : b.dias) - (a.dias === null ? 999 : a.dias))
         .slice(0, 5);
-      const primeiraVez = !s.treinos.length && !s.ativo;
+      const primeiraVez = !s.treinos.length && !s.ativo && !Store.planoActivo();
 
       return [
         primeiraVez ? escolhaObjetivo() : '',
         s.ativo ? cartaoAtivo(s.ativo) : cartaoSugestao(),
         accoesRapidas(),
-        primeiraVez ? '' : cartaoObjetivo(),
+        primeiraVez ? '' : (Store.planoActivo() ? cartaoPlano() : cartaoObjetivo()),
         resumoSemana(),
         cobertura(musculos, atencao),
         ultimosTreinos()
@@ -66,6 +66,11 @@ window.Vistas = window.Vistas || {};
       if (com) com.addEventListener('click', () => {
         const sug = Store.sugerirTreino();
         if (sug.tipo === 'circuito') return comecarCircuito(sug.chave, sug);
+        if (sug.tipo === 'plano') {
+          Store.comecarPlano(sug.planoDia);
+          UI.haptic('sucesso');
+          return App.ir('treino');
+        }
         const t = Store.comecarTreino(sug.nome, sug.exercicios.map(e => e.ex.id));
         t.splitId = sug.splitId; t.splitDia = sug.splitDia;
         Store.guardar(true);
@@ -80,6 +85,7 @@ window.Vistas = window.Vistas || {};
       });
 
       raiz.addEventListener('click', e => {
+        if (e.target.closest('[data-ver-plano]')) return App.ir('plano');
         if (e.target.closest('[data-livre-b]')) return comecarLivre();
         if (e.target.closest('[data-montar]')) return sheetTreino({ nome: '', ids: [], titulo: 'Montar treino' });
         if (e.target.closest('[data-circuito-b]')) return Comp.escolherCircuito(c => comecarCircuito(c));
@@ -208,10 +214,12 @@ window.Vistas = window.Vistas || {};
       </section>`;
     }
 
+    const doPlano = sug.tipo === 'plano';
     const linhas = sug.exercicios.map(x => `<li class="entre" style="padding:var(--e2) 0;border-bottom:1px solid var(--borda)">
       <span class="crescer truncar" style="font-weight:600;font-size:var(--t-md)">${esc(x.ex.n)}</span>
       <span class="num" style="font-size:var(--t-sm);color:var(--txt-2);white-space:nowrap">
-        ${x.series}×${x.reps[0]}-${x.reps[1]}${x.ex.tempo ? ' seg' : ''}${x.kg ? ' · ' + Store.U.fmt(x.kg) : ''}
+        ${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}${
+          x.max ? ' · máximo' : x.kg ? ' · ' + Store.U.fmt(x.kg) : ''}
         ${x.subir ? `<span class="chip chip--sucesso" style="margin-left:4px">${icone('seta', 11)}subir</span>` : ''}
       </span>
     </li>`).join('');
@@ -219,20 +227,47 @@ window.Vistas = window.Vistas || {};
     return `<section class="cartao cartao--destaque mb3">
       <div class="cartao__cab">
         <div class="crescer">
-          <span class="chip chip--primaria">${icone('raio', 13)}Sugestão de hoje</span>
-          <h2 class="cartao__tit mt2">${esc(sug.nome)}</h2>
+          <span class="chip chip--primaria">${icone('raio', 13)}${doPlano ? 'Dia ' + esc(sug.dia.k) + ' do plano' : 'Sugestão de hoje'}</span>
+          <h2 class="cartao__tit mt2">${esc(doPlano ? sug.dia.nome : sug.nome)}</h2>
           <p class="cartao__sub">${esc(sug.splitNome)} · ${sug.exercicios.length} exercícios</p>
         </div>
       </div>
-      ${sug.alerta ? `<p class="chip chip--aviso mb3" style="white-space:normal;text-align:left;line-height:1.4">${icone('aviso', 14)}${esc(sug.alerta)}</p>` : ''}
+      ${doPlano && sug.aquecimento ? `<p class="chip chip--multilinha mb3">${icone('chama', 14)}${esc(sug.aquecimento)}</p>` : ''}
+      ${doPlano && sug.nota ? `<p class="chip chip--multilinha mb3">${icone('info', 14)}${esc(sug.nota)}</p>` : ''}
+      ${sug.alerta ? `<p class="chip chip--aviso chip--multilinha mb3">${icone('aviso', 14)}${esc(sug.alerta)}</p>` : ''}
       <ul style="margin-bottom:var(--e4)">${linhas}</ul>
       <button type="button" class="btn btn--primario btn--grande btn--bloco" data-comecar>
         ${icone('play', 20)}Começar este treino
       </button>
       <div class="linha mt2" style="gap:var(--e2)">
-        <button type="button" class="btn btn--secundario crescer" data-ajustar>${icone('editar', 18)}Ajustar</button>
+        ${doPlano
+          ? `<button type="button" class="btn btn--secundario crescer" data-ver-plano>${icone('lista', 18)}Ver plano</button>`
+          : `<button type="button" class="btn btn--secundario crescer" data-ajustar>${icone('editar', 18)}Ajustar</button>`}
         <button type="button" class="btn btn--fantasma crescer" data-livre-b>Treino livre</button>
       </div>
+    </section>`;
+  }
+
+  /** Como vai o plano embutido, com atalho para o ecrã do plano */
+  function cartaoPlano() {
+    const e = Store.estadoPlano();
+    if (!e) return '';
+    const comCarga = e.exercicios.filter(x => x.chao != null);
+    const subiram = comCarga.filter(x => x.degraus > 0).length;
+    return `<section class="seccao">
+      <div class="seccao__cab"><h2 class="seccao__tit">Plano</h2>
+        <button type="button" class="seccao__accao" data-ver-plano>Ver plano</button></div>
+      <button type="button" class="cartao cartao--plano" data-ver-plano style="text-align:left;width:100%">
+        <div class="entre">
+          <span class="lista__t">${esc(e.plano.nome)}</span>
+          <span class="chip num">Semana ${e.semana} de ${e.plano.semanas}</span>
+        </div>
+        <p class="cartao__sub mt2">${e.sessoes} ${e.sessoes === 1 ? 'sessão feita' : 'sessões feitas'} ·
+          ${subiram} de ${comCarga.length} cargas já subiram um degrau</p>
+        <div class="linha mt3" style="flex-wrap:wrap;gap:6px">
+          ${e.dias.map(d => `<span class="chip ${d.indice === e.proximo.indice ? 'chip--primaria' : ''} num">${esc(d.k)} · ${d.total}×</span>`).join('')}
+        </div>
+      </button>
     </section>`;
   }
 

@@ -369,7 +369,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   grid-column: 1 / -1; height: 6px; border-radius: 3px;
   background: var(--sup-3); overflow: hidden;
 }
-.musculo__fill { height: 100%; border-radius: 3px; transition: width var(--d-lento) var(--ease-saida); }
+.musculo__fill { display: block; height: 100%; border-radius: 3px; transition: width var(--d-lento) var(--ease-saida); }
 .est-pronto   .musculo__fill { background: var(--sucesso); }
 .est-recuperar .musculo__fill { background: var(--info); }
 .est-atraso   .musculo__fill { background: var(--aviso); }
@@ -626,6 +626,15 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 /* ---------- 18. Diversos ---------- */
 .texto-corpo { font-size: var(--t-base); color: var(--txt-2); line-height: 1.6; }
 .divisor { height: 1px; background: var(--borda); margin: var(--e4) 0; border: 0; }
+
+/* relatório da semana, em texto corrido para copiar */
+.relatorio {
+  white-space: pre-wrap; word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--t-sm); line-height: 1.5; color: var(--txt-2);
+  background: var(--sup-2); border: 1px solid var(--borda); border-radius: var(--r2);
+  padding: var(--e3); margin: 0 0 var(--e3); max-height: 46vh; overflow: auto;
+}
 .pilha { display: grid; gap: var(--e3); }
 .linha { display: flex; align-items: center; gap: var(--e2); }
 .linha--fim { justify-content: flex-end; }

@@ -9,12 +9,55 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 
 | Ecrã | O que tem |
 |---|---|
-| **Hoje** | Objectivo de treino, sugestão do dia (força ou circuito), cobertura muscular dos últimos 7 dias |
+| **Hoje** | O dia do plano que vem a seguir, cobertura muscular dos últimos 7 dias |
+| **Plano** | O plano embutido: roda dos cinco dias, cargas contra o chão do plano, volume, relatório da semana |
 | **Treino** | Registo de séries e de rondas de circuito, repetições em reserva, cronómetro de descanso opcional, deteção de recordes |
 | **Histórico** | Calendário do mês com os dias treinados, detalhe de cada sessão, editar/apagar/repetir |
 | **Exercícios** | 191 exercícios organizados por grupo muscular, com filtro da parte do músculo, da pega e instruções de execução |
 | **Progresso** | Volume por semana, peso corporal, condição física dos últimos 30 dias, distribuição muscular, recordes |
-| **Ajustes** | Peso corporal, objectivo, plano de treino, tempos de descanso, cronómetro, RIR, fecho automático, kg/lb, tema, exportar/importar cópia de segurança |
+| **Ajustes** | Peso corporal, plano embutido, objectivo, divisão de treino, tempos de descanso, cronómetro, RIR, fecho automático, kg/lb, tema, exportar/importar cópia de segurança |
+
+## O plano embutido
+
+A app traz um plano concreto lá dentro — [`js/plano.js`](js/plano.js) — e é ele que manda enquanto
+estiver ligado em **Ajustes → Plano de treino embutido**. Cinco dias em roda, sem estarem presos a
+dias da semana:
+
+| Dia | O que é | Exercícios |
+|---|---|---|
+| **A** | Costas e bíceps | 6 |
+| **B** | Peito, tríceps e deltoide lateral | 5 |
+| **C** | Pernas | a tua sessão, mais o core do plano |
+| **D** | Costas e ombros | 6 |
+| **E** | Peito e braços | 5 |
+
+Cada exercício traz o número de séries, o intervalo de repetições, a **carga de partida** e o
+incremento daquela máquina. As cargas escritas são o **chão da primeira sessão**: a partir daí quem
+manda é o que registas, com a dupla progressão de sempre. O dia C é livre — a app escolhe os
+exercícios de pernas como faria normalmente e o plano só acrescenta o insecto morto e a prancha no fim.
+
+Ligar o plano adopta também os descansos que ele manda (3 minutos nos compostos, 90 segundos nos
+isolamentos). Desligá-lo devolve a app ao motor de sugestão normal, com a divisão e os músculos em atraso.
+
+### Monitorizar ao longo do tempo
+
+O ecrã **Plano** mostra em que semana vais, quantas vezes fizeste cada dia, e — o que interessa —
+a **carga de cada exercício contra o chão do plano**, em degraus ganhos. O volume é medido sobre a
+última rotação completa (as cinco sessões), não sobre sete dias: com uma roda de cinco dias, comparar
+com uma semana de calendário dava números que saltavam sem querer dizer nada.
+
+Há também o ponto de controlo da semana 4: se a puxada à frente e o supino inclinado com halteres
+não tiverem subido um incremento, o travão é a comida ou o sono, não o plano.
+
+### Rever o plano ao fim da semana
+
+**Plano → Relatório da semana** gera um texto com tudo o que é preciso para a revisão: as sessões
+com todas as séries (carga × repetições e RIR), as cargas contra o chão do plano, o volume da
+rotação e o peso corporal. Copia-se ou partilha-se como ficheiro `.md`.
+
+Com esse texto na mão, o plano actualiza-se num sítio só — [`js/plano.js`](js/plano.js): cargas,
+séries, intervalos e incrementos. Sobe o `versao`, muda o `revisto` e escreve em `notasDaRevisao`
+o que mudou; a app passa a propor os valores novos na sessão seguinte.
 
 ### Objectivos
 
@@ -118,7 +161,9 @@ reutilizado com `<use>`, para que centenas de figuras não pesem na página.
 
 ### Como decide o que sugerir
 
-1. Olha para o **plano escolhido** e vê qual foi o último dia feito — sugere o seguinte.
+0. Se o **plano embutido** estiver ligado, salta tudo isto: sugere o dia da roda que vem a seguir,
+   com os exercícios e as cargas que o plano prescreve. O resto só vale com o plano desligado.
+1. Olha para a **divisão escolhida** e vê qual foi o último dia feito — sugere o seguinte.
    Se esse dia for de circuito, propõe um circuito adequado ao objectivo.
 2. Conta as **séries por músculo dos últimos 7 dias** (séries em que o músculo é secundário contam metade)
    e compara com um alvo semanal por grupo.
@@ -204,6 +249,7 @@ sw.js                   service worker — faz a app funcionar offline
 icons/                  ícones PNG gerados
 js/
   exercises.js          catálogo: 16 músculos, 9 grupos com partes, 191 exercícios, pegas, 6 planos, 7 circuitos
+  plano.js              o plano embutido — dias, séries, alvos e cargas de partida
   execucao.js           passos de execução e erro mais comum de cada exercício
   anatomia.js           figura humana em SVG com os músculos trabalhados
   store.js              dados em localStorage + perfil, motor de sugestão e estatísticas
@@ -211,7 +257,7 @@ js/
   charts.js             gráficos SVG sem bibliotecas
   components.js         peças de interface reutilizadas
   app.js                router por hash, navegação, cronómetro de descanso
-  views/                um ficheiro por ecrã
+  views/                um ficheiro por ecrã (plano.js é o ecrã de monitorização)
 tools/
   servidor.js           servidor estático local (sem dependências)
   gerar-icones.js       gera os PNG dos ícones
