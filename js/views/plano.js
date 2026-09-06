@@ -45,6 +45,9 @@ window.Vistas = window.Vistas || {};
 
       raiz.addEventListener('click', ev => {
         if (ev.target.closest('[data-relatorio-b]')) return sheetRelatorio();
+        if (ev.target.closest('[data-pdf-b]')) return exportarPdf();
+        const v = ev.target.closest('[data-ver-dia]');
+        if (v) return sheetDia(+v.dataset.verDia);
         const c = ev.target.closest('[data-comecar-dia]');
         if (c) return comecarDia(+c.dataset.comecarDia);
         const x = ev.target.closest('[data-ex]');
@@ -92,7 +95,7 @@ window.Vistas = window.Vistas || {};
       <p class="campo__ajuda" style="margin:0 0 var(--e3)">${esc(e.plano.rotacao)}. Toca num dia para o fazer fora da ordem.</p>
       <div class="lista">${e.dias.map(d => {
         const proximo = d.indice === e.proximo.indice;
-        return `<button type="button" class="lista__i" data-comecar-dia="${d.indice}">
+        return `<button type="button" class="lista__i" data-ver-dia="${d.indice}">
           <span class="estacao__n num" aria-hidden="true">${esc(d.k)}</span>
           <div class="lista__corpo">
             <div class="lista__t">${esc(d.nome)}${d.livre ? ' <span class="chip">livre</span>' : ''}</div>
@@ -102,7 +105,7 @@ window.Vistas = window.Vistas || {};
               ${proximo ? `<span class="chip chip--primaria">${icone('raio', 12)}a seguir</span>` : ''}
             </div>
           </div>
-          <span class="lista__fim">${icone('play', 20)}</span>
+          <span class="lista__fim">${icone('direita', 20)}</span>
         </button>`;
       }).join('')}</div>
     </section>`;
@@ -136,9 +139,14 @@ window.Vistas = window.Vistas || {};
         </button>`;
       }).join('')}</div>
       ${semCarga.length ? `<p class="campo__ajuda">Sem carga escrita: ${esc(semCarga.map(x => x.nome).join(', '))}.</p>` : ''}
-      <button type="button" class="btn btn--secundario btn--bloco mt3" data-relatorio-b>
-        ${icone('descarregar', 18)}Relatório da semana
-      </button>
+      <div class="pilha mt3">
+        <button type="button" class="btn btn--secundario btn--bloco" data-pdf-b>
+          ${icone('nota', 18)}Plano em PDF
+        </button>
+        <button type="button" class="btn btn--secundario btn--bloco" data-relatorio-b>
+          ${icone('descarregar', 18)}Relatório da semana
+        </button>
+      </div>
     </section>`;
   }
 
@@ -205,6 +213,34 @@ window.Vistas = window.Vistas || {};
     </section>`;
   }
 
+  /** Mostra um dia por inteiro. Começar é uma decisão à parte, no fim. */
+  function sheetDia(indice) {
+    const sug = Store.sugerirPlano(indice);
+    if (!sug) return;
+    const sh = UI.sheet({
+      titulo: `Dia ${sug.dia.k} · ${sug.dia.nome}`,
+      alto: true,
+      html: `${sug.aquecimento ? `<p class="chip chip--multilinha mb3">${icone('chama', 14)}${esc(sug.aquecimento)}</p>` : ''}
+        ${sug.nota ? `<p class="chip chip--multilinha mb3">${icone('info', 14)}${esc(sug.nota)}</p>` : ''}
+        <div class="lista">${sug.exercicios.map(x => `<div class="lista__i">
+          <div class="lista__corpo">
+            <div class="lista__t">${esc(x.ex.n)}</div>
+            <div class="lista__s">
+              <span class="chip num">${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}</span>
+              ${x.max ? '<span class="chip">máximo</span>' : x.kg ? `<span class="chip num">${Store.U.fmt(x.kg)}</span>` : ''}
+              ${x.subir ? `<span class="chip chip--sucesso">${icone('seta', 12)}subir</span>` : ''}
+            </div>
+            ${x.nota ? `<div class="lista__s"><span>${esc(x.nota)}</span></div>` : ''}
+          </div>
+        </div>`).join('')}</div>`,
+      rodape: `<button type="button" class="btn btn--primario btn--bloco" data-comecar-agora>${icone('play', 18)}Começar o dia ${esc(sug.dia.k)}</button>`
+    });
+    sh.painel.querySelector('[data-comecar-agora]').addEventListener('click', () => {
+      UI.fecharSheet();
+      setTimeout(() => comecarDia(indice), 240);
+    });
+  }
+
   /* ---------- acções ---------- */
   async function comecarDia(indice) {
     if (Store.state.ativo && !(await UI.confirmar({
@@ -216,6 +252,67 @@ window.Vistas = window.Vistas || {};
     if (!t) { UI.toast('Não foi possível montar este dia', 'erro'); return; }
     UI.haptic('sucesso');
     App.ir('treino');
+  }
+
+  /**
+   * O plano em PDF: só os dias, os exercícios e as séries por repetições.
+   * Serve para levar no bolso ou imprimir — sem histórico nenhum.
+   */
+  async function exportarPdf() {
+    const P = Store.plano();
+    if (!P) return;
+    const doc = PDF.documento({ titulo: P.nome });
+    const dir = doc.direita;
+
+    doc.texto(P.nome, { tam: 20, negrito: true });
+    doc.texto(`Versão ${P.versao} · revisto a ${D.curto(P.revisto)} · ${P.rotacao.toLowerCase()}`,
+      { tam: 9, cinza: 0.45 });
+    doc.risco({ antes: 6, depois: 14 });
+
+    P.dias.forEach(dia => {
+      doc.cabe(90);
+      doc.texto(`DIA ${dia.k} · ${dia.nome.toUpperCase()}`, { tam: 12, negrito: true });
+      doc.espaco(2);
+      if (dia.aquecimento) doc.texto('Aquecimento: ' + dia.aquecimento, { tam: 8.5, cinza: 0.4 });
+      if (dia.nota) doc.texto(dia.nota, { tam: 8.5, cinza: 0.4 });
+      doc.espaco(6);
+
+      dia.exercicios.forEach(p => {
+        const ex = Store.exercicio(p.ex);
+        const nome = ex ? ex.n : p.ex;
+        const reps = p.reps[0] === p.reps[1] ? String(p.reps[0]) : `${p.reps[0]}-${p.reps[1]}`;
+        const prescricao = `${p.series} × ${reps}${ex && ex.tempo ? ' seg' : ''}`;
+        const carga = p.max ? 'máximo' : (p.kg != null ? Store.U.fmt(p.kg) : '');
+        doc.cabe(30);
+        const yLinha = doc.y;
+        doc.textoEm(prescricao, dir - 150, { tam: 10, negrito: true });
+        if (carga) doc.textoEm(carga, dir - 70, { tam: 10, negrito: true });
+        doc.texto(nome, { tam: 10, max: dir - doc.esquerda - 160 });
+        if (doc.y > yLinha - 14) doc.espaco(14 - (yLinha - doc.y));
+        if (p.nota) doc.texto(p.nota, { tam: 8, cinza: 0.5, max: dir - doc.esquerda - 160, alturaLinha: 10 });
+        doc.espaco(4);
+      });
+      doc.risco({ antes: 6, depois: 14 });
+    });
+
+    doc.cabe(120);
+    doc.texto('COMO PROGREDIR', { tam: 11, negrito: true });
+    doc.espaco(4);
+    P.regras.forEach(r => { doc.texto('·  ' + r, { tam: 8.5, cinza: 0.25, alturaLinha: 11 }); doc.espaco(3); });
+
+    const nome = `plano-${P.id}-v${P.versao}.pdf`;
+    const blob = doc.blob();
+    const ficheiro = new File([blob], nome, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [ficheiro] })) {
+      try { await navigator.share({ files: [ficheiro], title: P.nome }); return; }
+      catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    UI.toast('PDF guardado', 'sucesso');
   }
 
   /** Relatório em texto para exportar e rever o plano ao fim da semana */

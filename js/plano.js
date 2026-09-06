@@ -22,7 +22,7 @@
   const PLANO = {
     id: 'nuno-2026-09',
     nome: 'Plano do Nuno',
-    versao: 4,
+    versao: 5,
     criadoEm: '2026-09-05',
     revisto: '2026-09-06',
     origem: 'Construído a partir dos 23 treinos registados entre 31 de Julho e 6 de Setembro de 2026',
@@ -30,7 +30,11 @@
     rotacao: 'Quatro dias em roda, sem estarem presos a dias da semana',
     descanso: { composto: 180, isolamento: 90 },
     rir: [1, 2],                // deixar 1 a 2 em reserva; última série de cada exercício 0 a 1
-    notasDaRevisao: 'Versão 4. As cargas das barras passam a contar o peso da própria barra: '
+    notasDaRevisao: 'Versão 5. O peito passa a ser treinado duas vezes por rotação em vez de uma: '
+      + 'o press de peito na máquina muda-se do dia B para o dia D, e no lugar dele entram as '
+      + 'aberturas com halteres. Peito sobe de 10 para 13 séries, em duas sessões. Sai o '
+      + 'encolhimento de ombros: o trapézio já leva trabalho a sério nas duas remadas do dia A. '
+      + 'Versão 4: as cargas das barras passam a contar o peso da própria barra: '
       + 'agachamento de 60 para 75 kg (barra olímpica de 20) e tríceps à testa de 20 para 25 '
       + '(barra W de 10). Os registos antigos ficam como estavam, em discos — só contam para o '
       + 'plano depois de o exercício ser feito lá dentro, por isso não se misturam. '
@@ -60,11 +64,11 @@
     /* Séries por rotação previstas por grupo */
     volumeAlvo: [
       { k: 'dorsais', nome: 'Dorsais', musculos: ['dorsais'], alvo: 17 },
-      { k: 'peito', nome: 'Peito', musculos: ['peito'], alvo: 10 },
+      { k: 'peito', nome: 'Peito', musculos: ['peito'], alvo: 13 },
       { k: 'deltoide_lat', nome: 'Deltoide lateral', musculos: ['deltoide_lat'], alvo: 8 },
       { k: 'deltoide_post', nome: 'Deltoide posterior', musculos: ['deltoide_post'], alvo: 6 },
       { k: 'deltoide_ant', nome: 'Deltoide anterior', musculos: ['deltoide_ant'], alvo: 4 },
-      { k: 'trapezio', nome: 'Trapézio', musculos: ['trapezio'], alvo: 3 },
+      { k: 'trapezio', nome: 'Trapézio', musculos: ['trapezio'], alvo: 0 },
       { k: 'biceps', nome: 'Bíceps', musculos: ['biceps'], alvo: 6 },
       { k: 'triceps', nome: 'Tríceps', musculos: ['triceps'], alvo: 6 },
       { k: 'quadriceps', nome: 'Quadríceps', musculos: ['quadriceps'], alvo: 9 },
@@ -91,7 +95,7 @@
           { ex: 'puxada-frontal', series: 4, reps: [6, 10], kg: 52, inc: 7 },
           { ex: 'remada-maquina', series: 4, reps: [8, 12], kg: 52, inc: 7 },
           { ex: 'remada-baixa-polia', series: 3, reps: [10, 12], kg: 52, inc: 7, nota: 'Pega em V, junto ao corpo' },
-          { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 9, inc: 2.5, nota: 'Escreve nas notas qual das polias usaste' },
+          { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 9, inc: 2.5 },
           { ex: 'rosca-inclinada', series: 3, reps: [8, 12], kg: 12, inc: 2 },
           { ex: 'rosca-martelo', series: 3, reps: [10, 14], kg: 12, inc: 2 }
         ]
@@ -103,11 +107,11 @@
         nota: 'A mesma carga nas quatro séries do supino inclinado. Não subas série a série.',
         exercicios: [
           { ex: 'supino-inclinado-halteres', series: 4, reps: [6, 10], kg: 25, inc: 2 },
-          { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 45, inc: 7 },
           { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
+          { ex: 'crucifixo-halteres', series: 3, reps: [10, 15], kg: 18, inc: 2 },
           { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
-          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 7, nota: 'Barra em V ou barra direita, à tua escolha — mas escolhe uma e mantém-na, e escreve nas notas qual das polias usaste' },
-          { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 25, inc: 2.5, nota: 'Substitui a extensão acima da cabeça, que te magoava o ombro: trabalha a mesma parte do tríceps sem levar o braço acima da cabeça. Barra W de 10 kg incluída — 25 kg são a barra mais 7,5 de cada lado. A carga é um palpite: acerta-a na primeira sessão para 10 a 12 repetições com 2 em reserva' }
+          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 7, nota: 'Barra em V ou barra direita: escolhe uma e mantém-na' },
+          { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 25, inc: 2.5, nota: 'Barra W de 10 kg incluída — 25 kg são a barra mais 7,5 de cada lado. Acerta a carga na primeira sessão' }
         ]
       },
       {
@@ -125,14 +129,15 @@
       },
       {
         k: 'D',
-        nome: 'Ombros e costas',
+        nome: 'Ombros, costas e peito',
         aquecimento: 'Elevações laterais 5 × 15 para aquecer o ombro.',
+        nota: 'A segunda dose de peito da semana. Três séries chegam — o trabalho grande foi no dia B.',
         exercicios: [
           { ex: 'press-ombros-halteres', series: 4, reps: [6, 10], kg: 22, inc: 2 },
           { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
           { ex: 'puxada-supinada', series: 3, reps: [8, 12], kg: 52, inc: 7 },
           { ex: 'remada-maquina-uni', series: 3, reps: [10, 12], kg: 32, inc: 7 },
-          { ex: 'encolhimentos-halteres', series: 3, reps: [12, 15], kg: 22, inc: 2 },
+          { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 45, inc: 7 },
           { ex: 'crucifixo-invertido', series: 3, reps: [12, 20], kg: 8, inc: 2 }
         ]
       }

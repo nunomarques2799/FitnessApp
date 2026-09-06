@@ -66,7 +66,7 @@
         vibrar: true,
         timerModo: 'perguntar', // perguntar | sempre | nunca — cronómetro de descanso
         plano: 'nuno-2026-09',  // plano embutido a seguir (null = a app sugere sozinha)
-        maquinas: ['Polia 1', 'Polia 2'],  // polias/máquinas do ginásio que dão números diferentes
+        maquinas: ['Polia leve (levanto mais)', 'Polia dura (levanto menos)'],
         fecharAuto: 4,          // horas sem registos até a app fechar o treino sozinho (0 = nunca)
         rir: true,              // registar repetições em reserva em cada série
         equipamento: null       // null = tudo disponível
@@ -107,6 +107,13 @@
     } catch (e) {
       console.error('Falha a ler dados locais', e);
     }
+    // nomes antigos das polias, ainda por estrear: passam aos que dizem qual é qual
+    const maq = state.settings.maquinas || [];
+    if (maq.length === 2 && maq[0] === 'Polia 1' && maq[1] === 'Polia 2'
+      && !state.treinos.some(t => t.entradas.some(e => e.maq))) {
+      state.settings.maquinas = ['Polia leve (levanto mais)', 'Polia dura (levanto menos)'];
+    }
+
     // primeira vez com o plano ligado — telemóvel novo ou dados antigos:
     // marca o dia em que começou e adopta os descansos que ele manda
     if (state.settings.plano && !state.planoDesde) {
@@ -377,8 +384,10 @@
    */
   function usaMaquina(ex) {
     if (!ex) return false;
+    // só as polias: as máquinas de placas do ginásio são uma só, e a
+    // pergunta em todos os exercícios era ruído
     const e = ex.e;
-    return (e === 'cabos' || e === 'maquina' || e === 'corda') && (state.settings.maquinas || []).length > 0;
+    return (e === 'cabos' || e === 'corda') && (state.settings.maquinas || []).length > 0;
   }
 
   /** O exercício mede-se em carga? (conta para volume e recordes de peso) */

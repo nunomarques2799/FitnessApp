@@ -55,6 +55,17 @@ saltavam sem querer dizer nada.
 Há também o ponto de controlo da semana 4, sobre os dois exercícios que o plano elegeu como
 referência.
 
+### Levar o plano no bolso
+
+**Plano → Plano em PDF** gera uma folha A4 com os quatro dias, os exercícios, as séries por
+repetições e a carga de partida — sem histórico nenhum. Dá para partilhar, guardar no telemóvel ou
+imprimir e levar para o ginásio.
+
+O PDF é escrito à mão em [`js/pdf.js`](js/pdf.js): páginas A4, Helvetica e Helvetica-Bold (duas das
+14 fontes que qualquer leitor traz de origem, por isso não é preciso embutir nada), texto em
+WinAnsi para os acentos, e quebra de linha calculada com a tabela de larguras da fonte. São umas
+duzentas linhas e nenhuma dependência, para continuar a funcionar sem internet.
+
 ### Rever o plano ao fim da semana
 
 **Plano → Relatório da semana** gera um texto com tudo o que é preciso para a revisão: as sessões
@@ -126,7 +137,8 @@ aparece cronómetro nenhum. Podes ligá-lo ou desligá-lo a meio, nas opções d
 Um ginásio com duas polias de relações diferentes dá leituras que chegam a ser o dobro para o mesmo
 esforço, e a progressão fica sem saber se subiste ou se mudaste de máquina. Em
 **Ajustes → Durante o treino → Máquinas e polias** dás nomes às máquinas; durante o treino, os
-exercícios de polia e de máquina levam um chip para dizeres qual estás a usar.
+exercícios de polia levam um chip para dizeres qual estás a usar. Só as polias — as máquinas de
+placas são uma só e a pergunta em todo o lado era ruído.
 
 Escolher a máquina faz duas coisas: enche já as séries por fazer com a carga que usaste **nessa**
 máquina da última vez, e passa a comparar o histórico só dentro dela. A máquina fica no registo, no
