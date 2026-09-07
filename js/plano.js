@@ -22,15 +22,29 @@
   const PLANO = {
     id: 'nuno-2026-09',
     nome: 'Plano do Nuno',
-    versao: 5,
+    versao: 6,
     criadoEm: '2026-09-05',
-    revisto: '2026-09-06',
+    revisto: '2026-09-07',
     origem: 'Construído a partir dos 23 treinos registados entre 31 de Julho e 6 de Setembro de 2026',
     semanas: 8,                 // não mudar exercícios antes disto
     rotacao: 'Quatro dias em roda, sem estarem presos a dias da semana',
     descanso: { composto: 180, isolamento: 90 },
     rir: [1, 2],                // deixar 1 a 2 em reserva; última série de cada exercício 0 a 1
-    notasDaRevisao: 'Versão 5. O peito passa a ser treinado duas vezes por rotação em vez de uma: '
+    notasDaRevisao: 'Versão 6. Primeiro acerto de cargas com o plano já a andar, feito sobre os dias '
+      + 'A e B. No dia A registaste RIR 0 em quase todas as séries — não é isso que o plano pede, e '
+      + 'com quatro séries à falha a última nem sequer conta. Descem: a remada na máquina de 52 para '
+      + '45, a remada baixa de 52 para 45, o crucifixo invertido na polia de 9 para 6,5 e as duas '
+      + 'roscas de 12 para 10 (fizeste-as a 10 e ainda assim chegaste à falha). A puxada à frente '
+      + 'fica nos 52: fizeste 4 × 10 e é a tua carga de sempre — o que muda é o alvo, de 6-10 para '
+      + '8-12, que é onde realmente trabalhas. No dia B só o supino inclinado sobe, de 25 para 27, '
+      + 'porque fechaste as quatro séries no topo do intervalo com 1 a 2 em reserva. As elevações '
+      + 'laterais descem de 10 para 8. As aberturas com halteres saem do plano: eram o mesmo '
+      + 'exercício que o peck deck — mesmo músculo, mesma região do peito, mesmo padrão — e estavam '
+      + 'as duas no dia B. Em vez delas, o press de peito na máquina volta ao dia B, onde faz falta '
+      + 'como segundo press, e o peck deck passa a ser feito nos dois dias. O peito mantém as 13 '
+      + 'séries: 4 de supino inclinado, 3 de press na máquina e 3 de peck deck no dia B, mais 3 de '
+      + 'peck deck no dia D. '
+      + 'Versão 5. O peito passa a ser treinado duas vezes por rotação em vez de uma: '
       + 'o press de peito na máquina muda-se do dia B para o dia D, e no lugar dele entram as '
       + 'aberturas com halteres. Peito sobe de 10 para 13 séries, em duas sessões. Sai o '
       + 'encolhimento de ombros: o trapézio já leva trabalho a sério nas duas remadas do dia A. '
@@ -90,14 +104,14 @@
         k: 'A',
         nome: 'Costas e bíceps',
         aquecimento: 'Puxada à frente 39 × 12 antes de começar.',
-        nota: 'O dia mais importante do plano. Puxa com os cotovelos, não com as mãos.',
+        nota: 'O dia mais importante do plano. Puxa com os cotovelos, não com as mãos. Pára cada série com 1 a 2 repetições ainda no bolso — só a última é que pode ir ao fim.',
         exercicios: [
-          { ex: 'puxada-frontal', series: 4, reps: [6, 10], kg: 52, inc: 7 },
-          { ex: 'remada-maquina', series: 4, reps: [8, 12], kg: 52, inc: 7 },
-          { ex: 'remada-baixa-polia', series: 3, reps: [10, 12], kg: 52, inc: 7, nota: 'Pega em V, junto ao corpo' },
-          { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 9, inc: 2.5 },
-          { ex: 'rosca-inclinada', series: 3, reps: [8, 12], kg: 12, inc: 2 },
-          { ex: 'rosca-martelo', series: 3, reps: [10, 14], kg: 12, inc: 2 }
+          { ex: 'puxada-frontal', series: 4, reps: [8, 12], kg: 52, inc: 7 },
+          { ex: 'remada-maquina', series: 4, reps: [10, 14], kg: 45, inc: 7 },
+          { ex: 'remada-baixa-polia', series: 3, reps: [10, 14], kg: 45, inc: 7, nota: 'Pega em V, junto ao corpo' },
+          { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 6.5, inc: 2.5 },
+          { ex: 'rosca-inclinada', series: 3, reps: [8, 12], kg: 10, inc: 2 },
+          { ex: 'rosca-martelo', series: 3, reps: [8, 12], kg: 10, inc: 2 }
         ]
       },
       {
@@ -106,10 +120,10 @@
         aquecimento: 'Supino inclinado com halteres 20 × 12.',
         nota: 'A mesma carga nas quatro séries do supino inclinado. Não subas série a série.',
         exercicios: [
-          { ex: 'supino-inclinado-halteres', series: 4, reps: [6, 10], kg: 25, inc: 2 },
+          { ex: 'supino-inclinado-halteres', series: 4, reps: [8, 12], kg: 27, inc: 2 },
+          { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 45, inc: 7 },
           { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
-          { ex: 'crucifixo-halteres', series: 3, reps: [10, 15], kg: 18, inc: 2 },
-          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
+          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 8, inc: 2 },
           { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 7, nota: 'Barra em V ou barra direita: escolhe uma e mantém-na' },
           { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 25, inc: 2.5, nota: 'Barra W de 10 kg incluída — 25 kg são a barra mais 7,5 de cada lado. Acerta a carga na primeira sessão' }
         ]
@@ -134,10 +148,10 @@
         nota: 'A segunda dose de peito da semana. Três séries chegam — o trabalho grande foi no dia B.',
         exercicios: [
           { ex: 'press-ombros-halteres', series: 4, reps: [6, 10], kg: 22, inc: 2 },
-          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
+          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 8, inc: 2 },
           { ex: 'puxada-supinada', series: 3, reps: [8, 12], kg: 52, inc: 7 },
           { ex: 'remada-maquina-uni', series: 3, reps: [10, 12], kg: 32, inc: 7 },
-          { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 45, inc: 7 },
+          { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
           { ex: 'crucifixo-invertido', series: 3, reps: [12, 20], kg: 8, inc: 2 }
         ]
       }
