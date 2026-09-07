@@ -66,6 +66,7 @@ window.Vistas = window.Vistas || {};
         <span class="num" style="font-size:var(--t-sm);color:var(--txt-2);white-space:nowrap">
           ${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}${x.max ? ' · máximo' : x.kg ? ' · ' + Store.U.fmt(x.kg) : ''}
           ${x.subir ? `<span class="chip chip--sucesso" style="margin-left:4px">${icone('seta', 11)}subir</span>` : ''}
+          ${x.revisto ? `<span class="chip" style="margin-left:4px">revisto</span>` : ''}
         </span>
       </span>
       ${x.nota ? `<span class="cartao__sub" style="display:block;margin-top:2px">${esc(x.nota)}</span>` : ''}
@@ -229,6 +230,7 @@ window.Vistas = window.Vistas || {};
               <span class="chip num">${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}</span>
               ${x.max ? '<span class="chip">máximo</span>' : x.kg ? `<span class="chip num">${Store.U.fmt(x.kg)}</span>` : ''}
               ${x.subir ? `<span class="chip chip--sucesso">${icone('seta', 12)}subir</span>` : ''}
+              ${x.revisto ? `<span class="chip" title="Carga nova, vinda da revisão do plano">revisto${x.anterior ? ' · antes ' + Store.U.fmt(x.anterior) : ''}</span>` : ''}
             </div>
             ${x.nota ? `<div class="lista__s"><span>${esc(x.nota)}</span></div>` : ''}
           </div>

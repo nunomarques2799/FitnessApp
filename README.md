@@ -74,7 +74,13 @@ rotação e o peso corporal. Copia-se ou partilha-se como ficheiro `.md`.
 
 Com esse texto na mão, o plano actualiza-se num sítio só — [`js/plano.js`](js/plano.js): cargas,
 séries, intervalos e incrementos. Sobe o `versao`, muda o `revisto` e escreve em `notasDaRevisao`
-o que mudou; a app passa a propor os valores novos na sessão seguinte.
+o que mudou.
+
+Subir o `versao` é o que faz a revisão valer: no primeiro treino a seguir, os exercícios cuja
+carga mudou entram com a do plano e aparecem com a marca **revisto**, mesmo que o histórico
+diga outra coisa — é assim que uma carga baixada de propósito chega ao ginásio. Onde o número
+ficou igual, nada muda e a progressão continua a mandar como sempre. A partir da sessão
+seguinte volta tudo ao normal, porque o treino já foi feito dentro da versão nova.
 
 ### Objectivos
 

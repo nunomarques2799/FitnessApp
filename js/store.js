@@ -306,9 +306,15 @@
       const e = t.entradas.find(x => x.exId === exId);
       if (!e || !e.series.filter(serieUtil).length) continue;
       if (maq && (e.maq || null) !== maq) continue;
-      return { data: t.data, series: e.series, treinoId: t.id, maq: e.maq || null };
+      return { data: t.data, series: e.series, treinoId: t.id, maq: e.maq || null, versao: t.planoVersao || 0 };
     }
     return null;
+  }
+
+  /** Carga de trabalho de uma sessão: a mais pesada das séries que contam */
+  function cargaDe(series) {
+    const uteis = (series || []).filter(serieUtil).map(x => x.kg || 0);
+    return uteis.length ? Math.max(...uteis) : null;
   }
 
   /** Incremento de carga: o do plano se o exercício lá estiver, senão o do catálogo */
@@ -1190,14 +1196,22 @@
       // a progressão só entra depois de o exercício ter sido feito dentro do plano,
       // e compara com a última vez na mesma máquina
       const noPlano = ultimaNoPlano(p.ex);
-      const prog = noPlano ? sugerirProgressao(p.ex, noPlano.maq || undefined) : null;
+      // uma revisão do plano manda mais do que o histórico: se a carga escrita
+      // mudou desde a última vez que fizeste o exercício, é a nova que vale — é
+      // para isso que se revê o plano, e sem isto baixar uma carga no plano não
+      // servia de nada. Vale uma sessão; a partir da seguinte a progressão volta
+      // a mandar. Onde o número não mudou, nada disto se mete ao caminho.
+      const antes = noPlano ? cargaDe(noPlano.series) : null;
+      const revisto = !!noPlano && p.kg != null && noPlano.versao < P.versao && p.kg !== antes;
+      const prog = (noPlano && !revisto) ? sugerirProgressao(p.ex, noPlano.maq || undefined) : null;
       exercicios.push({
         ex, musculo: (ex.p || [])[0], prescricao: p,
         series: p.series, reps: p.reps,
         kg: prog ? prog.kg : (p.kg != null ? p.kg : null),
         subir: prog ? prog.subir : false,
-        anterior: prog ? prog.anterior : null,
+        anterior: prog ? prog.anterior : (revisto ? antes : null),
         estreia: !prog,
+        revisto,
         max: !!p.max, nota: p.nota || null
       });
     });
