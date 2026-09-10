@@ -221,7 +221,7 @@ window.Vistas = window.Vistas || {};
         ${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}${
           x.max ? ' · máximo' : x.kg ? ' · ' + Store.U.fmt(x.kg) : ''}
         ${x.subir ? `<span class="chip chip--sucesso" style="margin-left:4px">${icone('seta', 11)}subir</span>` : ''}
-        ${x.revisto ? `<span class="chip" style="margin-left:4px">revisto</span>` : ''}
+        ${x.mudou ? `<span class="chip" style="margin-left:4px">antes ${Store.U.fmt(x.anterior)}</span>` : ''}
       </span>
     </li>`).join('');
 

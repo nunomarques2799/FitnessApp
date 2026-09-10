@@ -640,17 +640,17 @@
   function criarEntradaPlano(x) {
     const ex = x.ex;
     const n = Math.max(1, x.series || state.settings.seriesPorExercicio || 3);
-    // na estreia dentro do plano ninguém copia as repetições antigas: elas
-    // vinham de séries em rampa e não dizem respeito a esta carga
-    const ult = x.estreia ? null : ultimaNoPlano(ex.id);
-    const antes = ult ? ult.series.filter(s => s.tipo !== 'aquecimento') : [];
+    // um dia do plano entra sempre com o que está escrito em js/plano.js: a
+    // mesma carga em todas as séries e o topo do intervalo de repetições, que
+    // é o alvo da dupla progressão. O que ficou registado da última vez não se
+    // copia para aqui — isso fazia a sessão anterior repetir-se sozinha e
+    // escondia o que o plano pede. Os números mudam na revisão semanal.
     const reps = x.reps || repsDe(ex);
     const chave = chaveAlvo(ex);
-    const series = Array.from({ length: n }, (_, i) => {
+    const series = Array.from({ length: n }, () => {
       const s = serieVazia(ex);
       if (comCarga(ex) && !x.max && x.kg != null) s.kg = x.kg;
-      const ant = antes[i] || antes[antes.length - 1];
-      s[chave] = (x.subir || !ant || ant[chave] == null) ? (x.subir ? reps[0] : reps[1]) : ant[chave];
+      s[chave] = reps[1];
       return s;
     });
     return { exId: ex.id, series, notas: '', plano: true };
@@ -749,6 +749,8 @@
    * Escolhe a máquina de um exercício do treino a decorrer. As séries que
    * ainda não estão feitas passam a levar a carga do histórico dessa
    * máquina — é para isso que serve dizer qual é.
+   * Num exercício do plano a carga fica como está: lá o número vem do plano
+   * e não do histórico, e a máquina serve só para saber onde foi feito.
    * Devolve a carga que ficou, ou null se não havia histórico dessa máquina.
    */
   function definirMaquina(i, maq) {
@@ -758,7 +760,7 @@
     entrada.maq = maq || null;
     let kg = null;
     const ex = exercicio(entrada.exId);
-    if (maq && ex && comCarga(ex)) {
+    if (maq && ex && comCarga(ex) && !entrada.plano) {
       const prog = sugerirProgressao(entrada.exId, maq);
       if (prog && prog.kg) {
         kg = prog.kg;
@@ -1193,25 +1195,21 @@
     dia.exercicios.forEach(p => {
       const ex = exercicio(p.ex);
       if (!ex) return;
-      // a progressão só entra depois de o exercício ter sido feito dentro do plano,
-      // e compara com a última vez na mesma máquina
+      // dentro do plano é o plano que manda: a carga proposta é sempre a que
+      // está escrita, nunca a que saiu da última sessão. A progressão decide-se
+      // na revisão da semana, com o relatório à frente, e escreve-se aqui. Sem
+      // isto, uma série levada à falha puxava o número para cima sozinha e uma
+      // carga baixada de propósito nunca chegava ao ginásio.
+      // A última carga feita fica ao lado, só para se ver o que muda.
       const noPlano = ultimaNoPlano(p.ex);
-      // uma revisão do plano manda mais do que o histórico: se a carga escrita
-      // mudou desde a última vez que fizeste o exercício, é a nova que vale — é
-      // para isso que se revê o plano, e sem isto baixar uma carga no plano não
-      // servia de nada. Vale uma sessão; a partir da seguinte a progressão volta
-      // a mandar. Onde o número não mudou, nada disto se mete ao caminho.
       const antes = noPlano ? cargaDe(noPlano.series) : null;
-      const revisto = !!noPlano && p.kg != null && noPlano.versao < P.versao && p.kg !== antes;
-      const prog = (noPlano && !revisto) ? sugerirProgressao(p.ex, noPlano.maq || undefined) : null;
       exercicios.push({
         ex, musculo: (ex.p || [])[0], prescricao: p,
         series: p.series, reps: p.reps,
-        kg: prog ? prog.kg : (p.kg != null ? p.kg : null),
-        subir: prog ? prog.subir : false,
-        anterior: prog ? prog.anterior : (revisto ? antes : null),
-        estreia: !prog,
-        revisto,
+        kg: p.kg != null ? p.kg : null,
+        subir: false,
+        anterior: antes,
+        mudou: antes != null && p.kg != null && p.kg !== antes,
         max: !!p.max, nota: p.nota || null
       });
     });
@@ -1369,9 +1367,12 @@
       const uteis = ult ? ult.series.filter(serieUtil) : [];
       const actual = uteis.length ? Math.max(...uteis.map(s => s.kg || 0)) : null;
       const inc = (p && p.inc) || (ex && ex.inc) || 2.5;
-      const chao = p && p.kg != null ? p.kg : null;
+      // o chão é a carga com que o exercício entrou no bloco, não a desta
+      // semana: as cargas do plano mexem-se em cada revisão, e contar degraus
+      // contra um chão que anda dava sempre zero
+      const chao = p ? (p.partida != null ? p.partida : (p.kg != null ? p.kg : null)) : null;
       return {
-        id, ex, prescricao: p, inc, chao,
+        id, ex, prescricao: p, inc, chao, alvo: p && p.kg != null ? p.kg : null,
         nome: ex ? ex.n : id,
         maq: ult ? ult.maq : null,
         sessoes: hist.length,
@@ -1492,10 +1493,10 @@
       L.push('');
     });
 
-    L.push('## Cargas · chão do plano, onde estás e degraus ganhos');
+    L.push('## Cargas · chão do bloco, o que o plano pede agora, onde estás e degraus ganhos');
     est.exercicios.forEach(x => {
       if (x.chao == null) { L.push(`- ${x.nome}: peso do corpo · ${x.sessoes} ${x.sessoes === 1 ? 'sessão' : 'sessões'}`); return; }
-      L.push(`- ${x.nome}: ${U.fmt(x.chao)} → ${x.actual ? U.fmt(x.actual) : 'sem registo'}`
+      L.push(`- ${x.nome}: chão ${U.fmt(x.chao)} · plano ${x.alvo != null ? U.fmt(x.alvo) : '—'} → ${x.actual ? U.fmt(x.actual) : 'sem registo'}`
         + `${x.degraus != null ? ` (${x.degraus >= 0 ? '+' : ''}${x.degraus} degrau${Math.abs(x.degraus) === 1 ? '' : 's'} de ${U.fmt(x.inc)})` : ''}`
         + `${x.subir ? ' · a subir para ' + U.fmt(x.proxima) : ''}`);
     });

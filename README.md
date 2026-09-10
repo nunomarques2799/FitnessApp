@@ -28,16 +28,18 @@ dias da semana, 20 séries cada:
 | **A** | Costas e bíceps | 20 |
 | **B** | Peito, tríceps e deltoide lateral | 20 |
 | **C** | Pernas e core | 20 |
-| **D** | Ombros e costas | 20 |
+| **D** | Ombros, costas e peito | 20 |
 
-Cada exercício traz o número de séries, o intervalo de repetições, a **carga de partida** e o
-incremento daquela máquina. As cargas escritas são o **chão da estreia**: enquanto o exercício não
-for feito dentro do plano, é o número do plano que aparece. A partir da primeira sessão manda o que
-registas, com a dupla progressão de sempre.
+Cada exercício traz o número de séries, o intervalo de repetições, a **carga de trabalho** e o
+incremento daquela máquina. Dentro do plano é o plano que manda: cada dia abre sempre com a carga
+escrita e com o topo do intervalo de repetições, sessão após sessão, e não com o que ficou
+registado da última vez. Ao lado aparece a carga da última sessão, quando for diferente, só para
+se ver o que mudou.
 
-Esta separação existe por uma razão concreta: quem sobe a carga de série para série deixa no
-histórico um máximo que só aguentou uma vez. Se a progressão lesse esse número, propunha cargas
-que não se aguentam em quatro séries seguidas.
+Esta separação existe por uma razão concreta: uma série levada à falha, ou um dia em que se subiu
+a carga de série para série, deixa no histórico um máximo que só se aguentou uma vez. Um plano que
+lesse esse número propunha cargas que não se aguentam em quatro séries seguidas — e nunca deixava
+baixar nenhuma. Quem decide o que sobe e o que desce é a revisão da semana, à frente do relatório.
 
 Ligar o plano adopta também os descansos que ele manda (3 minutos nos compostos, 90 segundos nos
 isolamentos). Desligá-lo devolve a app ao motor de sugestão normal, com a divisão e os músculos em atraso.
@@ -76,11 +78,14 @@ Com esse texto na mão, o plano actualiza-se num sítio só — [`js/plano.js`](
 séries, intervalos e incrementos. Sobe o `versao`, muda o `revisto` e escreve em `notasDaRevisao`
 o que mudou.
 
-Subir o `versao` é o que faz a revisão valer: no primeiro treino a seguir, os exercícios cuja
-carga mudou entram com a do plano e aparecem com a marca **revisto**, mesmo que o histórico
-diga outra coisa — é assim que uma carga baixada de propósito chega ao ginásio. Onde o número
-ficou igual, nada muda e a progressão continua a mandar como sempre. A partir da sessão
-seguinte volta tudo ao normal, porque o treino já foi feito dentro da versão nova.
+O que escreveres aqui é o que aparece no ginásio, já no treino a seguir: cargas, séries e
+repetições saem deste ficheiro e de mais lado nenhum. Durante a semana a app não propõe subir
+nada — limita-se a mostrar, ao lado da carga nova, a que fizeste da última vez. É a revisão que
+faz o plano andar, e é por isso que vale a pena não a saltar.
+
+O relatório continua a assinalar os exercícios prontos a subir (todas as séries no topo do
+intervalo, ou 3 e mais repetições de reserva em todas elas). É uma sugestão para a revisão ler,
+não uma carga que entre sozinha no treino.
 
 ### Objectivos
 
@@ -147,8 +152,9 @@ exercícios de polia levam um chip para dizeres qual estás a usar. Só as polia
 placas são uma só e a pergunta em todo o lado era ruído.
 
 Escolher a máquina faz duas coisas: enche já as séries por fazer com a carga que usaste **nessa**
-máquina da última vez, e passa a comparar o histórico só dentro dela. A máquina fica no registo, no
-detalhe da sessão e no relatório da semana.
+máquina da última vez, e passa a comparar o histórico só dentro dela. Num exercício do plano a
+carga não se mexe — lá o número vem do plano —, e o chip serve só para dizer onde foi feito. A
+máquina fica no registo, no detalhe da sessão e no relatório da semana.
 
 ### Repetições em reserva (RIR)
 
