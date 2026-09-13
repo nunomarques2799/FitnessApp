@@ -10,7 +10,7 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 | Ecrã | O que tem |
 |---|---|
 | **Hoje** | O dia do plano que vem a seguir, cobertura muscular dos últimos 7 dias |
-| **Plano** | O plano embutido: roda dos cinco dias, cargas contra o chão do plano, volume, relatório da semana |
+| **Plano** | O plano embutido: roda dos quatro dias, cargas contra o chão do plano, volume, relatório da semana |
 | **Treino** | Registo de séries e de rondas de circuito, repetições em reserva, cronómetro de descanso opcional, deteção de recordes |
 | **Histórico** | Calendário do mês com os dias treinados, detalhe de cada sessão, editar/apagar/repetir |
 | **Exercícios** | 191 exercícios organizados por grupo muscular, com filtro da parte do músculo, da pega e instruções de execução |
