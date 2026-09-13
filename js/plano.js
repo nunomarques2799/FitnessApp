@@ -135,7 +135,7 @@
           { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 9, inc: 2.5 },
           { ex: 'rosca-inclinada', series: 3, reps: [8, 12], kg: 10, inc: 2, partida: 12 },
           { ex: 'rosca-martelo', series: 3, reps: [8, 12], kg: 10, inc: 2, partida: 12 },
-          { ex: 'elevacao-joelhos', series: 3, reps: [10, 20], max: true, nota: 'Joelhos ao peito, sem balanco. Quando as 20 sairem nas tres series, segura um halter entre os pes' }
+          { ex: 'elevacao-joelhos', series: 3, reps: [10, 20], max: true, nota: 'Joelhos ao peito, sem balanço. Quando as 20 saírem nas três séries, segura um halter entre os pés' }
         ]
       },
       {
