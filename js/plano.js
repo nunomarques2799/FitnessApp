@@ -26,15 +26,15 @@
   const PLANO = {
     id: 'nuno-2026-09',
     nome: 'Plano do Nuno',
-    versao: 7,
+    versao: 8,
     criadoEm: '2026-09-05',
-    revisto: '2026-09-10',
+    revisto: '2026-09-13',
     origem: 'Construído a partir dos 23 treinos registados entre 31 de Julho e 6 de Setembro de 2026',
     semanas: 8,                 // não mudar exercícios antes disto
     rotacao: 'Quatro dias em roda, sem estarem presos a dias da semana',
     descanso: { composto: 180, isolamento: 90 },
     rir: [1, 2],                // deixar 1 a 2 em reserva; última série de cada exercício 0 a 1
-    notasDaRevisao: 'Versão 7. Primeira revisão com os quatro dias já feitos, e a maior parte das '
+    notasDaRevisao: 'Versão 8. Duas sessões feitas já dentro da versão 7 — o dia A e o dia B — e desta vez a maior parte sobe. Sobem quatro por dupla progressão cumprida, que é o topo do intervalo em todas as séries: o supino inclinado de 25 para 27 (quatro de 12, com 1 a 2 em reserva), o press de peito na máquina de 45 para 52 (três de 12), as elevações laterais de 10 para 12 nos dois dias (quatro de 20, o tecto do intervalo outra vez) e a remada na máquina de 45 de volta a 52. Esta última merece explicação, porque desfaz uma decisão da versão 6: ela baixou-a de 52 para 45 por causa do RIR 0, mas as repetições estavam planas — 12, 12, 12, 12 — e repetições planas querem dizer que a carga está certa e que só vais à falha no fim. A 45 fizeste 14, 14, 14, 14. O sinal a que se dá ouvidos é as repetições a cair de série para série, não o RIR sozinho. Fica sem partida escrita porque voltaste ao chão do bloco: não é degrau ganho, é uma correcção. É um dos dois exercícios do ponto de controlo da semana 4. Duas cargas estavam erradas no papel e foi o ginásio que as corrigiu. O crucifixo invertido na polia estava escrito a 6,5 e fizeste-o a 9, com 15, 15 e 14: a descida da versão 6 não tinha razão de ser e passa a 9. O tríceps à testa entrou sem número certo, a pedir calibração — fizeste 20 a sentir e depois 30 para 12 e 12 — por isso fica escrito nos 30. Desce um: o tríceps na polia com barra, de 27 para 23. Fizeste 9, 9 e 9, tudo a zero de reserva, e na última baixaste tu próprio para 23. Nove repetições é o fundo do intervalo com a carga a fugir. Mantêm-se a puxada à frente nos 52, a remada baixa nos 45, o peck deck nos 12,5 e a rosca inclinada nos 10 — nenhum deles fechou todas as séries no topo. Os dias C e D ainda não foram feitos dentro da versão 7, por isso as cargas deles não se tocam. E os abdominais passam de 3 para 6 séries por rotação. Três era o alvo mais baixo do plano inteiro e menos de metade das 8 que o próprio catálogo da app considera normal, e só treinavas a flexão de cima para baixo. Entra a elevação de joelhos na barra no fim do dia A, que apanha a parte de baixo e é o dia mais afastado do dia C na roda. O crunch desce de 20 para 15: fizeste 20, 15 e 15 a zero, que é exactamente a queda de repetições que fez descer os outros. Ver os abdominais é gordura, não séries — a comer acima da manutenção, isto constrói o músculo mas não o mostra neste bloco. '      + 'Versão 7. Primeira revisão com os quatro dias já feitos, e a maior parte das '
       + 'cargas desce. O sinal é sempre o mesmo: registaste RIR 0 com as repetições a caírem de '
       + 'série para série, o que quer dizer que a carga só dá para a primeira. Descem a flexão de '
       + 'pernas de 66 para 52 (fizeste a primeira a 66 e tiveste de baixar logo para 59), a extensão '
@@ -111,7 +111,7 @@
       { k: 'quadriceps', nome: 'Quadríceps', musculos: ['quadriceps'], alvo: 9 },
       { k: 'isquiotibiais', nome: 'Isquiotibiais', musculos: ['isquiotibiais'], alvo: 4 },
       { k: 'gemeos', nome: 'Gémeos', musculos: ['gemeos'], alvo: 4 },
-      { k: 'abdominais', nome: 'Abdominais', musculos: ['abdominais'], alvo: 3 }
+      { k: 'abdominais', nome: 'Abdominais', musculos: ['abdominais'], alvo: 6 }
     ],
 
     /* Ponto de controlo: são as costas que têm de se mexer nestas 8 semanas */
@@ -130,11 +130,12 @@
         nota: 'O dia mais importante do plano. Puxa com os cotovelos, não com as mãos. Pára cada série com 1 a 2 repetições ainda no bolso — só a última é que pode ir ao fim.',
         exercicios: [
           { ex: 'puxada-frontal', series: 4, reps: [8, 12], kg: 52, inc: 7 },
-          { ex: 'remada-maquina', series: 4, reps: [10, 14], kg: 45, inc: 7, partida: 52 },
+          { ex: 'remada-maquina', series: 4, reps: [10, 14], kg: 52, inc: 7 },
           { ex: 'remada-baixa-polia', series: 3, reps: [10, 14], kg: 45, inc: 7, partida: 52, nota: 'Pega em V, junto ao corpo' },
-          { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 6.5, inc: 2.5, partida: 9 },
+          { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 9, inc: 2.5 },
           { ex: 'rosca-inclinada', series: 3, reps: [8, 12], kg: 10, inc: 2, partida: 12 },
-          { ex: 'rosca-martelo', series: 3, reps: [8, 12], kg: 10, inc: 2, partida: 12 }
+          { ex: 'rosca-martelo', series: 3, reps: [8, 12], kg: 10, inc: 2, partida: 12 },
+          { ex: 'elevacao-joelhos', series: 3, reps: [10, 20], max: true, nota: 'Joelhos ao peito, sem balanco. Quando as 20 sairem nas tres series, segura um halter entre os pes' }
         ]
       },
       {
@@ -143,12 +144,12 @@
         aquecimento: 'Supino inclinado com halteres 20 × 12.',
         nota: 'A mesma carga nas quatro séries do supino inclinado. Não subas série a série.',
         exercicios: [
-          { ex: 'supino-inclinado-halteres', series: 4, reps: [8, 12], kg: 25, inc: 2 },
-          { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 45, inc: 7 },
+          { ex: 'supino-inclinado-halteres', series: 4, reps: [8, 12], kg: 27, inc: 2, partida: 25 },
+          { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 52, inc: 7, partida: 45 },
           { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
-          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
-          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 7, nota: 'Barra em V ou barra direita: escolhe uma e mantém-na' },
-          { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 20, inc: 2.5, partida: 20, nota: 'Barra W de 10 kg incluída — 20 kg são a barra mais 5 de cada lado. Acerta a carga na primeira sessão' }
+          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 12, inc: 2, partida: 8 },
+          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 23, inc: 7, partida: 27, nota: 'Barra em V ou barra direita: escolhe uma e mantém-na' },
+          { ex: 'triceps-testa', series: 3, reps: [8, 12], kg: 30, inc: 2.5, nota: 'Barra W de 10 kg incluída — 30 kg são a barra mais 10 de cada lado. Carga acertada na sessão de 11 de Setembro' }
         ]
       },
       {
@@ -161,7 +162,7 @@
           { ex: 'flexao-pernas-sentado', series: 4, reps: [10, 12], kg: 52, inc: 7, partida: 66 },
           { ex: 'extensao-pernas', series: 3, reps: [12, 15], kg: 45, inc: 7, partida: 66 },
           { ex: 'gemeos-prensa', series: 4, reps: [12, 20], kg: 73, inc: 7, partida: 79 },
-          { ex: 'crunch', series: 3, reps: [15, 20], kg: 20, inc: 5, nota: 'Banco inclinado, com peso' }
+          { ex: 'crunch', series: 3, reps: [15, 20], kg: 15, inc: 5, partida: 20, nota: 'Banco inclinado, com peso' }
         ]
       },
       {
@@ -171,7 +172,7 @@
         nota: 'A segunda dose de peito da semana. Três séries chegam — o trabalho grande foi no dia B.',
         exercicios: [
           { ex: 'press-ombros-halteres', series: 4, reps: [6, 10], kg: 24, inc: 2, partida: 22 },
-          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2 },
+          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 12, inc: 2, partida: 8 },
           { ex: 'puxada-supinada', series: 3, reps: [8, 12], kg: 45, inc: 7, partida: 52 },
           {
             ex: 'remada-polia-uni', series: 3, reps: [10, 12], kg: 14, inc: 2.5, partida: 14,
