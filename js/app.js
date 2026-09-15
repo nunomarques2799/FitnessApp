@@ -6,6 +6,7 @@
 
   const TABS = [
     { rota: 'hoje',       icone: 'casa',       label: 'Hoje' },
+    { rota: 'comida',     icone: 'talher',     label: 'Comida' },
     { rota: 'historico',  icone: 'calendario', label: 'Histórico' },
     { rota: 'exercicios', icone: 'haltere',    label: 'Exercícios' },
     { rota: 'progresso',  icone: 'grafico',    label: 'Progresso' },
@@ -181,7 +182,9 @@
 
   /* ---------- arranque ---------- */
   function nav() {
-    document.getElementById('nav').innerHTML = TABS.map(t =>
+    const barra = document.getElementById('nav');
+    barra.style.setProperty('--n-tabs', TABS.length);
+    barra.innerHTML = TABS.map(t =>
       `<button type="button" class="nav__b" data-rota="${t.rota}" aria-current="false">
         ${UI.icone(t.icone, 23)}<span>${t.label}</span>
       </button>`).join('');

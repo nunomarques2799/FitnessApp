@@ -46,8 +46,11 @@
     corpo: '<circle cx="12" cy="4.6" r="2.3"/><path d="M12 6.9v7.4M12 9.5 7 12M12 9.5l5 2.5M12 14.3l-2.6 6.8M12 14.3l2.6 6.8"/>',
     cadeado: '<rect x="4.5" y="10.5" width="15" height="10.5" rx="2"/><path d="M8 10.5V7.4a4 4 0 0 1 8 0v3.1"/>',
     seta: '<path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/>',
+    // garfo e faca — a alimentação
+    talher: '<path d="M5.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M8 3v5M8 10.5V21"/>'
+      + '<path d="M17.5 21v-7.6"/><path d="M17.5 13.4c1.5-.6 2.3-2.2 2.3-5C19.8 4.9 18.8 3 17.5 3s-2.3 1.9-2.3 5.4c0 2.8.8 4.4 2.3 5z"/>',
     // mão fechada à volta de uma barra — as pegas dos exercícios
-    pega: '<path d="M2.5 8.75h19"/><rect x="6" y="7.25" width="12" height="9.5" rx="4.75"/><path d="M10 16.15v-3.6M14 16.15v-3.6"/>'
+    pega:'<path d="M2.5 8.75h19"/><rect x="6" y="7.25" width="12" height="9.5" rx="4.75"/><path d="M10 16.15v-3.6M14 16.15v-3.6"/>'
   };
 
   function icone(nome, tam, cls) {

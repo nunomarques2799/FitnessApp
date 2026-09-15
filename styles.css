@@ -204,7 +204,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 /* ---------- 4. Navegação inferior ---------- */
 .nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-nav);
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(var(--n-tabs, 5), 1fr);
   background: color-mix(in srgb, var(--fundo-eleva) 90%, transparent);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -213,10 +213,13 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 .nav__b {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; min-height: var(--h-nav); padding: var(--e2) var(--e1);
-  color: var(--txt-3); font-size: 10.5px; font-weight: 600; letter-spacing: .01em;
+  gap: 3px; min-height: var(--h-nav); padding: var(--e2) 2px;
+  color: var(--txt-3); font-size: 10px; font-weight: 600; letter-spacing: -0.01em;
   position: relative; transition: color var(--d-rapido) var(--ease-saida);
+  overflow: hidden;
 }
+/* com seis separadores as etiquetas ficam apertadas: cortam-se em vez de partir a grelha */
+.nav__b span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav__b .ic { transition: transform var(--d-normal) var(--mola); }
 .nav__b[aria-current='page'] { color: var(--primaria-txt); }
 .nav__b[aria-current='page'] .ic { transform: translateY(-1px) scale(1.08); }
@@ -780,7 +783,63 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .aviso-cx__t { font-size: var(--t-md); font-weight: 700; }
 .aviso-cx__s { font-size: var(--t-md); color: var(--txt-2); line-height: 1.5; margin-top: 2px; }
 
-/* ---------- 24. Movimento reduzido ---------- */
+/* ---------- 24. Alimentação ---------- */
+/* fita dos sete dias, para saltar entre dias sem sair do ecrã */
+.dias-b {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--e1);
+  margin-bottom: var(--e4);
+}
+.dia-b {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--e2) 0; border-radius: var(--r2); border: 1px solid transparent;
+  color: var(--txt-3); transition: background-color var(--d-rapido), color var(--d-rapido);
+}
+.dia-b__s { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.dia-b__n { font-size: var(--t-base); font-weight: 700; color: var(--txt-2); }
+.dia-b--cheio { background: var(--sup); border-color: var(--borda); }
+.dia-b--cheio .dia-b__n { color: var(--txt); }
+.dia-b--activo { background: var(--primaria-suave); border-color: var(--primaria); color: var(--primaria-txt); }
+.dia-b--activo .dia-b__n { color: var(--primaria-txt); }
+
+/* calorias do dia, o número que se vê primeiro */
+.kcal { font-size: var(--t-3xl); font-weight: 800; line-height: 1.05; margin-top: var(--e2); }
+.kcal__u { font-size: var(--t-base); font-weight: 700; color: var(--txt-2); margin-left: 6px; }
+
+/* anel de percentagem das calorias */
+.anel {
+  width: 64px; height: 64px; flex: none; border-radius: 50%;
+  display: grid; place-items: center;
+  background: conic-gradient(var(--primaria) calc(var(--pct) * 1%), var(--sup-3) 0);
+}
+.anel::before {
+  content: ''; grid-area: 1 / 1; width: 50px; height: 50px;
+  border-radius: 50%; background: var(--sup);
+}
+.anel__v { grid-area: 1 / 1; font-size: var(--t-sm); font-weight: 800; }
+
+/* barras dos macros */
+.macros { display: grid; gap: var(--e3); }
+.macro__cab { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e2); }
+.macro__l { font-size: var(--t-sm); font-weight: 600; color: var(--txt-2); }
+.macro__v { font-size: var(--t-sm); font-weight: 700; }
+.macro__alvo { color: var(--txt-3); font-weight: 600; }
+.macro__barra { display: block; height: 6px; border-radius: 3px; background: var(--sup-3); overflow: hidden; margin-top: 4px; }
+.macro__fill { display: block; height: 100%; border-radius: 3px; background: var(--primaria); transition: width var(--d-lento) var(--ease-saida); }
+.macro--prot .macro__fill { background: var(--sucesso); }
+.macro--hc .macro__fill { background: var(--info); }
+.macro--gord .macro__fill { background: var(--aviso); }
+.macro__fill--passou { background: var(--perigo) !important; }
+
+/* o que o plano manda comer nesta refeição */
+.plano-l { display: grid; gap: var(--e1); font-size: var(--t-md); }
+.plano-l li { padding: 2px 0; }
+.vazio-b { width: 100%; text-align: left; border-style: dashed; }
+.vazio-b .cartao__sub { display: flex; align-items: center; gap: 6px; }
+.grelha-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e2); }
+.grelha-3 .campo { margin-bottom: var(--e3); }
+.grelha-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--e3); }
+
+/* ---------- 25. Movimento reduzido ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important; animation-iteration-count: 1 !important;
@@ -790,7 +849,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .sheet-wrap .sheet__scrim { opacity: 1; }
 }
 
-/* ---------- 25. Ecrãs largos ---------- */
+/* ---------- 26. Ecrãs largos ---------- */
 @media (min-width: 768px) {
   .vista { padding-left: var(--e5); padding-right: var(--e5); }
   .app-cab { padding-left: var(--e5); padding-right: var(--e5); }

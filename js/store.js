@@ -69,7 +69,11 @@
         maquinas: ['Polia leve (levanto mais)', 'Polia dura (levanto menos)'],
         fecharAuto: 4,          // horas sem registos até a app fechar o treino sozinho (0 = nunca)
         rir: true,              // registar repetições em reserva em cada série
-        equipamento: null       // null = tudo disponível
+        equipamento: null,      // null = tudo disponível
+        nutricao: {             // alvos do dia; com o plano ligado são os dele
+          plano: 'nuno-2000',   // plano alimentar embutido (null = alvos à mão)
+          kcal: null, prot: null, hc: null, gord: null
+        }
       },
       perfil: { peso: null, pesoEm: null, pesos: [] },
       planoDesde: null,         // dia em que o plano começou, para contar as semanas
@@ -78,7 +82,11 @@
       favoritos: [],
       treinos: [],              // histórico (mais recente primeiro)
       ativo: null,              // treino em curso
-      timer: null               // { fim: epochMs, total: seg }
+      timer: null,              // { fim: epochMs, total: seg }
+      alimentos: [],            // alimentos criados por ti
+      alimentosEditados: {},    // idDoCatálogo → campos que corrigiste
+      alimentosOcultos: [],     // alimentos do catálogo que escondeste
+      comidas: []               // registo alimentar, uma linha por alimento comido
     };
   }
 
@@ -101,8 +109,15 @@
         const omissoes = base.settings;
         state = Object.assign(base, dados);
         state.settings = Object.assign({}, omissoes, dados.settings || {});
+        // a nutrição é um objecto dentro das definições: mistura-se campo a campo,
+        // senão um telemóvel gravado antes dela ficava sem os alvos de origem
+        state.settings.nutricao = Object.assign({}, omissoes.nutricao, (dados.settings || {}).nutricao || {});
         state.perfil = normalizarPerfil(dados.perfil);
         if (!state.nomes) state.nomes = {};
+        if (!Array.isArray(state.alimentos)) state.alimentos = [];
+        if (!Array.isArray(state.comidas)) state.comidas = [];
+        if (!Array.isArray(state.alimentosOcultos)) state.alimentosOcultos = [];
+        if (!state.alimentosEditados) state.alimentosEditados = {};
       }
     } catch (e) {
       console.error('Falha a ler dados locais', e);
@@ -1558,6 +1573,421 @@
     return out;
   }
 
+  /* =============================================================
+     Alimentação — catálogo, registo do dia e revisão da semana
+
+     O registo guarda os macros já calculados em cada linha, e não
+     só uma referência ao alimento. É de propósito: corrigir hoje
+     as calorias do bitoque não pode reescrever o que comeste no
+     mês passado, tal como acertar o plano de treino não mexe nas
+     séries já registadas.
+     ============================================================= */
+
+  function refeicoes() { return global.COMIDA.REFEICOES; }
+  function ordemRefeicoes() { return Object.keys(global.COMIDA.REFEICOES); }
+
+  /** Um alimento como está agora: catálogo, com as tuas correcções por cima */
+  function alimento(id) {
+    const meu = (state.alimentos || []).find(a => a.id === id);
+    if (meu) return meu;
+    const base = global.COMIDA.POR_ID[id];
+    if (!base) return null;
+    const ed = state.alimentosEditados && state.alimentosEditados[id];
+    return ed ? Object.assign({}, base, ed) : base;
+  }
+
+  /** Todos os alimentos à mão: os teus primeiro, depois o catálogo */
+  function alimentos() {
+    const ocultos = new Set(state.alimentosOcultos || []);
+    const base = global.COMIDA.ALIMENTOS.filter(a => !ocultos.has(a.id)).map(a => alimento(a.id));
+    return (state.alimentos || []).concat(base);
+  }
+
+  /** Macros de uma quantidade: gramas nos alimentos por 100 g, porções nos outros */
+  function macrosDe(a, q) {
+    const f = a.tipo === 'g' ? (q || 0) / 100 : (q || 0);
+    const uma = n => Math.round((n || 0) * f * 10) / 10;
+    return { kcal: Math.round((a.kcal || 0) * f), prot: uma(a.prot), hc: uma(a.hc), gord: uma(a.gord) };
+  }
+
+  /** Soma de uma lista de linhas com macros */
+  function somarMacros(lista) {
+    const t = { kcal: 0, prot: 0, hc: 0, gord: 0 };
+    (lista || []).forEach(x => {
+      t.kcal += x.kcal || 0; t.prot += x.prot || 0; t.hc += x.hc || 0; t.gord += x.gord || 0;
+    });
+    ['prot', 'hc', 'gord'].forEach(k => { t[k] = Math.round(t[k] * 10) / 10; });
+    t.kcal = Math.round(t.kcal);
+    return t;
+  }
+
+  /** Quantidade escrita por extenso: "180 g" ou "2 × scoop" */
+  function textoQuantidade(x) {
+    if (x.tipo === 'g') return `${UI.fmt(x.q, 0)} g`;
+    const n = UI.fmt(x.q);
+    const p = x.porcao || 'porção';
+    return x.q === 1 ? `1 ${p}` : `${n} × ${p}`;
+  }
+
+  /** Cria ou corrige um alimento. Corrigir um do catálogo guarda só a diferença. */
+  function guardarAlimento(dados) {
+    const campos = {
+      n: String(dados.n || '').trim(),
+      cat: dados.cat || 'prato',
+      tipo: dados.tipo === 'g' ? 'g' : 'un',
+      kcal: Math.max(0, dados.kcal || 0),
+      prot: Math.max(0, dados.prot || 0),
+      hc: Math.max(0, dados.hc || 0),
+      gord: Math.max(0, dados.gord || 0),
+      porcao: dados.tipo === 'g' ? null : (String(dados.porcao || '').trim() || 'porção'),
+      g: dados.g || null
+    };
+    if (!campos.n) return null;
+
+    if (dados.id) {
+      const meu = (state.alimentos || []).find(a => a.id === dados.id);
+      if (meu) Object.assign(meu, campos);
+      else {
+        // alimento do catálogo: guarda-se só o que ficou diferente
+        state.alimentosEditados = state.alimentosEditados || {};
+        state.alimentosEditados[dados.id] = campos;
+      }
+      guardar(true);
+      return alimento(dados.id);
+    }
+
+    const base = campos.n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'alimento';
+    let id = 'meu-' + base, i = 2;
+    while (alimento(id)) id = 'meu-' + base + '-' + i++;
+    const novo = Object.assign({ id, custom: true, criadoEm: D.hoje() }, campos);
+    state.alimentos = state.alimentos || [];
+    state.alimentos.push(novo);
+    guardar(true);
+    return novo;
+  }
+
+  /** Tira um alimento da lista. Os teus são apagados, os do catálogo escondidos. */
+  function apagarAlimento(id) {
+    const i = (state.alimentos || []).findIndex(a => a.id === id);
+    if (i >= 0) state.alimentos.splice(i, 1);
+    else {
+      state.alimentosOcultos = state.alimentosOcultos || [];
+      if (!state.alimentosOcultos.includes(id)) state.alimentosOcultos.push(id);
+      if (state.alimentosEditados) delete state.alimentosEditados[id];
+    }
+    guardar(true);
+  }
+
+  /** Repõe um alimento do catálogo como veio de fábrica */
+  function reporAlimento(id) {
+    if (state.alimentosEditados) delete state.alimentosEditados[id];
+    state.alimentosOcultos = (state.alimentosOcultos || []).filter(x => x !== id);
+    guardar(true);
+    return alimento(id);
+  }
+
+  /** Quantas vezes cada alimento foi registado, e quando foi a última */
+  function usosAlimentos() {
+    const u = {};
+    (state.comidas || []).forEach(c => {
+      const x = u[c.aId] || (u[c.aId] = { n: 0, ultima: null });
+      x.n++;
+      if (!x.ultima || c.data > x.ultima) x.ultima = c.data;
+    });
+    return u;
+  }
+
+  /**
+   * Alimentos por ordem de utilidade: os mais usados primeiro, depois os do
+   * plano, depois o resto. Com `termo`, procura por nome.
+   */
+  function procurarAlimentos(termo, limite) {
+    const u = usosAlimentos();
+    const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const t = norm(termo).trim();
+    const lista = alimentos().filter(a => !t || norm(a.n).includes(t));
+    lista.sort((a, b) => {
+      const ua = u[a.id], ub = u[b.id];
+      if (t) {
+        const ia = norm(a.n).indexOf(t), ib = norm(b.n).indexOf(t);
+        if (ia !== ib) return ia - ib;
+      }
+      if ((ub ? ub.n : 0) !== (ua ? ua.n : 0)) return (ub ? ub.n : 0) - (ua ? ua.n : 0);
+      if (!!b.plano !== !!a.plano) return b.plano ? 1 : -1;
+      return a.n.localeCompare(b.n, 'pt');
+    });
+    return limite ? lista.slice(0, limite) : lista;
+  }
+
+  /* ---------- plano alimentar embutido ---------- */
+
+  function planoAlimentar() {
+    const P = global.PLANO_ALIMENTAR;
+    if (!P) return null;
+    return state.settings.nutricao && state.settings.nutricao.plano === P.id ? P : null;
+  }
+
+  function activarPlanoAlimentar(ligar) {
+    const P = global.PLANO_ALIMENTAR;
+    state.settings.nutricao = state.settings.nutricao || {};
+    state.settings.nutricao.plano = ligar && P ? P.id : null;
+    guardar(true);
+    return planoAlimentar();
+  }
+
+  /** Os alvos do dia: os do plano se estiver ligado, senão os que escreveste */
+  function alvosNutricao() {
+    const P = planoAlimentar();
+    if (P) return Object.assign({}, P.alvos, { fonte: 'plano', nome: P.nome });
+    const n = state.settings.nutricao || {};
+    if (n.kcal || n.prot || n.hc || n.gord) {
+      return { kcal: n.kcal || null, prot: n.prot || null, hc: n.hc || null, gord: n.gord || null, fonte: 'teus' };
+    }
+    return null;
+  }
+
+  /** O que o plano manda comer num dia, já com as contas feitas */
+  function planoDoDia(data) {
+    const P = planoAlimentar();
+    if (!P) return null;
+    const dia = P.dia(data || D.hoje());
+    if (!dia) return null;
+    const refs = ordemRefeicoes().map(k => {
+      const linhas = (dia.refeicoes[k] || []).map(l => {
+        const a = alimento(l.a);
+        if (!a) return null;
+        return Object.assign({
+          aId: a.id, n: a.n, tipo: a.tipo, porcao: a.porcao || null, q: l.q, nota: l.nota || null
+        }, macrosDe(a, l.q));
+      }).filter(Boolean);
+      return { k, nome: refeicoes()[k].name, linhas, totais: somarMacros(linhas) };
+    });
+    return { nome: dia.nome, refeicoes: refs, totais: somarMacros(refs.map(r => r.totais)) };
+  }
+
+  /** Regista de uma vez o que o plano manda numa refeição */
+  function registarRefeicaoDoPlano(data, refeicao) {
+    const p = planoDoDia(data);
+    if (!p) return 0;
+    const r = p.refeicoes.find(x => x.k === refeicao);
+    if (!r || !r.linhas.length) return 0;
+    r.linhas.forEach(l => registarComida({
+      alimentoId: l.aId, q: l.q, refeicao, data, nota: l.nota, doPlano: true
+    }, true));
+    guardar(true);
+    return r.linhas.length;
+  }
+
+  /* ---------- registo ---------- */
+
+  function registarComida(dados, adiar) {
+    const a = alimento(dados.alimentoId);
+    if (!a) return null;
+    const q = dados.q != null ? dados.q : (a.tipo === 'g' ? (a.g || 100) : 1);
+    const r = Object.assign({
+      id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      data: dados.data || D.hoje(),
+      refeicao: dados.refeicao || global.COMIDA.refeicaoDaHora(),
+      aId: a.id, n: a.n, tipo: a.tipo, porcao: a.porcao || null, q,
+      nota: dados.nota || null, doPlano: !!dados.doPlano, criadoEm: Date.now()
+    }, macrosDe(a, q));
+    state.comidas = state.comidas || [];
+    state.comidas.push(r);
+    if (!adiar) guardar(true);
+    return r;
+  }
+
+  function comida(id) { return (state.comidas || []).find(c => c.id === id) || null; }
+
+  /** Muda a quantidade, a refeição ou o dia de uma linha já registada */
+  function actualizarComida(id, campos) {
+    const c = comida(id);
+    if (!c) return null;
+    if (campos.refeicao) c.refeicao = campos.refeicao;
+    if (campos.data) c.data = campos.data;
+    if (campos.nota !== undefined) c.nota = campos.nota || null;
+    if (campos.q != null && campos.q !== c.q) {
+      const a = alimento(c.aId);
+      if (a) Object.assign(c, macrosDe(a, campos.q));
+      else {
+        // o alimento já não existe: escala os macros que ficaram na linha
+        const f = c.q ? campos.q / c.q : 0;
+        c.kcal = Math.round(c.kcal * f);
+        ['prot', 'hc', 'gord'].forEach(k => { c[k] = Math.round(c[k] * f * 10) / 10; });
+      }
+      c.q = campos.q;
+      c.doPlano = false;
+    }
+    guardar(true);
+    return c;
+  }
+
+  function apagarComida(id) {
+    const i = (state.comidas || []).findIndex(c => c.id === id);
+    if (i < 0) return false;
+    state.comidas.splice(i, 1);
+    guardar(true);
+    return true;
+  }
+
+  function comidasDoDia(data) {
+    const ordem = ordemRefeicoes();
+    return (state.comidas || []).filter(c => c.data === data)
+      .slice().sort((a, b) => ordem.indexOf(a.refeicao) - ordem.indexOf(b.refeicao) || a.criadoEm - b.criadoEm);
+  }
+
+  function totaisComida(data) {
+    return somarMacros(comidasDoDia(data));
+  }
+
+  /** Um dia inteiro: o que comeste, por refeição, contra os alvos e contra o plano */
+  function diaComida(data) {
+    const dia = data || D.hoje();
+    const itens = comidasDoDia(dia);
+    const plano = planoDoDia(dia);
+    const refs = ordemRefeicoes().map(k => {
+      const lista = itens.filter(c => c.refeicao === k);
+      const pl = plano ? plano.refeicoes.find(r => r.k === k) : null;
+      return {
+        k, nome: refeicoes()[k].name, itens: lista, totais: somarMacros(lista),
+        plano: pl && pl.linhas.length ? pl : null,
+        seguido: !!(lista.length && lista.every(c => c.doPlano))
+      };
+    });
+    const totais = somarMacros(itens);
+    const alvos = alvosNutricao();
+    const restante = alvos ? {
+      kcal: alvos.kcal != null ? Math.round(alvos.kcal - totais.kcal) : null,
+      prot: alvos.prot != null ? Math.round((alvos.prot - totais.prot) * 10) / 10 : null,
+      hc: alvos.hc != null ? Math.round((alvos.hc - totais.hc) * 10) / 10 : null,
+      gord: alvos.gord != null ? Math.round((alvos.gord - totais.gord) * 10) / 10 : null
+    } : null;
+    return { data: dia, itens, refeicoes: refs, totais, alvos, restante, plano, vazio: !itens.length };
+  }
+
+  /** Dias com registo de comida, do mais recente para trás */
+  function diasComRegisto(limite) {
+    const dias = [...new Set((state.comidas || []).map(c => c.data))].sort().reverse();
+    return limite ? dias.slice(0, limite) : dias;
+  }
+
+  /* ---------- a semana ---------- */
+
+  /** Segunda a domingo da semana a `recuar` semanas de distância */
+  function semanaDe(recuar) {
+    const base = D.maisDias(D.hoje(), -7 * (recuar || 0));
+    const ini = D.maisDias(base, -((D.parse(base).getDay() + 6) % 7));
+    return { ini, fim: D.maisDias(ini, 6) };
+  }
+
+  /**
+   * A semana de alimentação: cada dia, a média dos dias registados e a
+   * distância aos alvos. A média só conta dias com registo — dias em
+   * branco a contar como zero davam um défice que não existiu.
+   */
+  function semanaComida(recuar) {
+    const { ini, fim } = semanaDe(recuar);
+    const alvos = alvosNutricao();
+    const dias = [];
+    for (let i = 0; i < 7; i++) {
+      const data = D.maisDias(ini, i);
+      const itens = comidasDoDia(data);
+      const treino = (state.treinos || []).find(t => t.data === data);
+      dias.push({
+        data, itens, totais: somarMacros(itens), registado: itens.length > 0,
+        doPlano: itens.length > 0 && itens.every(c => c.doPlano),
+        treino: treino ? treino.nome : null,
+        futuro: data > D.hoje()
+      });
+    }
+    const comRegisto = dias.filter(d => d.registado);
+    const media = comRegisto.length ? {
+      kcal: Math.round(comRegisto.reduce((n, d) => n + d.totais.kcal, 0) / comRegisto.length),
+      prot: Math.round(comRegisto.reduce((n, d) => n + d.totais.prot, 0) / comRegisto.length),
+      hc: Math.round(comRegisto.reduce((n, d) => n + d.totais.hc, 0) / comRegisto.length),
+      gord: Math.round(comRegisto.reduce((n, d) => n + d.totais.gord, 0) / comRegisto.length)
+    } : null;
+    const desvio = media && alvos ? {
+      kcal: alvos.kcal != null ? media.kcal - alvos.kcal : null,
+      prot: alvos.prot != null ? media.prot - alvos.prot : null,
+      hc: alvos.hc != null ? media.hc - alvos.hc : null,
+      gord: alvos.gord != null ? media.gord - alvos.gord : null
+    } : null;
+    return { ini, fim, dias, comRegisto: comRegisto.length, media, desvio, alvos, recuar: recuar || 0 };
+  }
+
+  /**
+   * Relatório da semana em texto, para exportar e rever o plano alimentar.
+   * Traz o que foi comido dia a dia, a média contra os alvos e o peso —
+   * é o que é preciso para decidir se as calorias sobem ou descem.
+   */
+  function relatorioComida(recuar) {
+    const s = semanaComida(recuar);
+    const P = planoAlimentar();
+    const L = [];
+    const un = m => `${m.kcal} kcal · ${UI.fmt(m.prot, 0)} P · ${UI.fmt(m.hc, 0)} HC · ${UI.fmt(m.gord, 0)} G`;
+
+    L.push(`# Alimentação — ${D.curto(s.ini)} a ${D.curto(s.fim)}`);
+    L.push('');
+    if (s.alvos) {
+      L.push(`Alvo diário: ${s.alvos.kcal || '—'} kcal · ${s.alvos.prot || '—'} g proteína · `
+        + `${s.alvos.hc || '—'} g hidratos · ${s.alvos.gord || '—'} g gordura`
+        + (P ? ` (${P.nome} v${P.versao})` : ''));
+    } else {
+      L.push('Sem alvos definidos — escreve-os em Ajustes ou liga o plano alimentar.');
+    }
+    const peso = pesoCorporal();
+    if (peso != null) {
+      const dif = variacaoPeso(30);
+      L.push(`Peso corporal: ${U.fmt(peso)}${dif === null ? '' : ` (${dif > 0 ? '+' : ''}${UI.fmt(U.mostrar(dif))} ${U.label()} em 30 dias)`}`);
+    }
+    L.push('');
+
+    if (!s.comRegisto) {
+      L.push('Sem nada registado nesta semana.');
+      return L.join('\n');
+    }
+
+    L.push(`Dias registados: ${s.comRegisto} de 7.`);
+    L.push(`Média dos dias registados: ${un(s.media)}`);
+    if (s.desvio) {
+      const p = [];
+      if (s.desvio.kcal != null) p.push(`${s.desvio.kcal > 0 ? '+' : ''}${s.desvio.kcal} kcal`);
+      if (s.desvio.prot != null) p.push(`${s.desvio.prot > 0 ? '+' : ''}${s.desvio.prot} g de proteína`);
+      if (s.desvio.hc != null) p.push(`${s.desvio.hc > 0 ? '+' : ''}${s.desvio.hc} g de hidratos`);
+      if (s.desvio.gord != null) p.push(`${s.desvio.gord > 0 ? '+' : ''}${s.desvio.gord} g de gordura`);
+      if (p.length) L.push(`Face ao alvo: ${p.join(' · ')}`);
+    }
+    const seguidos = s.dias.filter(d => d.registado && d.doPlano).length;
+    if (P) L.push(`Dias só com o que o plano manda: ${seguidos} de ${s.comRegisto}.`);
+    L.push('');
+
+    s.dias.forEach(d => {
+      if (d.futuro && !d.registado) return;
+      const cab = `## ${D.nomeDia(d.data)}, ${D.curto(d.data)}`;
+      if (!d.registado) { L.push(`${cab} — sem registo${d.treino ? ` (treino: ${d.treino})` : ''}`); L.push(''); return; }
+      L.push(`${cab} — ${un(d.totais)}${d.treino ? ` (treino: ${d.treino})` : ''}`);
+      ordemRefeicoes().forEach(k => {
+        const itens = d.itens.filter(c => c.refeicao === k);
+        if (!itens.length) return;
+        const partes = itens.map(c => `${c.n} ${textoQuantidade(c)} (${c.kcal} kcal, ${UI.fmt(c.prot, 0)} P)`);
+        L.push(`- ${refeicoes()[k].name}: ${partes.join('; ')}`);
+      });
+      L.push('');
+    });
+
+    const u = {};
+    s.dias.forEach(d => d.itens.forEach(c => { u[c.n] = (u[c.n] || 0) + 1; }));
+    // só o que se repetiu: uma lista onde tudo aparece 1× não diz nada
+    const top = Object.keys(u).filter(n => u[n] > 1).sort((a, b) => u[b] - u[a]).slice(0, 10);
+    if (top.length) {
+      L.push('## O que mais comeste');
+      top.forEach(n => L.push(`- ${n}: ${u[n]}×`));
+    }
+    return L.join('\n');
+  }
+
   /* ---------- backup ---------- */
   function exportar() {
     return JSON.stringify({ ...state, exportadoEm: new Date().toISOString() }, null, 2);
@@ -1579,10 +2009,22 @@
       const dias = new Set(meu.pesos.map(p => p.data));
       normalizarPerfil(dados.perfil).pesos.forEach(p => { if (!dias.has(p.data)) meu.pesos.push(p); });
       state.perfil = normalizarPerfil(meu);
+      // alimentação: junta as linhas do registo que ainda não cá estão
+      const linhas = new Set((state.comidas || []).map(c => c.id));
+      (dados.comidas || []).forEach(c => { if (!linhas.has(c.id)) state.comidas.push(c); });
+      const aids = new Set((state.alimentos || []).map(a => a.id));
+      (dados.alimentos || []).forEach(a => { if (!aids.has(a.id)) state.alimentos.push(a); });
+      // correcções ao catálogo: o que já está neste telemóvel manda
+      state.alimentosEditados = Object.assign({}, dados.alimentosEditados || {}, state.alimentosEditados || {});
+      state.alimentosOcultos = [...new Set((state.alimentosOcultos || []).concat(dados.alimentosOcultos || []))];
     } else {
+      const omissoes = estadoInicial().settings;
       state = Object.assign(estadoInicial(), dados);
-      state.settings = Object.assign(estadoInicial().settings, dados.settings || {});
+      state.settings = Object.assign({}, omissoes, dados.settings || {});
+      state.settings.nutricao = Object.assign({}, omissoes.nutricao, (dados.settings || {}).nutricao || {});
       state.perfil = normalizarPerfil(dados.perfil);
+      if (!Array.isArray(state.comidas)) state.comidas = [];
+      if (!Array.isArray(state.alimentos)) state.alimentos = [];
     }
     invalidarIndice();
     guardar(true);
@@ -1616,6 +2058,11 @@
     ultimaPerformance, historicoExercicio, recordes, indiceRecordes, textoRecorde, melhorEtiqueta,
     sugerirProgressao, sugerirTreino, sugerirCircuito, circuitosSugeridos, proximoDiaSplit,
     diasTreinados, sequencia, volumeSemanal,
+    refeicoes, ordemRefeicoes, alimento, alimentos, macrosDe, somarMacros, textoQuantidade,
+    guardarAlimento, apagarAlimento, reporAlimento, usosAlimentos, procurarAlimentos,
+    planoAlimentar, activarPlanoAlimentar, alvosNutricao, planoDoDia, registarRefeicaoDoPlano,
+    registarComida, comida, actualizarComida, apagarComida, comidasDoDia, totaisComida,
+    diaComida, diasComRegisto, semanaComida, relatorioComida,
     exportar, importar, apagarTudo
   };
 })(window);
