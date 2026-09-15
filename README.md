@@ -14,6 +14,7 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 | **Treino** | Registo de séries e de rondas de circuito, repetições em reserva, cronómetro de descanso opcional, deteção de recordes |
 | **Histórico** | Calendário do mês com os dias treinados, detalhe de cada sessão, editar/apagar/repetir |
 | **Exercícios** | 191 exercícios organizados por grupo muscular, com filtro da parte do músculo, da pega e instruções de execução |
+| **Comida** | O que comeste em cada refeição, contra os alvos do dia, com o plano alimentar a propor cada refeição |
 | **Progresso** | Volume por semana, peso corporal, condição física dos últimos 30 dias, distribuição muscular, recordes |
 | **Ajustes** | Peso corporal, plano embutido, objectivo, divisão de treino, tempos de descanso, cronómetro, RIR, fecho automático, kg/lb, tema, exportar/importar cópia de segurança |
 
@@ -221,6 +222,59 @@ escala-os: *Moderado* se treinas 3 vezes por semana, *Alto* se treinas 5 ou 6.
 
 ---
 
+## O plano alimentar embutido
+
+A app traz também um plano de alimentação lá dentro — [`js/alimentar.js`](js/alimentar.js) — com os
+alvos do dia e as refeições de cada dia da semana. São 2000 kcal, 150 g de proteína, 226 g de
+hidratos e 55 g de gordura, cinco refeições por dia.
+
+Ao contrário do plano de treino, este anda preso aos dias da semana: segunda é segunda. E **propõe,
+não regista**: no ecrã **Comida**, cada refeição que ainda não tenha nada aparece com o que o plano
+manda e um botão **Comi isto**, que mete as linhas todas no diário de uma vez. Se comeste outra
+coisa, escreve-se ao lado — e é isso, o que foge ao plano, que interessa à revisão.
+
+### Registar o que comes
+
+Cada alimento entra de uma de duas maneiras, conforme o que faz sentido:
+
+| Como se conta | Escreves | Serve para |
+|---|---|---|
+| **Por peso** | valores por 100 g, e depois os gramas que comeste | o que pesas: arroz, frango, granola |
+| **Por porção** | valores de uma porção inteira, e depois quantas comeste | o que não pesas: um ovo, uma lata de atum, um bitoque |
+
+O catálogo traz 72 alimentos com valores de referência — os do plano, mais o que se come mesmo:
+bitoque, francesinha, bacalhau à Brás, pastel de nata, cerveja. **Registas um bitoque uma vez e
+ele fica guardado**: da próxima é procurar e tocar, e os mais usados aparecem primeiro. Qualquer
+valor se corrige com o rótulo à frente (**Comida → Alimentos guardados**), e o que corrigires fica
+só no teu telemóvel — um botão repõe o valor de origem.
+
+Ao criar ou corrigir um alimento, a app confere as calorias contra os macros (4 kcal por grama de
+proteína e de hidratos, 9 por grama de gordura) e avisa se estiverem a mais de 15% de distância.
+Apanha gralhas do rótulo. A excepção é o álcool, que traz 7 kcal por grama e não aparece em
+nenhum dos três macros.
+
+O registo guarda as calorias e os macros **já calculados** em cada linha. É de propósito: corrigir
+hoje as calorias do bitoque não pode reescrever o que comeste no mês passado, tal como acertar o
+plano de treino não mexe nas séries já registadas.
+
+### Rever a alimentação ao fim da semana
+
+**Comida → Relatório da semana** gera o texto da revisão: o que comeste refeição a refeição em cada
+dia, quantos dias foram registados, a média dos dias registados contra os alvos e o peso corporal.
+Cada dia diz também que treino foi feito, para se ver as calorias ao lado do esforço.
+
+A média só conta os dias com registo — dias em branco a valer zero davam um défice que não existiu,
+e é exactamente aí que estas contas costumam mentir.
+
+Com esse texto, o plano alimentar actualiza-se num sítio só — [`js/alimentar.js`](js/alimentar.js):
+alvos, refeições e notas. Sobe o `versao`, muda o `revisto` e escreve em `notasDaRevisao` o que
+mudou e porquê.
+
+Desligar o plano em **Ajustes → Alimentação** deixa-te escrever os alvos à mão, e a app passa a
+somar o dia sem propor nada.
+
+---
+
 ## Pôr no iPhone
 
 A app precisa de um endereço `https://` **fixo**, porque os dados ficam guardados por endereço.
@@ -274,7 +328,8 @@ Fica com ícone próprio, abre em ecrã inteiro sem barra do Safari e funciona s
 Os dados vivem no armazenamento do Safari. Desaparecem se apagares a app do ecrã principal
 ou limpares os dados do site. **Ajustes → Exportar treinos** gera um ficheiro `.json`
 que podes guardar no iCloud Drive; **Importar** repõe tudo (juntar ou substituir) — treinos,
-exercícios teus, definições, o peso corporal e os nomes que deste aos exercícios.
+exercícios teus, definições, o peso corporal, os nomes que deste aos exercícios, o registo
+alimentar e os alimentos que criaste ou corrigiste.
 
 Vale a pena exportar uma vez por mês.
 
@@ -290,7 +345,9 @@ sw.js                   service worker — faz a app funcionar offline
 icons/                  ícones PNG gerados
 js/
   exercises.js          catálogo: 16 músculos, 9 grupos com partes, 191 exercícios, pegas, 6 planos, 7 circuitos
-  plano.js              o plano embutido — dias, séries, alvos e cargas de partida
+  plano.js              o plano de treino embutido — dias, séries, alvos e cargas de partida
+  alimentos.js          catálogo: 72 alimentos, 5 refeições do dia, 8 categorias
+  alimentar.js          o plano alimentar embutido — alvos do dia e refeições de cada dia da semana
   execucao.js           passos de execução e erro mais comum de cada exercício
   anatomia.js           figura humana em SVG com os músculos trabalhados
   store.js              dados em localStorage + perfil, motor de sugestão e estatísticas

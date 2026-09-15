@@ -41,6 +41,7 @@ window.Vistas = window.Vistas || {};
         s.ativo ? cartaoAtivo(s.ativo) : cartaoSugestao(),
         accoesRapidas(),
         primeiraVez ? '' : (Store.planoActivo() ? cartaoPlano() : cartaoObjetivo()),
+        cartaoComida(),
         resumoSemana(),
         cobertura(musculos, atencao),
         ultimosTreinos()
@@ -86,6 +87,7 @@ window.Vistas = window.Vistas || {};
 
       raiz.addEventListener('click', e => {
         if (e.target.closest('[data-ver-plano]')) return App.ir('plano');
+        if (e.target.closest('[data-ver-comida]')) return App.ir('comida');
         if (e.target.closest('[data-livre-b]')) return comecarLivre();
         if (e.target.closest('[data-montar]')) return sheetTreino({ nome: '', ids: [], titulo: 'Montar treino' });
         if (e.target.closest('[data-circuito-b]')) return Comp.escolherCircuito(c => comecarCircuito(c));
@@ -268,6 +270,33 @@ window.Vistas = window.Vistas || {};
         <div class="linha mt3" style="flex-wrap:wrap;gap:6px">
           ${e.dias.map(d => `<span class="chip ${d.indice === e.proximo.indice ? 'chip--primaria' : ''} num">${esc(d.k)} · ${d.total}×</span>`).join('')}
         </div>
+      </button>
+    </section>`;
+  }
+
+  /** O que já comeste hoje, contra o alvo do dia */
+  function cartaoComida() {
+    const d = Store.diaComida();
+    const a = d.alvos;
+    const feitas = d.refeicoes.filter(r => r.itens.length).length;
+    const seguinte = d.refeicoes.find(r => !r.itens.length && r.plano);
+
+    return `<section class="seccao">
+      <div class="seccao__cab"><h2 class="seccao__tit">Comida</h2>
+        <button type="button" class="seccao__accao" data-ver-comida>${d.vazio ? 'Registar' : 'Ver dia'}</button></div>
+      <button type="button" class="cartao cartao--plano" data-ver-comida style="text-align:left;width:100%">
+        <div class="entre">
+          <span class="lista__t num">${UI.fmt(d.totais.kcal, 0)} kcal${a && a.kcal ? ` <span style="color:var(--txt-3);font-weight:600">de ${UI.fmt(a.kcal, 0)}</span>` : ''}</span>
+          <span class="chip num">${UI.fmt(d.totais.prot, 0)} g de proteína${a && a.prot ? ` / ${UI.fmt(a.prot, 0)}` : ''}</span>
+        </div>
+        ${a && a.kcal ? `<span class="macro__barra mt3">
+          <span class="macro__fill ${d.totais.kcal > a.kcal * 1.05 ? 'macro__fill--passou' : ''}"
+                style="width:${Math.min(100, Math.round(d.totais.kcal / a.kcal * 100))}%"></span></span>` : ''}
+        <p class="cartao__sub mt2">${d.vazio
+          ? (seguinte ? `Nada registado. O plano manda ${esc(seguinte.nome.toLowerCase())}: ${esc(seguinte.plano.linhas.map(l => l.n).join(', '))}.`
+                      : 'Ainda não registaste nada hoje.')
+          : `${feitas} ${feitas === 1 ? 'refeição registada' : 'refeições registadas'}${
+              seguinte ? ` · a seguir ${esc(seguinte.nome.toLowerCase())}` : ''}`}</p>
       </button>
     </section>`;
   }

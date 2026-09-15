@@ -61,6 +61,8 @@ window.Vistas = window.Vistas || {};
           </div>
         </section>
 
+        ${seccaoAlimentacao()}
+
         <section class="seccao">
           <div class="seccao__cab"><h2 class="seccao__tit">Objectivo</h2></div>
           <div class="pilha">
@@ -448,6 +450,12 @@ window.Vistas = window.Vistas || {};
 
       raiz.querySelectorAll('[data-troca]').forEach(b => b.addEventListener('click', () => {
         const k = b.dataset.troca;
+        if (k === 'plano-alimentar') {
+          const p = Store.activarPlanoAlimentar(!Store.planoAlimentar());
+          UI.haptic('medio');
+          UI.toast(p ? 'O plano alimentar passa a mandar nos alvos' : 'Plano alimentar desligado');
+          return App.render();
+        }
         if (k === 'plano') {
           const ligado = Store.activarPlano(!s.plano);
           UI.haptic('medio');
@@ -463,6 +471,17 @@ window.Vistas = window.Vistas || {};
 
       const verPlano = raiz.querySelector('[data-ver-plano]');
       if (verPlano) verPlano.addEventListener('click', () => App.ir('plano'));
+
+      const verComida = raiz.querySelector('[data-ver-comida]');
+      if (verComida) verComida.addEventListener('click', () => App.ir('comida'));
+
+      raiz.querySelectorAll('[data-alvo]').forEach(inp => inp.addEventListener('change', () => {
+        const v = UI.lerNumero(inp.value);
+        s.nutricao = s.nutricao || {};
+        s.nutricao[inp.dataset.alvo] = v && v > 0 ? v : null;
+        Store.guardar(true);
+        UI.toast('Alvo guardado', 'sucesso');
+      }));
 
       raiz.querySelectorAll('[data-uni]').forEach(b => b.addEventListener('click', () => {
         s.unidade = b.dataset.uni;
@@ -515,6 +534,62 @@ window.Vistas = window.Vistas || {};
               style="text-align:center;font-size:var(--t-xl);font-weight:800">${UI.mmss(valor)}</span>
         <button type="button" class="btn-icone" data-descanso="${chave}" data-d="15" aria-label="Mais 15 segundos em ${esc(label)}">${icone('mais', 22)}</button>
       </div>
+    </div>`;
+  }
+
+  /* ---------- alimentação ---------- */
+
+  /**
+   * Alvos do dia. Com o plano alimentar ligado são os dele e os campos ficam
+   * de fora — é o ficheiro que manda, como no plano de treino.
+   */
+  function seccaoAlimentacao() {
+    const P = window.PLANO_ALIMENTAR;
+    const ligado = !!Store.planoAlimentar();
+    const alvos = Store.alvosNutricao();
+    const n = Store.state.settings.nutricao || {};
+    const registos = (Store.state.comidas || []).length;
+    const dias = Store.diasComRegisto().length;
+
+    return `<section class="seccao">
+      <div class="seccao__cab"><h2 class="seccao__tit">Alimentação</h2>
+        <button type="button" class="seccao__accao" data-ver-comida>Abrir</button></div>
+      <div class="cartao">
+        ${P ? troca('plano-alimentar', P.nome, 'Os alvos do dia e as refeições saem do plano', ligado) : ''}
+        ${ligado ? `<hr class="divisor">
+          <div class="linha" style="flex-wrap:wrap;gap:6px">
+            <span class="chip num">${P.alvos.kcal} kcal</span>
+            <span class="chip num">${P.alvos.prot} g de proteína</span>
+            <span class="chip num">${P.alvos.hc} g de hidratos</span>
+            <span class="chip num">${P.alvos.gord} g de gordura</span>
+          </div>
+          <p class="campo__ajuda">Versão ${P.versao}, revisto a ${esc(Store.D.curto(P.revisto))}.
+            Muda-se em <strong>js/alimentar.js</strong>, como o plano de treino. Desliga isto para
+            escreveres os alvos à mão.</p>`
+        : `<hr class="divisor">
+          <span class="campo__l">Alvos do dia</span>
+          <div class="grelha-2 mt2">
+            ${alvoCampo('kcal', 'Calorias', n.kcal, 'kcal')}
+            ${alvoCampo('prot', 'Proteína', n.prot, 'g')}
+            ${alvoCampo('hc', 'Hidratos', n.hc, 'g')}
+            ${alvoCampo('gord', 'Gordura', n.gord, 'g')}
+          </div>
+          <p class="campo__ajuda">${alvos
+            ? 'Deixa em branco o que não quiseres seguir.'
+            : 'Sem alvos, a app soma o que comes mas não tem contra o que comparar.'}</p>`}
+        <hr class="divisor">
+        <p class="cartao__sub num">${registos} ${registos === 1 ? 'alimento registado' : 'alimentos registados'}
+          em ${dias} ${dias === 1 ? 'dia' : 'dias'}${(Store.state.alimentos || []).length
+            ? ` · ${Store.state.alimentos.length} alimentos criados por ti` : ''}</p>
+      </div>
+    </section>`;
+  }
+
+  function alvoCampo(chave, label, valor, unidade) {
+    return `<div class="campo" style="margin-bottom:0">
+      <label class="campo__l" for="al-${chave}">${esc(label)} (${esc(unidade)})</label>
+      <input class="entrada num" id="al-${chave}" type="text" inputmode="decimal" autocomplete="off"
+             data-alvo="${chave}" value="${valor != null ? esc(String(valor)) : ''}" placeholder="—">
     </div>`;
   }
 
