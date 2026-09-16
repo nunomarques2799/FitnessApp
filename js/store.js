@@ -1988,6 +1988,92 @@
     return L.join('\n');
   }
 
+  /* ---------- registo alimentar em ficheiro ---------- */
+
+  /**
+   * Só o registo alimentar, em JSON: as linhas e os teus alimentos que elas usam.
+   * É o ficheiro que se leva para outro telemóvel ou que volta corrigido.
+   */
+  function exportarComida() {
+    const comidas = (state.comidas || []).slice().sort((a, b) => a.data.localeCompare(b.data) || a.criadoEm - b.criadoEm);
+    const usados = new Set(comidas.map(c => c.aId));
+    return JSON.stringify({
+      tipo: 'registo-alimentar', versao: 1, exportadoEm: new Date().toISOString(),
+      comidas, alimentos: (state.alimentos || []).filter(a => usados.has(a.id))
+    }, null, 2);
+  }
+
+  /**
+   * Lê um ficheiro de registo — o de cima ou uma cópia de segurança inteira —
+   * e devolve as linhas já normalizadas, sem mexer em nada.
+   * Cada linha precisa de `data`; o resto preenche-se: com `aId` do catálogo e
+   * sem `kcal`, os macros saem do alimento; com `kcal`, valem os números da linha.
+   */
+  function lerRegistoComida(json) {
+    const dados = typeof json === 'string' ? JSON.parse(json) : json;
+    const brutas = Array.isArray(dados) ? dados : dados && dados.comidas;
+    if (!Array.isArray(brutas)) throw new Error('Ficheiro sem registo alimentar');
+    const alimentosFicheiro = (dados && Array.isArray(dados.alimentos) ? dados.alimentos : [])
+      .filter(a => a && a.id && a.n);
+    const doFicheiro = id => alimentosFicheiro.find(a => a.id === id) || null;
+    const refs = ordemRefeicoes();
+    const num = v => Math.max(0, +v || 0);
+    const agora = Date.now();
+
+    const linhas = brutas.map((c, i) => {
+      if (!c || !/^\d{4}-\d{2}-\d{2}$/.test(c.data || '')) return null;
+      const a = c.aId ? (alimento(c.aId) || doFicheiro(c.aId)) : null;
+      const n = String(c.n || (a && a.n) || '').trim();
+      if (!n) return null;
+      const tipo = c.tipo === 'g' || c.tipo === 'un' ? c.tipo : (a ? a.tipo : 'un');
+      const q = +c.q > 0 ? +c.q : (tipo === 'g' ? ((a && a.g) || 100) : 1);
+      const macros = c.kcal != null
+        ? { kcal: Math.round(num(c.kcal)), prot: num(c.prot), hc: num(c.hc), gord: num(c.gord) }
+        : a ? macrosDe(a, q) : null;
+      if (!macros) return null;
+      return Object.assign({
+        id: c.id || 'c' + (agora + i).toString(36) + Math.random().toString(36).slice(2, 6),
+        data: c.data,
+        refeicao: refs.includes(c.refeicao) ? c.refeicao : 'snack',
+        aId: c.aId || null, n, tipo,
+        porcao: tipo === 'g' ? null : (c.porcao || (a && a.porcao) || null), q,
+        nota: c.nota || null, doPlano: !!c.doPlano,
+        criadoEm: +c.criadoEm || agora + i
+      }, macros);
+    }).filter(Boolean);
+
+    return {
+      linhas,
+      ignoradas: brutas.length - linhas.length,
+      dias: [...new Set(linhas.map(c => c.data))].sort(),
+      alimentos: alimentosFicheiro
+    };
+  }
+
+  /**
+   * Mete no registo as linhas de um ficheiro.
+   *   'juntar' → só entra o que ainda não cá está (pelo id da linha)
+   *   'dias'   → cada dia que vem no ficheiro fica exactamente como no ficheiro
+   * Os teus alimentos que vêm junto entram se ainda não existirem.
+   */
+  function importarComida(json, modo) {
+    const r = lerRegistoComida(json);
+    state.comidas = state.comidas || [];
+    let novas = r.linhas;
+    if (modo === 'dias') {
+      const dias = new Set(r.dias);
+      state.comidas = state.comidas.filter(c => !dias.has(c.data));
+    } else {
+      const ids = new Set(state.comidas.map(c => c.id));
+      novas = novas.filter(c => !ids.has(c.id));
+    }
+    novas.forEach(c => state.comidas.push(c));
+    state.alimentos = state.alimentos || [];
+    r.alimentos.forEach(a => { if (!alimento(a.id)) state.alimentos.push(Object.assign({ custom: true }, a)); });
+    guardar(true);
+    return { linhas: novas.length, dias: r.dias.length };
+  }
+
   /* ---------- backup ---------- */
   function exportar() {
     return JSON.stringify({ ...state, exportadoEm: new Date().toISOString() }, null, 2);
@@ -2063,6 +2149,7 @@
     planoAlimentar, activarPlanoAlimentar, alvosNutricao, planoDoDia, registarRefeicaoDoPlano,
     registarComida, comida, actualizarComida, apagarComida, comidasDoDia, totaisComida,
     diaComida, diasComRegisto, semanaComida, relatorioComida,
+    exportarComida, lerRegistoComida, importarComida,
     exportar, importar, apagarTudo
   };
 })(window);

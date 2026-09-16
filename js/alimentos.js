@@ -70,6 +70,7 @@
     { id: 'batata', n: 'Batata cozida', cat: 'hidratos', tipo: 'g', g: 150, kcal: 87, prot: 2, hc: 20, gord: 0.1, plano: true },
     { id: 'batata-doce', n: 'Batata-doce cozida', cat: 'hidratos', tipo: 'g', g: 150, kcal: 90, prot: 2, hc: 21, gord: 0.1 },
     { id: 'batata-frita', n: 'Batata frita', cat: 'hidratos', tipo: 'g', g: 150, kcal: 312, prot: 3.4, hc: 41, gord: 15 },
+    { id: 'pure-batata', n: 'Puré de batata', cat: 'hidratos', tipo: 'g', g: 200, kcal: 95, prot: 2, hc: 14, gord: 3.5 },
     { id: 'pao-integral', n: 'Pão integral', cat: 'hidratos', tipo: 'un', porcao: 'fatia', g: 35, kcal: 90, prot: 3.5, hc: 15, gord: 1.2, plano: true },
     { id: 'torrada-integral', n: 'Torrada integral', cat: 'hidratos', tipo: 'un', porcao: 'torrada', g: 15, kcal: 55, prot: 2, hc: 10, gord: 0.8, plano: true },
     { id: 'papo-seco', n: 'Papo-seco', cat: 'hidratos', tipo: 'un', porcao: 'pão', g: 60, kcal: 165, prot: 5.5, hc: 32, gord: 1.3 },
@@ -96,6 +97,7 @@
     /* ---------- lacticínios ---------- */
     { id: 'iogurte-proteico', n: 'Iogurte proteico Continente', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 160, kcal: 140, prot: 20, hc: 12, gord: 1.5, plano: true },
     { id: 'iogurte-grego', n: 'Iogurte grego', cat: 'lacticinios', tipo: 'g', g: 170, kcal: 71, prot: 8, hc: 4, gord: 2.6, plano: true },
+    { id: 'mythos', n: 'Iogurte grego Mythos Continente', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 125, kcal: 125, prot: 4.5, hc: 4.3, gord: 10 },
     { id: 'iogurte-natural', n: 'Iogurte natural', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 125, kcal: 72, prot: 4.3, hc: 5.4, gord: 3.8 },
     { id: 'leite', n: 'Leite meio-gordo', cat: 'lacticinios', tipo: 'g', g: 200, kcal: 46, prot: 3.2, hc: 4.8, gord: 1.6 },
     { id: 'queijo-flamengo', n: 'Queijo flamengo', cat: 'lacticinios', tipo: 'un', porcao: 'fatia', g: 20, kcal: 66, prot: 5, hc: 0.4, gord: 5 },
@@ -118,6 +120,11 @@
     { id: 'frango-assado', n: 'Frango assado com arroz', cat: 'prato', tipo: 'un', porcao: 'dose', g: 400, kcal: 650, prot: 45, hc: 60, gord: 22 },
     { id: 'bolonhesa', n: 'Massa à bolonhesa', cat: 'prato', tipo: 'un', porcao: 'dose', g: 400, kcal: 600, prot: 30, hc: 70, gord: 20 },
     { id: 'pizza', n: 'Pizza', cat: 'prato', tipo: 'un', porcao: 'fatia', g: 110, kcal: 285, prot: 12, hc: 36, gord: 10 },
+    // H3: valores oficiais de h3.com (Info Nutri). O Tuga é o hambúrguer médio
+    // com ovo estrelado, molho tuga e alho; arroz e batatas contam-se à parte.
+    { id: 'h3-tuga', n: 'H3 Tuga (hambúrguer com ovo e molho)', cat: 'prato', tipo: 'un', porcao: 'hambúrguer', g: 180, kcal: 502, prot: 43.6, hc: 9.7, gord: 32.3 },
+    { id: 'h3-arroz', n: 'Arroz do H3', cat: 'prato', tipo: 'un', porcao: 'dose', kcal: 390, prot: 6.4, hc: 70, gord: 8.4 },
+    { id: 'h3-batatas', n: 'Batatas do H3', cat: 'prato', tipo: 'un', porcao: 'dose', kcal: 411, prot: 5, hc: 47.7, gord: 21.5 },
     { id: 'hamburguer', n: 'Hambúrguer', cat: 'prato', tipo: 'un', porcao: 'hambúrguer', g: 220, kcal: 550, prot: 27, hc: 45, gord: 28 },
     { id: 'tosta-mista', n: 'Tosta mista', cat: 'prato', tipo: 'un', porcao: 'tosta', g: 180, kcal: 380, prot: 20, hc: 33, gord: 18 },
     { id: 'sandes-frango', n: 'Sandes de frango', cat: 'prato', tipo: 'un', porcao: 'sandes', g: 200, kcal: 400, prot: 28, hc: 42, gord: 12 },
@@ -130,6 +137,8 @@
     { id: 'cerveja', n: 'Cerveja', cat: 'bebida', tipo: 'un', porcao: 'garrafa (33 cl)', g: 330, kcal: 140, prot: 1.5, hc: 11, gord: 0 },
     { id: 'vinho', n: 'Vinho', cat: 'bebida', tipo: 'un', porcao: 'copo', g: 150, kcal: 125, prot: 0, hc: 4, gord: 0 },
     { id: 'refrigerante', n: 'Refrigerante', cat: 'bebida', tipo: 'un', porcao: 'lata', g: 330, kcal: 139, prot: 0, hc: 35, gord: 0 },
+    // em ml, que num batido de fruta com água é quase igual a gramas
+    { id: 'batido-fruta', n: 'Batido de fruta (banana, manga, pera e água)', cat: 'bebida', tipo: 'g', g: 300, kcal: 57, prot: 0.7, hc: 14, gord: 0.2 },
     { id: 'sumo-laranja', n: 'Sumo de laranja natural', cat: 'bebida', tipo: 'g', g: 200, kcal: 45, prot: 0.7, hc: 10, gord: 0.2 },
 
     /* ---------- suplementos ---------- */

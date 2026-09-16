@@ -70,6 +70,14 @@ window.Vistas = window.Vistas || {};
         if (e.target.closest('[data-alimentos]')) return sheetAlimentos();
         if (e.target.closest('[data-alvos]')) return App.ir('ajustes');
         if (e.target.closest('[data-copiar-ontem]')) return copiarDia(data);
+        if (e.target.closest('[data-exportar-registo]')) return exportarRegisto();
+        if (e.target.closest('[data-importar-registo]')) return raiz.querySelector('[data-ficheiro-registo]').click();
+      });
+
+      raiz.querySelector('[data-ficheiro-registo]').addEventListener('change', e => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (f) importarRegisto(f);
       });
     }
   };
@@ -202,6 +210,15 @@ window.Vistas = window.Vistas || {};
         <button type="button" class="btn btn--secundario btn--bloco" data-alimentos>
           ${icone('lista', 18)}Alimentos guardados
         </button>
+        <div class="grelha-2">
+          <button type="button" class="btn btn--fantasma" data-exportar-registo>
+            ${icone('descarregar', 18)}Exportar registo
+          </button>
+          <button type="button" class="btn btn--fantasma" data-importar-registo>
+            ${icone('carregar', 18)}Importar registo
+          </button>
+        </div>
+        <input type="file" accept="application/json,.json" hidden data-ficheiro-registo>
         ${d.vazio ? `<button type="button" class="btn btn--fantasma btn--bloco" data-copiar-ontem>
           ${icone('duplicar', 18)}Copiar o último dia registado
         </button>` : ''}
@@ -237,6 +254,82 @@ window.Vistas = window.Vistas || {};
     UI.haptic('sucesso');
     UI.toast(`${itens.length} alimentos copiados`, 'sucesso');
     App.render();
+  }
+
+  /* ---------- registo em ficheiro ---------- */
+
+  async function exportarRegisto() {
+    if (!Store.diasComRegisto().length) { UI.toast('Ainda não há nada registado', 'erro'); return; }
+    const json = Store.exportarComida();
+    const nome = `registo-alimentar-${Store.D.hoje()}.json`;
+    const ficheiro = new File([json], nome, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [ficheiro] })) {
+      try { await navigator.share({ files: [ficheiro], title: 'Registo alimentar' }); return; }
+      catch (err) { if (err && err.name === 'AbortError') return; }
+    }
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    UI.toast('Ficheiro guardado', 'sucesso');
+  }
+
+  /** Mostra o que o ficheiro traz, dia a dia, e pergunta se junta ou substitui */
+  function importarRegisto(f) {
+    const leitor = new FileReader();
+    leitor.onerror = () => UI.toast('Não foi possível ler o ficheiro', 'erro');
+    leitor.onload = () => {
+      let r;
+      try {
+        r = Store.lerRegistoComida(leitor.result);
+        if (!r.linhas.length) throw new Error();
+      } catch (err) {
+        UI.haptic('erro');
+        UI.toast('O ficheiro não traz nenhum registo alimentar', 'erro');
+        return;
+      }
+      const porDia = r.dias.map(dia => {
+        const linhas = r.linhas.filter(c => c.data === dia);
+        const t = Store.somarMacros(linhas);
+        const agora = Store.totaisComida(dia);
+        return `<div class="lista__i">
+          <div class="lista__corpo">
+            <div class="lista__t">${esc(legivel(dia))}</div>
+            <div class="lista__s num">${linhas.length} ${linhas.length === 1 ? 'alimento' : 'alimentos'} · ${UI.fmt(t.prot, 0)} g de proteína${agora.kcal ? ` · tens agora ${UI.fmt(agora.kcal, 0)} kcal` : ''}</div>
+          </div>
+          <span class="lista__fim num" style="font-weight:700">${UI.fmt(t.kcal, 0)} kcal</span>
+        </div>`;
+      }).join('');
+
+      const sh = UI.sheet({
+        titulo: 'Importar registo',
+        alto: r.dias.length > 4,
+        html: `<div class="lista mb3">${porDia}</div>
+          ${r.ignoradas ? `<p class="campo__ajuda">${r.ignoradas} ${r.ignoradas === 1 ? 'linha ficou' : 'linhas ficaram'} de fora por não terem dia, nome ou calorias.</p>` : ''}
+          <p class="campo__ajuda"><strong>Substituir estes dias</strong> deixa cada dia do ficheiro exactamente como vem
+            nele — é o que serve para corrigir um dia. <strong>Juntar</strong> só acrescenta o que ainda cá não está.</p>`,
+        rodape: `<button type="button" class="btn btn--secundario" data-juntar>Juntar</button>
+                 <button type="button" class="btn btn--primario" data-dias>Substituir estes dias</button>`
+      });
+      sh.painel.querySelector('[data-juntar]').addEventListener('click', () => aplicar('juntar'));
+      sh.painel.querySelector('[data-dias]').addEventListener('click', () => aplicar('dias'));
+
+      function aplicar(modo) {
+        try {
+          const n = Store.importarComida(leitor.result, modo);
+          UI.fecharSheet();
+          UI.haptic('sucesso');
+          UI.toast(n.linhas
+            ? `${n.linhas} ${n.linhas === 1 ? 'alimento importado' : 'alimentos importados'}`
+            : 'Nada de novo — já estava tudo cá', 'sucesso');
+          App.render();
+        } catch (err) {
+          UI.toast('Não foi possível importar', 'erro');
+        }
+      }
+    };
+    leitor.readAsText(f);
   }
 
   /* ---------- escolher o que comeste ---------- */

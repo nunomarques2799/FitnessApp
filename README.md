@@ -242,7 +242,7 @@ Cada alimento entra de uma de duas maneiras, conforme o que faz sentido:
 | **Por peso** | valores por 100 g, e depois os gramas que comeste | o que pesas: arroz, frango, granola |
 | **Por porção** | valores de uma porção inteira, e depois quantas comeste | o que não pesas: um ovo, uma lata de atum, um bitoque |
 
-O catálogo traz 72 alimentos com valores de referência — os do plano, mais o que se come mesmo:
+O catálogo traz 78 alimentos com valores de referência — os do plano, mais o que se come mesmo:
 bitoque, francesinha, bacalhau à Brás, pastel de nata, cerveja. **Registas um bitoque uma vez e
 ele fica guardado**: da próxima é procurar e tocar, e os mais usados aparecem primeiro. Qualquer
 valor se corrige com o rótulo à frente (**Comida → Alimentos guardados**), e o que corrigires fica
@@ -256,6 +256,27 @@ nenhum dos três macros.
 O registo guarda as calorias e os macros **já calculados** em cada linha. É de propósito: corrigir
 hoje as calorias do bitoque não pode reescrever o que comeste no mês passado, tal como acertar o
 plano de treino não mexe nas séries já registadas.
+
+### Exportar e importar o registo
+
+**Comida → Exportar registo** gera um JSON só com o registo alimentar: todas as linhas e os
+alimentos teus que elas usam. **Importar registo** lê esse ficheiro (ou uma cópia de segurança
+inteira), mostra o que traz dia a dia e deixa escolher:
+
+- **Substituir estes dias** — cada dia do ficheiro fica exactamente como vem nele. É assim que se
+  corrige um dia registado à pressa.
+- **Juntar** — só entra o que ainda não está no telemóvel.
+
+Cada linha precisa de `data` e de `refeicao` (`pa`, `almoco`, `lanche`, `jantar`, `snack`). Com o `aId`
+de um alimento do catálogo e a quantidade `q`, os macros fazem-se sozinhos; com `n` e `kcal`,
+`prot`, `hc`, `gord` escritos, valem esses números:
+
+```json
+{ "comidas": [
+  { "data": "2026-09-16", "refeicao": "almoco", "aId": "h3-arroz", "q": 2 },
+  { "data": "2026-09-16", "refeicao": "pa", "n": "Pão", "tipo": "g", "q": 100, "kcal": 270, "prot": 9, "hc": 54, "gord": 2 }
+] }
+```
 
 ### Rever a alimentação ao fim da semana
 
