@@ -25,9 +25,9 @@
   const PLANO = {
     id: 'nuno-2000',
     nome: 'Plano de 2000 kcal',
-    versao: 1,
+    versao: 2,
     criadoEm: '2026-09-15',
-    revisto: '2026-09-15',
+    revisto: '2026-09-16',
     origem: 'Plano semanal de 2000 kcal/dia, escrito para acompanhar o plano de treino de quatro dias',
 
     /* Alvos do dia. Iguais todos os dias — o que muda é de onde vêm. */
@@ -37,25 +37,29 @@
        andar a gritar por 40 kcal de diferença */
     margem: { kcal: 150, prot: 15 },
 
-    notasDaRevisao: 'Versão 1. O plano entra na app tal como estava escrito, com duas coisas '
-      + 'tornadas explícitas porque a app precisa de números: as torradas de domingo passam a ser '
-      + 'duas (uma torrada de 15 g não é um pequeno-almoço) e onde dizia "carne magra" fica bife de '
-      + 'vaca, que é a carne magra que já estava escrita noutros dias. As calorias que a app mostra '
-      + 'são somadas a partir do catálogo de alimentos e não dos totais arredondados do plano, por '
-      + 'isso podem dar uns 50 a 100 kcal abaixo do que lá está escrito — o que conta é a soma dos '
-      + 'alimentos, que é a mesma que vais registar. Somadas assim, as sete ementas dão em média '
-      + '1907 kcal com 178 g de proteína e 160 g de hidratos, e não os 2000 kcal com 150 g de '
-      + 'proteína e 226 g de hidratos que o alvo diz: as ementas trazem mais proteína e menos '
-      + 'hidratos do que o alvo escrito. Os alvos ficam como estavam — são eles que a app mostra — '
-      + 'mas isto é para decidir na primeira revisão: ou os alvos descem a proteína e sobem os '
-      + 'hidratos, ou as ementas ganham mais uma dose de arroz ou massa por dia. Quinta-feira é o '
-      + 'dia mais fraco de todos, 1673 kcal, porque o atum e o peixe branco são muito magros.',
+    notasDaRevisao: 'Versão 2. O plano passa a ser feito com o que está na despensa, com os '
+      + 'valores tirados dos rótulos: o iogurte de beber (+Proteína, 280 g, 136 kcal e 20 g de '
+      + 'proteína), o iogurte de comer (+Proteína baunilha, 200 g, 92 kcal e 14 g), a aveia e a '
+      + 'granola Nacional. Na versão 1 as ementas davam 1907 kcal com 178 g de proteína e só 160 g '
+      + 'de hidratos, longe do alvo de 226 g; os alvos ficam iguais e são as ementas que andam. '
+      + 'A aveia entra seis vezes por semana, ao pequeno-almoço ou ao lanche, e o arroz, a massa e '
+      + 'a batata sobem para 180 a 250 g. Para pagar isso sai proteína que estava a mais: dois ovos '
+      + 'em vez de três quando há iogurte de beber, frango e carne de vaca a 150 g, salmão a 150 g '
+      + '(é o que traz mais gordura). O iogurte grego sai do plano — o que há em casa é o Mythos, '
+      + 'com 8 g de gordura e 3,6 g de proteína por 100 g — e entra no lugar dele o de comer. '
+      + 'Saem também os cajus e a maior parte do azeite, que eram gordura sem proteína. '
+      + 'Quinta-feira ao jantar leva uma lata do atum em óleo em vez de duas ao natural, com dois '
+      + 'ovos cozidos para a proteína não cair. Somadas pelo catálogo, as sete ementas dão agora em '
+      + 'média 2035 kcal, 167 g de proteína, 224 g de hidratos e 49 g de gordura; o dia mais baixo '
+      + 'é quinta, com 2010 kcal e 158 g de proteína.',
 
     notas: [
       'Proteína distribuída por 30 a 40 g em cada refeição principal, em vez de toda ao jantar.',
       'Hidratos concentrados à volta do treino; nos dias de descanso podes cortar uma dose de arroz ou massa.',
-      'A gordura vem do azeite, dos ovos, da manteiga de amendoim e dos frutos secos — é aí que mexes se precisares de margem.',
+      'A gordura vem sobretudo dos ovos, do salmão e da granola — é aí que mexes se precisares de margem.',
       'Podes trocar entre si as proteínas (frango, peru, peixe, carne magra, carne picada, atum) e os hidratos (arroz, batata, massa), mantendo os gramas.',
+      'O iogurte de beber e um scoop de whey valem o mesmo em proteína: troca um pelo outro à vontade.',
+      'A aveia pode ir dentro do iogurte de comer ou cozida em água; os gramas são da aveia crua.',
       'Défice mais agressivo do que os 300 kcal iniciais: pesa a comida sempre que der.'
     ],
 
@@ -64,60 +68,60 @@
       1: {
         nome: 'Segunda-feira',
         refeicoes: {
-          pa:     [{ a: 'ovo', q: 3, nota: 'mexidos' }, { a: 'iogurte-proteico', q: 1 }, { a: 'pao-integral', q: 1 }],
-          almoco: [{ a: 'picada5', q: 180 }, { a: 'cogumelos', q: 100 }, { a: 'arroz', q: 150 }, { a: 'feijao-verde', q: 150 }],
-          lanche: [{ a: 'whey', q: 1 }, { a: 'banana', q: 1 }],
-          jantar: [{ a: 'salmao', q: 180 }, { a: 'batata', q: 150 }, { a: 'salada', q: 1 }],
+          pa:     [{ a: 'ovo', q: 2, nota: 'mexidos' }, { a: 'iogurte-proteico', q: 1 }, { a: 'aveia', q: 40 }, { a: 'banana', q: 1 }],
+          almoco: [{ a: 'picada5', q: 180 }, { a: 'cogumelos', q: 100 }, { a: 'arroz', q: 200 }, { a: 'feijao-verde', q: 150 }],
+          lanche: [{ a: 'iogurte-proteina-baunilha', q: 1 }, { a: 'fruta', q: 1 }],
+          jantar: [{ a: 'salmao', q: 150 }, { a: 'batata', q: 250 }, { a: 'salada', q: 1 }],
           snack:  [{ a: 'iogurte-proteico', q: 1 }]
         }
       },
       2: {
         nome: 'Terça-feira',
         refeicoes: {
-          pa:     [{ a: 'iogurte-grego', q: 170 }, { a: 'granola', q: 50 }, { a: 'fruta', q: 1 }],
-          almoco: [{ a: 'peru', q: 180 }, { a: 'massa-integral', q: 150 }, { a: 'courgette', q: 150 }],
+          pa:     [{ a: 'iogurte-proteina-baunilha', q: 1 }, { a: 'aveia', q: 40 }, { a: 'granola', q: 20 }, { a: 'fruta', q: 1 }],
+          almoco: [{ a: 'peru', q: 180 }, { a: 'massa-integral', q: 200 }, { a: 'courgette', q: 150 }],
           lanche: [{ a: 'ovo', q: 2, nota: 'cozidos' }, { a: 'fruta', q: 1 }],
-          jantar: [{ a: 'salmao', q: 180 }, { a: 'arroz', q: 150 }, { a: 'espinafres', q: 150 }],
-          snack:  [{ a: 'whey', q: 1 }, { a: 'caju', q: 15 }]
+          jantar: [{ a: 'salmao', q: 150 }, { a: 'arroz', q: 180 }, { a: 'espinafres', q: 150 }],
+          snack:  [{ a: 'iogurte-proteico', q: 1 }]
         }
       },
       3: {
         nome: 'Quarta-feira',
         refeicoes: {
-          pa:     [{ a: 'ovo', q: 3 }, { a: 'pao-integral', q: 1 }, { a: 'manteiga-amendoim', q: 15 }],
-          almoco: [{ a: 'frango', q: 180 }, { a: 'batata', q: 150 }, { a: 'salada', q: 1 }, { a: 'azeite', q: 1 }],
-          lanche: [{ a: 'iogurte-proteico', q: 1 }],
-          jantar: [{ a: 'vaca', q: 180 }, { a: 'arroz', q: 120 }, { a: 'legumes-salteados', q: 150 }],
-          snack:  [{ a: 'whey', q: 1 }, { a: 'fruta', q: 1 }]
+          pa:     [{ a: 'ovo', q: 3 }, { a: 'pao-integral', q: 2 }],
+          almoco: [{ a: 'frango', q: 150 }, { a: 'batata', q: 250 }, { a: 'salada', q: 1 }],
+          lanche: [{ a: 'iogurte-proteina-baunilha', q: 1 }, { a: 'aveia', q: 30 }, { a: 'fruta', q: 1 }],
+          jantar: [{ a: 'vaca', q: 150 }, { a: 'arroz', q: 180 }, { a: 'legumes-salteados', q: 150 }],
+          snack:  [{ a: 'iogurte-proteico', q: 1 }, { a: 'fruta', q: 1 }]
         }
       },
       4: {
         nome: 'Quinta-feira',
         refeicoes: {
-          pa:     [{ a: 'iogurte-grego', q: 170 }, { a: 'granola', q: 40 }, { a: 'fruta', q: 1 }],
-          almoco: [{ a: 'peixe-branco', q: 180 }, { a: 'massa', q: 150 }, { a: 'salada', q: 1 }],
-          lanche: [{ a: 'ovo', q: 2, nota: 'cozidos' }, { a: 'fruta', q: 1 }],
-          jantar: [{ a: 'atum-lata', q: 2, nota: 'ao natural, escorrido' }, { a: 'arroz', q: 150 }, { a: 'salada', q: 1 }],
-          snack:  [{ a: 'whey', q: 1 }, { a: 'caju', q: 15 }]
+          pa:     [{ a: 'iogurte-proteina-baunilha', q: 1 }, { a: 'aveia', q: 50 }, { a: 'granola', q: 20 }, { a: 'fruta', q: 1 }],
+          almoco: [{ a: 'peixe-branco', q: 180 }, { a: 'massa', q: 220 }, { a: 'salada', q: 1 }, { a: 'azeite', q: 1 }],
+          lanche: [{ a: 'iogurte-proteico', q: 1 }, { a: 'fruta', q: 1 }],
+          jantar: [{ a: 'atum-oleo', q: 1, nota: 'escorrido' }, { a: 'ovo', q: 2, nota: 'cozidos' }, { a: 'arroz', q: 180 }, { a: 'salada', q: 1 }],
+          snack:  [{ a: 'whey', q: 1 }]
         }
       },
       5: {
         nome: 'Sexta-feira',
         refeicoes: {
-          pa:     [{ a: 'ovo', q: 3 }, { a: 'iogurte-proteico', q: 1 }, { a: 'pao-integral', q: 1 }],
-          almoco: [{ a: 'vaca', q: 180 }, { a: 'arroz', q: 150 }, { a: 'salada', q: 1 }],
-          lanche: [{ a: 'iogurte-proteico', q: 1 }],
-          jantar: [{ a: 'salmao', q: 180 }, { a: 'batata', q: 120 }, { a: 'espargos', q: 120 }],
-          snack:  [{ a: 'whey', q: 1 }, { a: 'fruta', q: 1 }]
+          pa:     [{ a: 'ovo', q: 2 }, { a: 'iogurte-proteico', q: 1 }, { a: 'aveia', q: 40 }, { a: 'banana', q: 1 }],
+          almoco: [{ a: 'vaca', q: 150 }, { a: 'arroz', q: 200 }, { a: 'salada', q: 1 }],
+          lanche: [{ a: 'iogurte-proteina-baunilha', q: 1 }, { a: 'granola', q: 30 }],
+          jantar: [{ a: 'salmao', q: 120 }, { a: 'batata', q: 200 }, { a: 'espargos', q: 120 }],
+          snack:  [{ a: 'iogurte-proteico', q: 1 }, { a: 'fruta', q: 1 }]
         }
       },
       6: {
         nome: 'Sábado',
         refeicoes: {
-          pa:     [{ a: 'ovo', q: 3 }, { a: 'iogurte-proteico', q: 1 }, { a: 'pao-integral', q: 1 }],
-          almoco: [{ a: 'frango', q: 180 }, { a: 'massa', q: 150 }, { a: 'legumes-salteados', q: 150 }, { a: 'azeite', q: 1 }],
-          lanche: [{ a: 'iogurte-grego', q: 170 }, { a: 'granola', q: 30 }],
-          jantar: [{ a: 'peixe-branco', q: 180 }, { a: 'arroz', q: 150 }, { a: 'salada', q: 1 }],
+          pa:     [{ a: 'ovo', q: 2 }, { a: 'iogurte-proteico', q: 1 }, { a: 'aveia', q: 40 }, { a: 'banana', q: 1 }],
+          almoco: [{ a: 'frango', q: 150 }, { a: 'massa', q: 220 }, { a: 'legumes-salteados', q: 150 }],
+          lanche: [{ a: 'iogurte-proteina-baunilha', q: 1 }, { a: 'granola', q: 30 }],
+          jantar: [{ a: 'peixe-branco', q: 180 }, { a: 'arroz', q: 180 }, { a: 'salada', q: 1 }],
           snack:  [{ a: 'iogurte-proteico', q: 1 }]
         }
       },
@@ -125,10 +129,10 @@
         nome: 'Domingo',
         refeicoes: {
           pa:     [{ a: 'ovo', q: 3 }, { a: 'torrada-integral', q: 2 }, { a: 'manteiga-amendoim', q: 15 }],
-          almoco: [{ a: 'vaca', q: 180 }, { a: 'massa', q: 150 }, { a: 'salada', q: 1 }, { a: 'azeite', q: 1 }],
-          lanche: [{ a: 'whey', q: 1 }, { a: 'fruta', q: 1 }],
-          jantar: [{ a: 'peixe-branco', q: 180 }, { a: 'arroz', q: 120 }, { a: 'espargos', q: 120 }],
-          snack:  [{ a: 'iogurte-proteico', q: 1 }]
+          almoco: [{ a: 'vaca', q: 150 }, { a: 'massa', q: 220 }, { a: 'salada', q: 1 }],
+          lanche: [{ a: 'iogurte-proteina-baunilha', q: 1 }, { a: 'aveia', q: 30 }, { a: 'fruta', q: 1 }],
+          jantar: [{ a: 'peixe-branco', q: 180 }, { a: 'arroz', q: 150 }, { a: 'espargos', q: 120 }],
+          snack:  [{ a: 'iogurte-proteico', q: 1 }, { a: 'fruta', q: 1 }]
         }
       }
     }

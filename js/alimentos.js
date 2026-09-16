@@ -60,9 +60,9 @@
     { id: 'salmao', n: 'Salmão grelhado', cat: 'proteina', tipo: 'g', g: 180, kcal: 208, prot: 22, hc: 0, gord: 13, plano: true },
     { id: 'peixe-branco', n: 'Peixe branco (pescada, dourada)', cat: 'proteina', tipo: 'g', g: 180, kcal: 92, prot: 19, hc: 0, gord: 1.5, plano: true },
     { id: 'bacalhau', n: 'Bacalhau cozido', cat: 'proteina', tipo: 'g', g: 180, kcal: 105, prot: 23, hc: 0, gord: 1 },
-    { id: 'atum-lata', n: 'Atum ao natural (lata escorrida)', cat: 'proteina', tipo: 'un', porcao: 'lata', g: 80, kcal: 93, prot: 21, hc: 0, gord: 0.8, plano: true },
+    { id: 'atum-lata', n: 'Atum ao natural (lata escorrida)', cat: 'proteina', tipo: 'un', porcao: 'lata', g: 80, kcal: 93, prot: 21, hc: 0, gord: 0.8 },
     // rótulo: 194 kcal, 26 g de proteína e 10 g de gordura por 100 g escorridos; a lata dá 85 g
-    { id: 'atum-oleo', n: 'Atum posta em óleo Continente (lata escorrida)', cat: 'proteina', tipo: 'un', porcao: 'lata', g: 85, kcal: 165, prot: 22.1, hc: 0, gord: 8.5 },
+    { id: 'atum-oleo', n: 'Atum posta em óleo Continente (lata escorrida)', cat: 'proteina', tipo: 'un', porcao: 'lata', g: 85, kcal: 165, prot: 22.1, hc: 0, gord: 8.5, plano: true },
     { id: 'fiambre', n: 'Fiambre de peru', cat: 'proteina', tipo: 'un', porcao: 'fatia', g: 25, kcal: 28, prot: 4.5, hc: 0.5, gord: 0.8 },
 
     /* ---------- hidratos ---------- */
@@ -78,7 +78,7 @@
     { id: 'pao-integral', n: 'Pão integral', cat: 'hidratos', tipo: 'un', porcao: 'fatia', g: 35, kcal: 90, prot: 3.5, hc: 15, gord: 1.2, plano: true },
     { id: 'torrada-integral', n: 'Torrada integral', cat: 'hidratos', tipo: 'un', porcao: 'torrada', g: 15, kcal: 55, prot: 2, hc: 10, gord: 0.8, plano: true },
     { id: 'papo-seco', n: 'Papo-seco', cat: 'hidratos', tipo: 'un', porcao: 'pão', g: 60, kcal: 165, prot: 5.5, hc: 32, gord: 1.3 },
-    { id: 'aveia', n: 'Aveia em flocos', cat: 'hidratos', tipo: 'g', g: 60, kcal: 379, prot: 13, hc: 67, gord: 7 },
+    { id: 'aveia', n: 'Aveia em flocos finos Continente', cat: 'hidratos', tipo: 'g', g: 40, kcal: 366, prot: 13, hc: 56, gord: 7.8, plano: true },
     { id: 'granola', n: 'Granola Nacional', cat: 'hidratos', tipo: 'g', g: 45, kcal: 456, prot: 10, hc: 53, gord: 21, plano: true },
     { id: 'feijao', n: 'Feijão cozido', cat: 'hidratos', tipo: 'g', g: 120, kcal: 127, prot: 8.7, hc: 22, gord: 0.5 },
     { id: 'grao', n: 'Grão-de-bico cozido', cat: 'hidratos', tipo: 'g', g: 120, kcal: 164, prot: 8.9, hc: 27, gord: 2.6 },
@@ -99,9 +99,9 @@
     { id: 'abacate', n: 'Abacate', cat: 'legumes', tipo: 'g', g: 80, kcal: 160, prot: 2, hc: 9, gord: 15 },
 
     /* ---------- lacticínios ---------- */
-    { id: 'iogurte-proteico', n: 'Iogurte proteico Continente', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 160, kcal: 140, prot: 20, hc: 12, gord: 1.5, plano: true },
-    { id: 'iogurte-proteina-baunilha', n: 'Iogurte +Proteína baunilha Continente (sem lactose)', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 200, kcal: 92, prot: 14.4, hc: 7.8, gord: 0 },
-    { id: 'iogurte-grego', n: 'Iogurte grego', cat: 'lacticinios', tipo: 'g', g: 170, kcal: 71, prot: 8, hc: 4, gord: 2.6, plano: true },
+    { id: 'iogurte-proteico', n: 'Iogurte líquido +Proteína Continente (de beber)', cat: 'lacticinios', tipo: 'un', porcao: 'garrafa', g: 280, kcal: 136, prot: 20, hc: 11.1, gord: 1.2, plano: true },
+    { id: 'iogurte-proteina-baunilha', n: 'Iogurte +Proteína baunilha Continente (de comer)', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 200, kcal: 92, prot: 14.4, hc: 7.8, gord: 0, plano: true },
+    { id: 'iogurte-grego', n: 'Iogurte grego', cat: 'lacticinios', tipo: 'g', g: 170, kcal: 71, prot: 8, hc: 4, gord: 2.6 },
     { id: 'mythos', n: 'Iogurte grego Mythos Continente', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 125, kcal: 125, prot: 4.5, hc: 4.3, gord: 10 },
     { id: 'iogurte-natural', n: 'Iogurte natural', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 125, kcal: 72, prot: 4.3, hc: 5.4, gord: 3.8 },
     { id: 'leite', n: 'Leite meio-gordo', cat: 'lacticinios', tipo: 'g', g: 200, kcal: 46, prot: 3.2, hc: 4.8, gord: 1.6 },
@@ -113,7 +113,7 @@
     { id: 'azeite', n: 'Azeite', cat: 'gordura', tipo: 'un', porcao: 'colher de sopa', g: 10, kcal: 90, prot: 0, hc: 0, gord: 10, plano: true },
     { id: 'manteiga', n: 'Manteiga', cat: 'gordura', tipo: 'g', g: 10, kcal: 740, prot: 0.9, hc: 0.6, gord: 82 },
     { id: 'manteiga-amendoim', n: 'Manteiga de amendoim', cat: 'gordura', tipo: 'g', g: 15, kcal: 600, prot: 25, hc: 20, gord: 50, plano: true },
-    { id: 'caju', n: 'Castanha de caju', cat: 'gordura', tipo: 'g', g: 15, kcal: 580, prot: 18, hc: 30, gord: 44, plano: true },
+    { id: 'caju', n: 'Castanha de caju', cat: 'gordura', tipo: 'g', g: 15, kcal: 580, prot: 18, hc: 30, gord: 44 },
     { id: 'amendoas', n: 'Amêndoas', cat: 'gordura', tipo: 'g', g: 25, kcal: 580, prot: 21, hc: 22, gord: 50 },
 
     /* ---------- pratos e refeições ---------- */
