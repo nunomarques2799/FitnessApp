@@ -30,7 +30,12 @@
     revisto: '2026-09-16',
     origem: 'Plano semanal de 2000 kcal/dia, escrito para acompanhar o plano de treino de quatro dias',
 
-    /* Alvos do dia. Iguais todos os dias — o que muda é de onde vêm. */
+    /* Alvos do dia. Iguais todos os dias — o que muda é de onde vêm.
+       Contas (16 set 2026): homem, 26 anos, 1,73 m, 72 kg. Metabolismo em
+       repouso pela fórmula de Mifflin-St Jeor, 1676 kcal; com trabalho de
+       secretária e quatro treinos de força, gasta perto de 2300 a 2450 kcal.
+       2000 kcal dão um défice de ~380 kcal, uns 0,35 kg de gordura por semana.
+       Proteína: 150 g são 2,1 g por kg, para o défice não levar músculo. */
     alvos: { kcal: 2000, prot: 150, hc: 226, gord: 55 },
 
     /* Margem em que o dia conta como cumprido, para o relatório não
