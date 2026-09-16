@@ -261,14 +261,15 @@ window.Vistas = window.Vistas || {};
           <div class="cartao">
             <p class="texto-corpo" style="font-size:var(--t-md)">
               Tudo é guardado no armazenamento do Safari deste iPhone. Se apagares a app do ecrã principal
-              ou limpares os dados do Safari, os treinos desaparecem. Exporta de vez em quando.
+              ou limpares os dados do Safari, perdes tudo. Exporta de vez em quando: o ficheiro leva mesmo
+              tudo — treinos, peso, medidas, alimentação, os teus alimentos e exercícios, e as definições.
             </p>
             <div class="pilha mt4">
-              <button type="button" class="btn btn--primario btn--bloco" data-exportar>${icone('descarregar', 20)}Exportar treinos</button>
+              <button type="button" class="btn btn--primario btn--bloco" data-exportar>${icone('descarregar', 20)}Exportar tudo</button>
               <button type="button" class="btn btn--secundario btn--bloco" data-importar>${icone('carregar', 20)}Importar de ficheiro</button>
               <input type="file" accept="application/json,.json" hidden data-ficheiro>
             </div>
-            <p class="cartao__sub mt3 num">${Store.state.treinos.length} treinos · ${Store.state.exerciciosCustom.length} exercícios personalizados${pesos.length ? ` · ${pesos.length} pesagens` : ''}</p>
+            <p class="cartao__sub mt3 num">${resumoDados()}</p>
           </div>
         </section>
 
@@ -605,14 +606,30 @@ window.Vistas = window.Vistas || {};
   }
 
   /* ---------- backup ---------- */
+
+  /** O que vai no ficheiro, dito por extenso */
+  function resumoDados(st) {
+    const x = st || Store.state;
+    const n = (v, um, varios) => `${v} ${v === 1 ? um : varios}`;
+    const pesos = ((x.perfil || {}).pesos || []).length;
+    const dias = new Set((x.comidas || []).map(c => c.data)).size;
+    return [
+      n((x.treinos || []).length, 'treino', 'treinos'),
+      pesos && n(pesos, 'pesagem', 'pesagens'),
+      (x.medidas || []).length && n(x.medidas.length, 'medição', 'medições'),
+      dias && n(dias, 'dia de alimentação', 'dias de alimentação'),
+      (x.alimentos || []).length && n(x.alimentos.length, 'alimento teu', 'alimentos teus'),
+      (x.exerciciosCustom || []).length && n(x.exerciciosCustom.length, 'exercício personalizado', 'exercícios personalizados')
+    ].filter(Boolean).join(' · ');
+  }
   async function exportar() {
     const json = Store.exportar();
-    const nome = `treinos-${Store.D.hoje()}.json`;
+    const nome = `treinos-tudo-${Store.D.hoje()}.json`;
     const ficheiro = new File([json], nome, { type: 'application/json' });
 
     if (navigator.canShare && navigator.canShare({ files: [ficheiro] })) {
       try {
-        await navigator.share({ files: [ficheiro], title: 'Cópia de segurança dos treinos' });
+        await navigator.share({ files: [ficheiro], title: 'Cópia de segurança completa' });
         UI.toast('Cópia exportada', 'sucesso');
         return;
       } catch (e) {
@@ -640,10 +657,11 @@ window.Vistas = window.Vistas || {};
         return;
       }
       const sh = UI.sheet({
-        titulo: 'Importar treinos',
-        html: `<p class="texto-corpo">O ficheiro tem <strong>${previsao.treinos.length}</strong> treinos
-            e <strong>${(previsao.exerciciosCustom || []).length}</strong> exercícios personalizados.</p>
-          <p class="texto-corpo mt3">Tens agora ${Store.state.treinos.length} treinos guardados.</p>`,
+        titulo: 'Importar cópia de segurança',
+        html: `<p class="texto-corpo">O ficheiro tem: <strong>${esc(resumoDados(previsao))}</strong>.</p>
+          <p class="texto-corpo mt3">Tens agora: ${esc(resumoDados())}.</p>
+          <p class="campo__ajuda mt3"><strong>Juntar</strong> acrescenta o que falta sem mexer no que já cá está.
+            <strong>Substituir tudo</strong> deixa o telemóvel exactamente como o ficheiro.</p>`,
         rodape: `<button type="button" class="btn btn--secundario" data-juntar>Juntar</button>
                  <button type="button" class="btn btn--perigo" data-substituir>Substituir tudo</button>`
       });
@@ -651,7 +669,7 @@ window.Vistas = window.Vistas || {};
       sh.painel.querySelector('[data-substituir]').addEventListener('click', async () => {
         if (await UI.confirmar({
           titulo: 'Substituir tudo?',
-          msg: 'Os treinos actuais neste telemóvel serão apagados e substituídos pelos do ficheiro.',
+          msg: 'Tudo o que está neste telemóvel — treinos, peso, medidas, alimentação e definições — é apagado e substituído pelo que vem no ficheiro.',
           ok: 'Substituir', perigo: true
         })) aplicar('substituir');
       });

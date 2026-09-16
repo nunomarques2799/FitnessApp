@@ -8,6 +8,7 @@ window.Vistas = window.Vistas || {};
 
   let metrica = 'volume';   // volume | series | treinos
   let semanas = 8;
+  let medida = 'cintura';   // a medida que o gráfico das medidas mostra
 
   Vistas.progresso = {
     titulo: () => 'Progresso',
@@ -18,21 +19,30 @@ window.Vistas = window.Vistas || {};
 
     render() {
       if (!Store.state.treinos.length) {
-        return pesoCorporal() + Comp.vazio({
+        return pesoCorporal() + medidas() + Comp.vazio({
           icone: 'grafico', titulo: 'Sem dados para mostrar',
           sub: 'Depois do primeiro treino aparecem aqui gráficos de volume, distribuição muscular e recordes.',
           accao: 'Começar a treinar'
         });
       }
-      return resumo() + graficoSemanal() + pesoCorporal() + condicaoFisica() + distribuicao() + topExercicios() + recordesRecentes();
+      return resumo() + graficoSemanal() + pesoCorporal() + medidas() + condicaoFisica() + distribuicao() + topExercicios() + recordesRecentes();
     },
 
     montar(raiz) {
       const b = raiz.querySelector('[data-vazio-accao]');
-      if (b) return b.addEventListener('click', () => App.ir('hoje'));
+      if (b) b.addEventListener('click', () => App.ir('hoje'));
 
       raiz.addEventListener('click', e => {
         if (e.target.closest('[data-ir-peso]')) return App.ir('ajustes');
+        if (e.target.closest('[data-medir]')) return sheetMedidas();
+        const md = e.target.closest('[data-medida]');
+        if (md) {
+          medida = md.dataset.medida;
+          UI.haptic('leve');
+          return App.render();
+        }
+        const reg = e.target.closest('[data-medicao]');
+        if (reg) return sheetMedicao(reg.dataset.medicao);
         const det = e.target.closest('[data-detalhe]');
         if (det) return Comp.detalhes(det.dataset.detalhe);
         const m = e.target.closest('[data-metrica]');
@@ -143,6 +153,125 @@ window.Vistas = window.Vistas || {};
           de manhã, em jejum — senão o gráfico anda aos saltos por causa da comida e da água.</p>
       </div>` : '<p class="campo__ajuda">Com duas pesagens aparece aqui o gráfico da evolução.</p>'}
     </section>`;
+  }
+
+  /* ---------- medidas com fita ---------- */
+
+  /** Cintura, peito, braço e ombros: o gráfico de uma, o resumo de todas e o histórico */
+  function medidas() {
+    const hist = Store.historicoMedidas();
+    const sinal = v => (v > 0 ? '+' : '') + UI.fmt(v);
+    const cab = `<div class="seccao__cab"><h2 class="seccao__tit">Medidas</h2>
+        <button type="button" class="seccao__accao" data-medir>Medir</button></div>`;
+
+    if (!hist.length) {
+      return `<section class="seccao">${cab}
+        <div class="cartao">
+          <p class="texto-corpo" style="font-size:var(--t-md)">Cintura, peito, braço e ombros, com fita métrica.
+            A balança diz quanto pesas; a fita diz se o que ganhaste foi músculo ou gordura —
+            peso a subir com a cintura parada é músculo.</p>
+          <button type="button" class="btn btn--primario btn--bloco mt4" data-medir>${icone('mais', 18)}Primeira medição</button>
+        </div>
+      </section>`;
+    }
+
+    const def = Store.MEDIDAS.find(m => m.k === medida) || Store.MEDIDAS[0];
+    const pontos = hist.filter(x => x[def.k] != null).slice(-12).map(x => ({
+      label: Store.D.curto(x.data), valor: x[def.k], curto: UI.fmt(x[def.k]), aria: `${UI.fmt(x[def.k])} cm`
+    }));
+    const ultima = hist[hist.length - 1];
+
+    return `<section class="seccao">${cab}
+      <div class="stats stats--2 mb3">
+        ${Store.MEDIDAS.map(m => {
+          const v = Store.variacaoMedida(m.k);
+          const ult = hist.filter(x => x[m.k] != null).pop();
+          return Comp.stat(ult ? UI.fmt(ult[m.k]) : '—', m.n.toLowerCase() + (v ? ` · ${sinal(v.dif)}` : ''), 'cm');
+        }).join('')}
+      </div>
+      <div class="segmento mb3" role="group" aria-label="Medida no gráfico">
+        ${Store.MEDIDAS.map(m => `<button type="button" class="segmento__b" data-medida="${m.k}" aria-pressed="${m.k === def.k}">${esc(m.n)}</button>`).join('')}
+      </div>
+      <div class="cartao">
+        ${pontos.length > 1
+          ? Charts.linha(pontos, { aria: `${def.n} nas últimas ${pontos.length} medições` })
+          : `<p class="campo__ajuda">Com duas medições ${pontos.length ? '' : 'da ' + esc(def.n.toLowerCase()) + ' '}aparece aqui o gráfico.</p>`}
+        <p class="cartao__sub mt3">A diferença ao lado de cada medida conta desde a primeira medição.
+          Mede uma vez por semana, de manhã, em jejum e antes de treinar.</p>
+      </div>
+      <div class="lista mt3">
+        ${hist.slice(-8).reverse().map(x => `<button type="button" class="lista__i" data-medicao="${x.data}">
+          <div class="lista__corpo">
+            <div class="lista__t">${esc(Store.D.curto(x.data))}${x.data === ultima.data ? ' <span class="chip chip--primaria">última</span>' : ''}</div>
+            <div class="lista__s num">${Store.MEDIDAS.filter(m => x[m.k] != null).map(m => `${esc(m.n)} ${UI.fmt(x[m.k])}`).join(' · ')}</div>
+          </div>
+        </button>`).join('')}
+      </div>
+    </section>`;
+  }
+
+  /** Registar (ou corrigir) as medidas de um dia, com as instruções de onde medir */
+  function sheetMedidas(data) {
+    const dia = data || Store.D.hoje();
+    const hist = Store.historicoMedidas();
+    const actual = hist.find(x => x.data === dia) || {};
+    const anterior = hist.filter(x => x.data < dia).pop() || {};
+    const s = UI.sheet({
+      titulo: data ? 'Corrigir medição' : 'Medir',
+      alto: true,
+      html: `<p class="campo__ajuda mb3">Em centímetros. De manhã, em jejum e <strong>antes de treinar</strong> —
+          o pump do treino incha o peito e os braços. Fita justa, sem apertar a pele.
+          Deixa em branco o que não mediste.</p>
+        ${Store.MEDIDAS.map(m => `<div class="campo">
+          <label class="campo__l" for="md-${m.k}">${esc(m.n)}${anterior[m.k] != null ? ` · da última vez ${UI.fmt(anterior[m.k])} cm` : ''}</label>
+          <input class="entrada num" id="md-${m.k}" type="text" inputmode="decimal" autocomplete="off"
+                 data-md="${m.k}" value="${actual[m.k] != null ? UI.fmt(actual[m.k]) : ''}" placeholder="cm" aria-describedby="md-${m.k}-onde">
+          <p class="campo__ajuda" id="md-${m.k}-onde">${esc(m.onde)}</p>
+        </div>`).join('')}`,
+      rodape: `<button type="button" class="btn btn--fantasma" data-cancelar>Cancelar</button>
+               <button type="button" class="btn btn--primario" data-ok>Guardar</button>`
+    });
+    s.painel.querySelector('[data-cancelar]').addEventListener('click', () => UI.fecharSheet());
+    s.painel.querySelector('[data-ok]').addEventListener('click', () => {
+      const valores = {};
+      let erro = null, algum = false;
+      s.painel.querySelectorAll('[data-md]').forEach(i => {
+        const v = UI.lerNumero(i.value);
+        if (v === null) return;
+        if (!(v >= 15 && v <= 250)) erro = Store.MEDIDAS.find(m => m.k === i.dataset.md).n;
+        valores[i.dataset.md] = v;
+        algum = true;
+      });
+      if (erro) { UI.toast(`${erro}: esse valor não parece estar em centímetros`, 'erro'); UI.haptic('erro'); return; }
+      if (!algum) { UI.toast('Escreve pelo menos uma medida', 'erro'); UI.haptic('erro'); return; }
+      Store.definirMedidas(valores, dia);
+      UI.fecharSheet();
+      UI.haptic('sucesso');
+      UI.toast('Medidas guardadas', 'sucesso');
+      App.render();
+    });
+  }
+
+  /** Uma medição do histórico: corrigir ou apagar */
+  function sheetMedicao(data) {
+    const x = Store.historicoMedidas().find(h => h.data === data) || {};
+    const s = UI.sheet({
+      titulo: 'Medição de ' + Store.D.curto(data),
+      html: `<div class="lista">${Store.MEDIDAS.map(m => `<div class="lista__i">
+          <div class="lista__corpo"><div class="lista__t">${esc(m.n)}</div></div>
+          <span class="lista__fim num" style="font-weight:700">${x[m.k] != null ? UI.fmt(x[m.k]) + ' cm' : '—'}</span>
+        </div>`).join('')}</div>`,
+      rodape: `<button type="button" class="btn btn--perigo-fantasma" data-apagar>${icone('lixo', 18)}Apagar</button>
+               <button type="button" class="btn btn--primario" data-corrigir>${icone('editar', 18)}Corrigir</button>`
+    });
+    s.painel.querySelector('[data-corrigir]').addEventListener('click', () => sheetMedidas(data));
+    s.painel.querySelector('[data-apagar]').addEventListener('click', async () => {
+      if (!(await UI.confirmar({ titulo: 'Apagar esta medição?', msg: 'As medidas de ' + Store.D.curto(data) + ' saem do histórico.', ok: 'Apagar', perigo: true }))) return;
+      Store.apagarMedidas(data);
+      UI.haptic('sucesso');
+      UI.toast('Medição apagada');
+      App.render();
+    });
   }
 
   function condicaoFisica() {

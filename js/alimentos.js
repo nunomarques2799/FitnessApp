@@ -120,7 +120,7 @@
     { id: 'manteiga', n: 'Manteiga', cat: 'gordura', tipo: 'g', g: 10, kcal: 740, prot: 0.9, hc: 0.6, gord: 82 },
     { id: 'manteiga-amendoim', n: 'Manteiga de amendoim', cat: 'gordura', tipo: 'g', g: 15, kcal: 600, prot: 25, hc: 20, gord: 50, plano: true },
     { id: 'caju', n: 'Castanha de caju', cat: 'gordura', tipo: 'g', g: 15, kcal: 580, prot: 18, hc: 30, gord: 44 },
-    { id: 'amendoas', n: 'Amêndoas', cat: 'gordura', tipo: 'g', g: 25, kcal: 580, prot: 21, hc: 22, gord: 50 },
+    { id: 'amendoas', n: 'Amêndoas', cat: 'gordura', tipo: 'g', g: 25, kcal: 580, prot: 21, hc: 22, gord: 50, plano: true },
 
     /* ---------- pratos e refeições ---------- */
     { id: 'bitoque', n: 'Bitoque', cat: 'prato', tipo: 'un', porcao: 'prato', g: 450, kcal: 950, prot: 55, hc: 75, gord: 45 },

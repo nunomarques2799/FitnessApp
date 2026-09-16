@@ -15,7 +15,7 @@ sem conta, sem servidor. **Todos os dados ficam guardados no telemóvel** (`loca
 | **Histórico** | Calendário do mês com os dias treinados, detalhe de cada sessão, editar/apagar/repetir |
 | **Exercícios** | 191 exercícios organizados por grupo muscular, com filtro da parte do músculo, da pega e instruções de execução |
 | **Comida** | O que comeste em cada refeição, contra os alvos do dia, com o plano alimentar a propor cada refeição |
-| **Progresso** | Volume por semana, peso corporal, condição física dos últimos 30 dias, distribuição muscular, recordes |
+| **Progresso** | Volume por semana, peso corporal, medidas com fita, condição física dos últimos 30 dias, distribuição muscular, recordes |
 | **Ajustes** | Peso corporal, plano embutido, objectivo, divisão de treino, tempos de descanso, cronómetro, RIR, fecho automático, kg/lb, tema, exportar/importar cópia de segurança |
 
 ## O plano embutido
@@ -195,6 +195,16 @@ de manhã e em jejum, senão o gráfico anda aos saltos por causa da comida e da
 
 Como tudo o resto, fica só no telemóvel e vai dentro da cópia de segurança.
 
+### Medidas
+
+**Progresso → Medidas** guarda cintura, peito, braço e ombros em centímetros, uma medição por
+dia, com o histórico, um gráfico de cada medida e a diferença desde a primeira vez. A folha de
+registo diz onde pôr a fita em cada uma e mostra o valor da última vez.
+
+A balança sozinha não distingue músculo de gordura; ao lado da cintura já distingue. Peso a subir
+com a cintura parada é músculo. Mede uma vez por semana, de manhã, em jejum e **antes de treinar**:
+o pump de um treino incha o peito e os braços 1 a 2 cm.
+
 ### Figura dos músculos
 
 Todos os exercícios mostram uma figura humana de frente e de costas, com os músculos principais a
@@ -225,8 +235,9 @@ escala-os: *Moderado* se treinas 3 vezes por semana, *Alto* se treinas 5 ou 6.
 ## O plano alimentar embutido
 
 A app traz também um plano de alimentação lá dentro — [`js/alimentar.js`](js/alimentar.js) — com os
-alvos do dia e as refeições de cada dia da semana. São 2000 kcal, 150 g de proteína, 226 g de
-hidratos e 55 g de gordura, cinco refeições por dia.
+alvos do dia e as refeições de cada dia da semana. São 2450 kcal, 175 g de proteína, 280 g de
+hidratos e 65 g de gordura, cinco refeições por dia — um excedente pequeno, para ganhar músculo
+sem ganhar gordura. As contas estão escritas junto aos alvos, no próprio ficheiro.
 
 Ao contrário do plano de treino, este anda preso aos dias da semana: segunda é segunda. E **propõe,
 não regista**: no ecrã **Comida**, cada refeição que ainda não tenha nada aparece com o que o plano
@@ -347,10 +358,10 @@ Fica com ícone próprio, abre em ecrã inteiro sem barra do Safari e funciona s
 ## Cópias de segurança
 
 Os dados vivem no armazenamento do Safari. Desaparecem se apagares a app do ecrã principal
-ou limpares os dados do site. **Ajustes → Exportar treinos** gera um ficheiro `.json`
-que podes guardar no iCloud Drive; **Importar** repõe tudo (juntar ou substituir) — treinos,
-exercícios teus, definições, o peso corporal, os nomes que deste aos exercícios, o registo
-alimentar e os alimentos que criaste ou corrigiste.
+ou limpares os dados do site. **Ajustes → Exportar tudo** gera um ficheiro `.json`
+com mesmo tudo: treinos, exercícios teus, definições, peso corporal, medidas, os nomes que deste
+aos exercícios, o registo alimentar e os alimentos que criaste ou corrigiste. Guarda-o no iCloud
+Drive; **Importar** repõe tudo, a juntar ao que já lá está ou a substituir.
 
 Vale a pena exportar uma vez por mês.
 

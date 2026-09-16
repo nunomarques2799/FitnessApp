@@ -282,6 +282,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 
 /* estatísticas */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: var(--e2); }
+.stats--2 { grid-template-columns: repeat(2, 1fr); }
 .stat {
   background: var(--sup); border: 1px solid var(--borda); border-radius: var(--r2);
   padding: var(--e3); text-align: center;

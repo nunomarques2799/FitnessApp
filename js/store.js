@@ -86,7 +86,8 @@
       alimentos: [],            // alimentos criados por ti
       alimentosEditados: {},    // idDoCatálogo → campos que corrigiste
       alimentosOcultos: [],     // alimentos do catálogo que escondeste
-      comidas: []               // registo alimentar, uma linha por alimento comido
+      comidas: [],              // registo alimentar, uma linha por alimento comido
+      medidas: []               // medições com fita, uma por dia: { data, cintura, peito, braco, ombros } em cm
     };
   }
 
@@ -118,6 +119,7 @@
         if (!Array.isArray(state.comidas)) state.comidas = [];
         if (!Array.isArray(state.alimentosOcultos)) state.alimentosOcultos = [];
         if (!state.alimentosEditados) state.alimentosEditados = {};
+        if (!Array.isArray(state.medidas)) state.medidas = [];
       }
     } catch (e) {
       console.error('Falha a ler dados locais', e);
@@ -234,6 +236,67 @@
     if (!dias) return lista;
     const limite = D.maisDias(D.hoje(), -dias + 1);
     return lista.filter(x => x.data >= limite);
+  }
+
+  /* ---------- medidas com fita ---------- */
+
+  /**
+   * O que se mede e onde. A fita só diz a verdade se for sempre no mesmo
+   * sítio, à mesma hora e antes do treino — o pump de um treino de peito
+   * ou de braços dá 1 a 2 cm que não são músculo.
+   */
+  const MEDIDAS = [
+    { k: 'cintura', n: 'Cintura', onde: 'À altura do umbigo, com a fita paralela ao chão. Descontraído, sem encolher a barriga: mede no fim de uma expiração normal.' },
+    { k: 'peito', n: 'Peito', onde: 'Por baixo das axilas e por cima dos mamilos, com os braços caídos ao lado do corpo. Mede no fim de uma expiração normal, sem encher o peito.' },
+    { k: 'braco', n: 'Braço', onde: 'Sempre o mesmo braço. Dobrado a 90° com o bíceps contraído, na parte mais grossa.' },
+    { k: 'ombros', n: 'Ombros', onde: 'De pé, braços caídos. A fita dá a volta aos dois ombros na parte mais larga, por cima dos deltoides e do peito. Mais fácil com ajuda.' }
+  ];
+
+  /**
+   * Regista as medidas de um dia, em cm. Um registo por dia: voltar a medir
+   * no mesmo dia corrige o que lá está. Campos em branco não apagam os outros.
+   */
+  function definirMedidas(valores, data) {
+    state.medidas = state.medidas || [];
+    const dia = data || D.hoje();
+    let m = state.medidas.find(x => x.data === dia);
+    if (!m) { m = { data: dia }; state.medidas.push(m); }
+    MEDIDAS.forEach(({ k }) => {
+      const v = valores[k];
+      if (v != null && v > 0) m[k] = Math.round(v * 10) / 10;
+    });
+    state.medidas = state.medidas.filter(x => MEDIDAS.some(({ k }) => x[k] != null));
+    state.medidas.sort((a, b) => a.data.localeCompare(b.data));
+    guardar(true);
+    return m;
+  }
+
+  function apagarMedidas(data) {
+    state.medidas = (state.medidas || []).filter(x => x.data !== data);
+    guardar(true);
+  }
+
+  /** Medições, da mais antiga para a mais recente */
+  function historicoMedidas() {
+    return (state.medidas || []).slice().sort((a, b) => a.data.localeCompare(b.data));
+  }
+
+  /**
+   * Quanto mudou uma medida desde a primeira vez (ou desde há N dias).
+   * Devolve { antes, agora, dif, desde } ou null se só houver uma medição.
+   */
+  function variacaoMedida(k, dias) {
+    const lista = historicoMedidas().filter(x => x[k] != null);
+    if (lista.length < 2) return null;
+    const agora = lista[lista.length - 1];
+    let antes = lista[0];
+    if (dias) {
+      const limite = D.maisDias(D.hoje(), -dias + 1);
+      const antigos = lista.filter(x => x.data < limite);
+      if (antigos.length) antes = antigos[antigos.length - 1];
+    }
+    if (antes.data === agora.data) return null;
+    return { antes: antes[k], agora: agora[k], dif: Math.round((agora[k] - antes[k]) * 10) / 10, desde: antes.data };
   }
 
   /** Variação de peso nos últimos N dias, em kg (null se não houver com que comparar) */
@@ -2101,6 +2164,13 @@
       const dias = new Set(meu.pesos.map(p => p.data));
       normalizarPerfil(dados.perfil).pesos.forEach(p => { if (!dias.has(p.data)) meu.pesos.push(p); });
       state.perfil = normalizarPerfil(meu);
+      // medidas: junta os dias que faltam, sem mexer nos que já cá estão
+      state.medidas = state.medidas || [];
+      const diasMedidas = new Set(state.medidas.map(m => m.data));
+      (Array.isArray(dados.medidas) ? dados.medidas : []).forEach(m => {
+        if (m && m.data && !diasMedidas.has(m.data)) state.medidas.push(m);
+      });
+      state.medidas.sort((a, b) => a.data.localeCompare(b.data));
       // alimentação: junta as linhas do registo que ainda não cá estão
       const linhas = new Set((state.comidas || []).map(c => c.id));
       (dados.comidas || []).forEach(c => { if (!linhas.has(c.id)) state.comidas.push(c); });
@@ -2117,6 +2187,7 @@
       state.perfil = normalizarPerfil(dados.perfil);
       if (!Array.isArray(state.comidas)) state.comidas = [];
       if (!Array.isArray(state.alimentos)) state.alimentos = [];
+      if (!Array.isArray(state.medidas)) state.medidas = [];
     }
     invalidarIndice();
     guardar(true);
@@ -2135,6 +2206,7 @@
     D, U, MUSCLES, GRUPOS, SPLITS, OBJETIVOS, CIRCUITOS, METRICAS,
     carregar, guardar, aoMudar,
     pesoCorporal, definirPeso, apagarPeso, historicoPeso, variacaoPeso,
+    MEDIDAS, definirMedidas, apagarMedidas, historicoMedidas, variacaoMedida,
     objetivo, aplicarObjetivo, usaCircuitos,
     plano, planoActivo, activarPlano, prescricao, proximoDiaPlano, semanaDoPlano,
     incrementoDe, sugerirPlano, comecarPlano, estadoPlano, relatorioPlano, ultimaNoPlano,
