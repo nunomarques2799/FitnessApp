@@ -61,11 +61,15 @@
     { id: 'peixe-branco', n: 'Peixe branco (pescada, dourada)', cat: 'proteina', tipo: 'g', g: 180, kcal: 92, prot: 19, hc: 0, gord: 1.5, plano: true },
     { id: 'bacalhau', n: 'Bacalhau cozido', cat: 'proteina', tipo: 'g', g: 180, kcal: 105, prot: 23, hc: 0, gord: 1 },
     { id: 'atum-lata', n: 'Atum ao natural (lata escorrida)', cat: 'proteina', tipo: 'un', porcao: 'lata', g: 80, kcal: 93, prot: 21, hc: 0, gord: 0.8, plano: true },
+    // rótulo: 194 kcal, 26 g de proteína e 10 g de gordura por 100 g escorridos; a lata dá 85 g
+    { id: 'atum-oleo', n: 'Atum posta em óleo Continente (lata escorrida)', cat: 'proteina', tipo: 'un', porcao: 'lata', g: 85, kcal: 165, prot: 22.1, hc: 0, gord: 8.5 },
     { id: 'fiambre', n: 'Fiambre de peru', cat: 'proteina', tipo: 'un', porcao: 'fatia', g: 25, kcal: 28, prot: 4.5, hc: 0.5, gord: 0.8 },
 
     /* ---------- hidratos ---------- */
     { id: 'arroz', n: 'Arroz cozido', cat: 'hidratos', tipo: 'g', g: 150, kcal: 130, prot: 2.7, hc: 28, gord: 0.3, plano: true },
     { id: 'massa', n: 'Massa cozida', cat: 'hidratos', tipo: 'g', g: 150, kcal: 158, prot: 5.8, hc: 31, gord: 0.9, plano: true },
+    // valores do rótulo, com a massa crua: 80 g crus dão perto de 180 g cozidos
+    { id: 'massa-vegetais-crua', n: 'Massa com tomate e espinafres Continente (crua)', cat: 'hidratos', tipo: 'g', g: 80, kcal: 358, prot: 12, hc: 72, gord: 1.5 },
     { id: 'massa-integral', n: 'Massa integral cozida', cat: 'hidratos', tipo: 'g', g: 150, kcal: 130, prot: 5.3, hc: 26, gord: 1.1, plano: true },
     { id: 'batata', n: 'Batata cozida', cat: 'hidratos', tipo: 'g', g: 150, kcal: 87, prot: 2, hc: 20, gord: 0.1, plano: true },
     { id: 'batata-doce', n: 'Batata-doce cozida', cat: 'hidratos', tipo: 'g', g: 150, kcal: 90, prot: 2, hc: 21, gord: 0.1 },
@@ -75,7 +79,7 @@
     { id: 'torrada-integral', n: 'Torrada integral', cat: 'hidratos', tipo: 'un', porcao: 'torrada', g: 15, kcal: 55, prot: 2, hc: 10, gord: 0.8, plano: true },
     { id: 'papo-seco', n: 'Papo-seco', cat: 'hidratos', tipo: 'un', porcao: 'pão', g: 60, kcal: 165, prot: 5.5, hc: 32, gord: 1.3 },
     { id: 'aveia', n: 'Aveia em flocos', cat: 'hidratos', tipo: 'g', g: 60, kcal: 379, prot: 13, hc: 67, gord: 7 },
-    { id: 'granola', n: 'Granola', cat: 'hidratos', tipo: 'g', g: 40, kcal: 440, prot: 9, hc: 62, gord: 17, plano: true },
+    { id: 'granola', n: 'Granola Nacional', cat: 'hidratos', tipo: 'g', g: 45, kcal: 456, prot: 10, hc: 53, gord: 21, plano: true },
     { id: 'feijao', n: 'Feijão cozido', cat: 'hidratos', tipo: 'g', g: 120, kcal: 127, prot: 8.7, hc: 22, gord: 0.5 },
     { id: 'grao', n: 'Grão-de-bico cozido', cat: 'hidratos', tipo: 'g', g: 120, kcal: 164, prot: 8.9, hc: 27, gord: 2.6 },
 
@@ -96,6 +100,7 @@
 
     /* ---------- lacticínios ---------- */
     { id: 'iogurte-proteico', n: 'Iogurte proteico Continente', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 160, kcal: 140, prot: 20, hc: 12, gord: 1.5, plano: true },
+    { id: 'iogurte-proteina-baunilha', n: 'Iogurte +Proteína baunilha Continente (sem lactose)', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 200, kcal: 92, prot: 14.4, hc: 7.8, gord: 0 },
     { id: 'iogurte-grego', n: 'Iogurte grego', cat: 'lacticinios', tipo: 'g', g: 170, kcal: 71, prot: 8, hc: 4, gord: 2.6, plano: true },
     { id: 'mythos', n: 'Iogurte grego Mythos Continente', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 125, kcal: 125, prot: 4.5, hc: 4.3, gord: 10 },
     { id: 'iogurte-natural', n: 'Iogurte natural', cat: 'lacticinios', tipo: 'un', porcao: 'unidade', g: 125, kcal: 72, prot: 4.3, hc: 5.4, gord: 3.8 },
