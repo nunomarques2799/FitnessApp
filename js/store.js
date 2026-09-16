@@ -1991,15 +1991,16 @@
   /* ---------- registo alimentar em ficheiro ---------- */
 
   /**
-   * Só o registo alimentar, em JSON: as linhas e os teus alimentos que elas usam.
-   * É o ficheiro que se leva para outro telemóvel ou que volta corrigido.
+   * Só o registo alimentar, em JSON: as linhas, todos os alimentos que criaste
+   * (mesmo os que ainda não comeste) e as correcções ao catálogo. É o ficheiro
+   * que se leva para outro telemóvel, que volta corrigido, ou de onde os teus
+   * alimentos passam para o catálogo da app.
    */
   function exportarComida() {
     const comidas = (state.comidas || []).slice().sort((a, b) => a.data.localeCompare(b.data) || a.criadoEm - b.criadoEm);
-    const usados = new Set(comidas.map(c => c.aId));
     return JSON.stringify({
       tipo: 'registo-alimentar', versao: 1, exportadoEm: new Date().toISOString(),
-      comidas, alimentos: (state.alimentos || []).filter(a => usados.has(a.id))
+      comidas, alimentos: state.alimentos || [], alimentosEditados: state.alimentosEditados || {}
     }, null, 2);
   }
 
@@ -2070,6 +2071,11 @@
     novas.forEach(c => state.comidas.push(c));
     state.alimentos = state.alimentos || [];
     r.alimentos.forEach(a => { if (!alimento(a.id)) state.alimentos.push(Object.assign({ custom: true }, a)); });
+    // correcções ao catálogo: o que já está neste telemóvel manda
+    const dados = typeof json === 'string' ? JSON.parse(json) : json;
+    if (dados && dados.alimentosEditados && typeof dados.alimentosEditados === 'object') {
+      state.alimentosEditados = Object.assign({}, dados.alimentosEditados, state.alimentosEditados || {});
+    }
     guardar(true);
     return { linhas: novas.length, dias: r.dias.length };
   }

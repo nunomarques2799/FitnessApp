@@ -242,7 +242,7 @@ Cada alimento entra de uma de duas maneiras, conforme o que faz sentido:
 | **Por peso** | valores por 100 g, e depois os gramas que comeste | o que pesas: arroz, frango, granola |
 | **Por porção** | valores de uma porção inteira, e depois quantas comeste | o que não pesas: um ovo, uma lata de atum, um bitoque |
 
-O catálogo traz 83 alimentos com valores de referência — os do plano, mais o que se come mesmo:
+O catálogo traz 89 alimentos com valores de referência — os do plano, mais o que se come mesmo:
 bitoque, francesinha, bacalhau à Brás, pastel de nata, cerveja. **Registas um bitoque uma vez e
 ele fica guardado**: da próxima é procurar e tocar, e os mais usados aparecem primeiro. Qualquer
 valor se corrige com o rótulo à frente (**Comida → Alimentos guardados**), e o que corrigires fica
@@ -259,8 +259,8 @@ plano de treino não mexe nas séries já registadas.
 
 ### Exportar e importar o registo
 
-**Comida → Exportar registo** gera um JSON só com o registo alimentar: todas as linhas e os
-alimentos teus que elas usam. **Importar registo** lê esse ficheiro (ou uma cópia de segurança
+**Comida → Exportar registo** gera um JSON só com o registo alimentar: todas as linhas, todos os
+alimentos e refeições que criaste na app e as correcções ao catálogo. **Importar registo** lê esse ficheiro (ou uma cópia de segurança
 inteira), mostra o que traz dia a dia e deixa escolher:
 
 - **Substituir estes dias** — cada dia do ficheiro fica exactamente como vem nele. É assim que se
