@@ -135,6 +135,8 @@
     /* ---------- bebidas ---------- */
     { id: 'cafe', n: 'Café', cat: 'bebida', tipo: 'un', porcao: 'chávena', g: 40, kcal: 2, prot: 0.2, hc: 0, gord: 0 },
     { id: 'cerveja', n: 'Cerveja', cat: 'bebida', tipo: 'un', porcao: 'garrafa (33 cl)', g: 330, kcal: 140, prot: 1.5, hc: 11, gord: 0 },
+    { id: 'imperial', n: 'Imperial (fino)', cat: 'bebida', tipo: 'un', porcao: 'imperial (20 cl)', g: 200, kcal: 85, prot: 0.9, hc: 6.7, gord: 0 },
+    { id: 'caneca', n: 'Caneca de cerveja', cat: 'bebida', tipo: 'un', porcao: 'caneca (50 cl)', g: 500, kcal: 212, prot: 2.3, hc: 16.7, gord: 0 },
     { id: 'vinho', n: 'Vinho', cat: 'bebida', tipo: 'un', porcao: 'copo', g: 150, kcal: 125, prot: 0, hc: 4, gord: 0 },
     { id: 'refrigerante', n: 'Refrigerante', cat: 'bebida', tipo: 'un', porcao: 'lata', g: 330, kcal: 139, prot: 0, hc: 35, gord: 0 },
     // em ml, que num batido de fruta com água é quase igual a gramas
