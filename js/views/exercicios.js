@@ -206,9 +206,8 @@ window.Vistas = window.Vistas || {};
             ${ex.cond ? '<span class="chip chip--aviso">Condição física</span>' : ''}
             ${ex.custom ? '<span class="chip chip--sucesso">Personalizado</span>' : ''}
           </div>
-          ${prog ? `<p class="chip ${prog.subir ? 'chip--sucesso' : ''} mt3" style="white-space:normal;text-align:left">
-              ${icone(prog.subir ? 'seta' : 'alvo', 14)}
-              ${prog.subir ? `Da última vez completaste tudo — tenta ${Store.U.fmt(prog.kg)}` : `Próxima carga de referência: ${Store.U.fmt(prog.kg)}`}
+          ${prog ? `<p class="chip mt3" style="white-space:normal;text-align:left">
+              ${icone('alvo', 14)}Carga da última vez: ${Store.U.fmt(prog.kg)}
             </p>` : ''}
         </section>
 

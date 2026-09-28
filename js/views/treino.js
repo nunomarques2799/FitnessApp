@@ -250,7 +250,6 @@ window.Vistas = window.Vistas || {};
     const ex = Store.exercicio(entrada.exId);
     if (!ex) return '';
     const ult = Store.ultimaPerformance(entrada.exId, Store.state.ativo.id);
-    const prog = Store.sugerirProgressao(entrada.exId);
     const rec = Store.recordes(entrada.exId);
     const met = Store.metricaDe(ex);
     const musc = Comp.nomesMusculos(ex.p).join(' e ');
@@ -275,7 +274,6 @@ window.Vistas = window.Vistas || {};
         <button type="button" class="btn-icone" data-menu-ex data-i="${i}" aria-label="Opções de ${esc(ex.n)}">${icone('opcoes', 20)}</button>
       </header>
 
-      ${prog && prog.subir ? `<p class="chip chip--sucesso chip--multilinha" style="margin:0 var(--e4) var(--e2)">${icone('seta', 13)}Sugestão: sobe para ${Store.U.fmt(prog.kg)}${prog.motivo === 'folga' ? ` — sobraram ${prog.margem} repetições` : ''}</p>` : ''}
       ${rec ? `<p class="chip" style="margin:0 var(--e4) var(--e2)">${icone('trofeu', 13)}Recorde ${esc(Store.textoRecorde(rec, ex))}</p>` : ''}
       ${chipMaquina(ex, entrada, i)}
       ${notaDoPlano(ex)}

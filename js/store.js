@@ -775,13 +775,8 @@
     const ex = exercicio(exId);
     const ult = ultimaPerformance(exId);
     const nSeries = Math.max(1, state.settings.seriesPorExercicio || 3);
-    const reps = repsDe(ex);
     let series = [];
-    if (ult) {
-      series = ult.series.filter(s => s.tipo !== 'aquecimento').map(s => copiarSerie(ex, s));
-      const sug = sugerirProgressao(exId);
-      if (sug && sug.subir) series.forEach(s => { s.kg = sug.kg; s.reps = reps[0]; });
-    }
+    if (ult) series = ult.series.filter(s => s.tipo !== 'aquecimento').map(s => copiarSerie(ex, s));
     if (!series.length) series = Array.from({ length: nSeries }, () => serieBase(ex));
     return { exId, series, notas: '' };
   }
@@ -1142,10 +1137,9 @@
   }
 
   /**
-   * Progressão sugerida. Sobe a carga em dois casos:
-   * — completaste todas as séries no topo do intervalo (dupla progressão);
-   * — registaste RIR e sobraram 3 ou mais repetições em todas as séries,
-   *   já dentro do intervalo — a carga está a ficar leve antes do tempo.
+   * Carga de referência: a da última vez. A app nunca propõe subir —
+   * as cargas e repetições decidem-se na revisão semanal, em js/plano.js,
+   * com o relatório à frente. `subir` fica sempre false para quem o lê.
    */
   function sugerirProgressao(exId, maq) {
     const ex = exercicio(exId);
@@ -1154,20 +1148,15 @@
     if (!ult) return null;
     const uteis = ult.series.filter(serieUtil);
     if (!uteis.length) return null;
-    const reps = repsDe(ex);
     const kgBase = Math.max(...uteis.map(s => s.kg || 0));
     if (!kgBase) return null;
-    const todasNoTopo = uteis.every(s => (s.reps || 0) >= reps[1] && (s.kg || 0) >= kgBase);
-    const margem = uteis.every(s => s.rir != null) ? Math.min(...uteis.map(s => s.rir)) : null;
-    const folga = margem != null && margem >= 3 && uteis.every(s => (s.reps || 0) >= reps[0]);
-    const subir = todasNoTopo || folga;
     return {
-      subir,
-      motivo: subir ? (todasNoTopo ? 'topo' : 'folga') : null,
-      margem,
-      kg: subir ? kgBase + incrementoDe(ex) : kgBase,
+      subir: false,
+      motivo: null,
+      margem: null,
+      kg: kgBase,
       anterior: kgBase,
-      reps: subir ? reps[0] : Math.max(...uteis.map(s => s.reps || 0))
+      reps: Math.max(...uteis.map(s => s.reps || 0))
     };
   }
 
@@ -1575,8 +1564,7 @@
     est.exercicios.forEach(x => {
       if (x.chao == null) { L.push(`- ${x.nome}: peso do corpo · ${x.sessoes} ${x.sessoes === 1 ? 'sessão' : 'sessões'}`); return; }
       L.push(`- ${x.nome}: chão ${U.fmt(x.chao)} · plano ${x.alvo != null ? U.fmt(x.alvo) : '—'} → ${x.actual ? U.fmt(x.actual) : 'sem registo'}`
-        + `${x.degraus != null ? ` (${x.degraus >= 0 ? '+' : ''}${x.degraus} degrau${Math.abs(x.degraus) === 1 ? '' : 's'} de ${U.fmt(x.inc)})` : ''}`
-        + `${x.subir ? ' · a subir para ' + U.fmt(x.proxima) : ''}`);
+        + `${x.degraus != null ? ` (${x.degraus >= 0 ? '+' : ''}${x.degraus} degrau${Math.abs(x.degraus) === 1 ? '' : 's'} de ${U.fmt(x.inc)})` : ''}`);
     });
     L.push('');
 

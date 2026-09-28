@@ -191,8 +191,7 @@ window.Vistas = window.Vistas || {};
             <p class="campo__ajuda">
               RIR são as <strong>repetições em reserva</strong>: quantas ainda conseguias fazer quando
               paraste a série. 0 é falha total; 2 é o ponto habitual para ganhar músculo sem te arrasares.
-              Se registares 3 ou mais em todas as séries de um exercício, a app sugere subir a carga na
-              sessão seguinte, sem esperar que chegues ao topo das repetições.
+              A app não sugere subir cargas: isso decide-se na revisão semanal do plano, com o RIR à frente.
             </p>
           </div>
           <div class="cartao mb3">

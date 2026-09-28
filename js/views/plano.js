@@ -65,7 +65,6 @@ window.Vistas = window.Vistas || {};
         <span class="crescer truncar" style="font-weight:600;font-size:var(--t-md)">${esc(x.ex.n)}</span>
         <span class="num" style="font-size:var(--t-sm);color:var(--txt-2);white-space:nowrap">
           ${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}${x.max ? ' · máximo' : x.kg ? ' · ' + Store.U.fmt(x.kg) : ''}
-          ${x.subir ? `<span class="chip chip--sucesso" style="margin-left:4px">${icone('seta', 11)}subir</span>` : ''}
           ${x.mudou ? `<span class="chip" style="margin-left:4px">antes ${Store.U.fmt(x.anterior)}</span>` : ''}
         </span>
       </span>
@@ -229,7 +228,6 @@ window.Vistas = window.Vistas || {};
             <div class="lista__s">
               <span class="chip num">${x.series}×${x.reps[0]}${x.reps[0] === x.reps[1] ? '' : '-' + x.reps[1]}${x.ex.tempo ? ' seg' : ''}</span>
               ${x.max ? '<span class="chip">máximo</span>' : x.kg ? `<span class="chip num">${Store.U.fmt(x.kg)}</span>` : ''}
-              ${x.subir ? `<span class="chip chip--sucesso">${icone('seta', 12)}subir</span>` : ''}
               ${x.mudou ? `<span class="chip" title="Carga do plano; ao lado, a que fizeste da última vez">antes ${Store.U.fmt(x.anterior)}</span>` : ''}
             </div>
             ${x.nota ? `<div class="lista__s"><span>${esc(x.nota)}</span></div>` : ''}
