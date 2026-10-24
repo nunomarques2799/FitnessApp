@@ -26,15 +26,16 @@
   const PLANO = {
     id: 'nuno-2026-09',
     nome: 'Plano do Nuno',
-    versao: 14,
+    versao: 15,
     criadoEm: '2026-09-05',
-    revisto: '2026-10-10',
+    revisto: '2026-10-24',
     origem: 'Construído a partir dos 23 treinos registados entre 31 de Julho e 6 de Setembro de 2026',
     semanas: 8,                 // não mudar exercícios antes disto
     rotacao: 'Quatro dias em roda, sem estarem presos a dias da semana',
     descanso: { composto: 180, isolamento: 90 },
     rir: [1, 2],                // deixar 1 a 2 em reserva; última série de cada exercício 0 a 1
-    notasDaRevisao: 'Versão 14, no mesmo dia da 13. As elevações laterais descem de 15 para 10 nos dois dias: a 15 não consegues, e é a 10 que as tens feito. A versão 13 subiu-as pelos quatro de 20 a 12 de 16 de Setembro, mas o que fazes agora vale mais do que um registo de há três semanas. Entre 10 e 15 só há 12,5, e sobes para lá quando as quatro séries chegarem às 20 a 10. '
+    notasDaRevisao: 'Versão 15, a 24 de Outubro. Oito treinos dentro da versão 14, de 11 a 21 de Outubro — três dias A, dois B, dois D e um C —, mais os de 5 a 10 que a versão 13 não chegou a ver. Muita coisa fechou o intervalo e sobe. O agachamento sobe de 95 para 100: fizeste 3 × 12 a 95, duas acima do tecto das 10. O press de ombros sobe de 25 para 27,5: a 19 fizeste quatro de 12 a 25, também acima do tecto. O supino inclinado sobe de 27,5 para 30: quatro de 12 a 10 e a 20, e a 14 só a última caiu para 11. A puxada supinada volta aos 52: três de 12 a 45 a 19, e a 7 já tinhas feito dois de 12 a 52. O peck deck sobe de 12,5 para 15: três de 15 em todas as sessões desde 10 de Outubro. O tríceps na polia sobe de 27 para 32, o pino a seguir naquela polia: três de 12 a 10 e a 20. A extensão acima da cabeça sobe de 22,5 para 24,8, o pino a seguir: três de 15 a 14. As elevações laterais com halteres sobem para 12,5, porque cumpriste a condição da versão 14 — quatro de 20 a 10 e a 12. A 19 ficaste nos 12, mas vinhas de quatro de 12 a 25 no press; se a primeira série não passar das 12, volta aos 10. As aberturas invertidas com halteres sobem de 5 para 7,5, também pela condição escrita: três de 20 a 19. Três exercícios mudam para o que fazes de facto. A puxada a um braço ajoelhado passa de 14 para 32, na polia leve: a 21 fizeste 27, 32 e 32, todas a 15, e marcaste a polia leve no chip. Os 14 eram da outra polia e não se comparam — fica nesta. No dia B o peck deck dá lugar às aberturas com halteres, que fizeste em dois dos três dias B (três de 15 a 15 a 20, e a 10 já chegaste a 17,5 × 15); entram nos 17,5. O peck deck fica no dia D. E as elevações laterais do dia B passam para a polia a um braço, a 9 kg, como as fizeste a 14 — três séries, por isso o deltoide lateral desce de 8 para 7 por rotação. No dia A sai a bicicleta, que nunca chegaste a registar, e entra o curl invertido a 27, que fizeste em quatro dos cinco dias A desde 5 de Outubro (três de 12 a 16). O bíceps passa de 6 para 9 séries por rotação e os abdominais de 6 para 3. O crunch do dia C também não é feito desde 13 de Setembro — se continuar assim, sai na próxima revisão. Ficam: a puxada à frente nos 59 (fazes uma ou duas séries a 59 e o resto a 52 — tenta segurar a segunda a 59 antes de baixares), a remada na máquina nos 52 (três de 14 a 16 e a 21, mas a quarta foi a 45 — sobe para 59 quando as quatro saírem a 14 a 52), o crucifixo invertido na polia nos 11,5 (três de 15 a 16, mas 12 na primeira a 21), as duas roscas nos 12,5 (a inclinada só dá 8 a 12,5 e a 16 desceste tu para 10; a martelo ficou-se por uma série a 21), o press de peito nos 52 (três de 12 a 20, mas a 14 fez 8 e 10 — sobe quando repetir), a flexão de pernas nos 59 (12, 12 e 10), a extensão nos 52 (12, 15, 15), a prensa nos 134 e os gémeos nos 86, que não foram feitos a 13. A remada a um braço na polia do dia D passa de 14 para 18, que é onde a fizeste a 7 (dois de 12). Na semana 4 a puxada à frente subiu um degrau e a remada na máquina ainda não. O bloco de 8 semanas acaba a 31 de Outubro: a próxima revisão é a da troca de bloco. Não há pesagem nova desde 24 de Setembro (73 kg) — pesa-te antes dela. '
+      + 'Versão 14, no mesmo dia da 13. As elevações laterais descem de 15 para 10 nos dois dias: a 15 não consegues, e é a 10 que as tens feito. A versão 13 subiu-as pelos quatro de 20 a 12 de 16 de Setembro, mas o que fazes agora vale mais do que um registo de há três semanas. Entre 10 e 15 só há 12,5, e sobes para lá quando as quatro séries chegarem às 20 a 10. '
       + 'Versão 13, a 10 de Outubro. O ginásio passou a ter só halteres de 2,5 em 2,5 kg, e cinco cargas do plano caíam em pesos que já lá não há. Esta revisão mexe só nessas: o relatório que chegou é outra vez o de 24 de Setembro, com o último treino a 23 — o mesmo da versão 9 —, por isso nada do que fizeste depois de 28 de Setembro entrou aqui, e as máquinas, as polias e as barras ficam como estavam. Cada halter vai para o degrau de 2,5 mais perto do que a versão 9 decidiu, e quando os dois vizinhos ficavam à mesma distância decidiram os números. As duas roscas passam de 12 para 12,5, que é praticamente a mesma carga. O press de ombros passa de 24 para 25: fizeste quatro de 10 a 22 com 1 a 2 em reserva, e no dia D chegas a ele fresco — se a primeira série não chegar às 6, faz o resto a 22,5. As elevações laterais passam de 14 para 15 nos dois dias: fechaste quatro de 20 a 10 e depois a 12, o tecto do intervalo duas vezes, e 12,5 era repetir os 12 — se a primeira série não chegar às 12, baixa para 12,5. As aberturas invertidas com halteres descem de 6 para 5 em vez de subirem para 7,5: a 6 fizeste 12, 12 e 12, o fundo do intervalo, e 7,5 punha mais um quarto de carga em cima disso. A 5 chegas perto das 20 e sobes para 7,5 quando as três lá chegarem. O supino inclinado já estava nos 27,5 com saltos de 2,5 e não muda. A extensão acima da cabeça fica nos 22,5, porque é feita na polia — 18, 20,3 e 22,5 não são pesos de halteres. E todos os halteres do catálogo da app passam a subir de 2,5 em 2,5. '
       + 'Versão 12, antes do dia A de 28 de Setembro. O relatório é o mesmo de 24 de Setembro — o último treino é o dia A de 23 — e as cargas do dia A já foram acertadas com ele na versão 9, por isso nenhuma carga mexe: puxada à frente 59, remada na máquina 52, crucifixo invertido na polia 11,5 e as duas roscas 12. A remada baixa sai e entra a puxada na polia alta a um braço, ajoelhado, com o cotovelo junto ao corpo — é um exercício de que gostas, e a 23 a remada baixa ficou-se por uma série a 14, no fim de duas puxadas e antes das roscas, sinal de que era a que sobrava. Fica no lugar dela e não ao lado, para o dia A não crescer: as costas continuam nas 17 séries por rotação, agora com duas puxadas e uma remada no dia A. Nunca a registaste, por isso entra a 14 kg — a carga da remada a um braço na polia — com intervalo largo, de 10 a 15, para acertares na primeira série. O tríceps à testa sai de vez, também como alternativa: a extensão acima da cabeça fica sozinha no dia B, a 22,5. A puxada à frente a 59 é um degrau novo e ninguém espera 12 à primeira: o intervalo é de 8 a 12, e 8 a 59 já é mais trabalho do que 12 a 52. Se não chegares às 8, desce para 52 e na revisão vê-se. E a app deixa de sugerir subir cargas a meio da semana — isso decide-se só aqui. '
       + 'Versão 11. Sai a elevação de joelhos na barra: no fim do dia A, depois de duas puxadas, duas remadas e duas roscas, os braços já não seguram o corpo pendurado, e nunca chegou a ser feita. Entram os abdominais em bicicleta, deitado no chão: apanham a mesma parte de baixo do abdómen e os oblíquos, sem precisar de braços nem de pega. Três séries, como antes, por isso os abdominais ficam nas 6 por rotação. '
@@ -108,16 +109,16 @@
     volumeAlvo: [
       { k: 'dorsais', nome: 'Dorsais', musculos: ['dorsais'], alvo: 17 },
       { k: 'peito', nome: 'Peito', musculos: ['peito'], alvo: 13 },
-      { k: 'deltoide_lat', nome: 'Deltoide lateral', musculos: ['deltoide_lat'], alvo: 8 },
+      { k: 'deltoide_lat', nome: 'Deltoide lateral', musculos: ['deltoide_lat'], alvo: 7 },
       { k: 'deltoide_post', nome: 'Deltoide posterior', musculos: ['deltoide_post'], alvo: 6 },
       { k: 'deltoide_ant', nome: 'Deltoide anterior', musculos: ['deltoide_ant'], alvo: 4 },
       { k: 'trapezio', nome: 'Trapézio', musculos: ['trapezio'], alvo: 0 },
-      { k: 'biceps', nome: 'Bíceps', musculos: ['biceps'], alvo: 6 },
+      { k: 'biceps', nome: 'Bíceps', musculos: ['biceps'], alvo: 9 },
       { k: 'triceps', nome: 'Tríceps', musculos: ['triceps'], alvo: 6 },
       { k: 'quadriceps', nome: 'Quadríceps', musculos: ['quadriceps'], alvo: 9 },
       { k: 'isquiotibiais', nome: 'Isquiotibiais', musculos: ['isquiotibiais'], alvo: 4 },
       { k: 'gemeos', nome: 'Gémeos', musculos: ['gemeos'], alvo: 4 },
-      { k: 'abdominais', nome: 'Abdominais', musculos: ['abdominais'], alvo: 6 }
+      { k: 'abdominais', nome: 'Abdominais', musculos: ['abdominais'], alvo: 3 }
     ],
 
     /* Ponto de controlo: são as costas que têm de se mexer nestas 8 semanas */
@@ -137,11 +138,11 @@
         exercicios: [
           { ex: 'puxada-frontal', series: 4, reps: [8, 12], kg: 59, inc: 7, partida: 52, nota: 'Primeira vez a 59: o alvo é 8, não 12. Se a primeira série não chegar às 8, baixa para 52 e faz o resto lá' },
           { ex: 'remada-maquina', series: 4, reps: [10, 14], kg: 52, inc: 7 },
-          { ex: 'puxada-uni-polia', series: 3, reps: [10, 15], kg: 14, inc: 2.5, nota: 'Um joelho no chão, de frente para a polia alta. Puxa o cotovelo colado ao corpo até às costelas. Na polia, sempre a mesma — escolhe-a no chip. Acerta a carga na primeira série e depois mantém-na' },
+          { ex: 'puxada-uni-polia', series: 3, reps: [10, 15], kg: 32, inc: 4.5, nota: 'Um joelho no chão, de frente para a polia alta. Puxa o cotovelo colado ao corpo até às costelas. Sempre na polia leve (levanto mais) — escolhe-a no chip' },
           { ex: 'crucifixo-invertido-polia-uni', series: 3, reps: [12, 15], kg: 11.5, inc: 2.5, partida: 9, nota: 'O pino a seguir aos 9 na mesma polia' },
           { ex: 'rosca-inclinada', series: 3, reps: [8, 12], kg: 12.5, inc: 2.5, partida: 12 },
           { ex: 'rosca-martelo', series: 3, reps: [8, 12], kg: 12.5, inc: 2.5, partida: 12 },
-          { ex: 'crunch-bicicleta', series: 3, reps: [16, 30], max: true, nota: 'Deitado no chão, cotovelo ao joelho contrário, devagar. Conta-se cada lado como uma repetição' }
+          { ex: 'rosca-inversa', series: 3, reps: [10, 15], kg: 27, inc: 4.5, nota: 'Pega por cima. A seguir aos 27 vêm os 32' }
         ]
       },
       {
@@ -150,12 +151,12 @@
         aquecimento: 'Supino inclinado com halteres 20 × 12.',
         nota: 'A mesma carga nas quatro séries do supino inclinado. Não subas série a série.',
         exercicios: [
-          { ex: 'supino-inclinado-halteres', series: 4, reps: [8, 12], kg: 27.5, inc: 2.5, partida: 25 },
+          { ex: 'supino-inclinado-halteres', series: 4, reps: [8, 12], kg: 30, inc: 2.5, partida: 25 },
           { ex: 'press-peito-maquina', series: 3, reps: [8, 12], kg: 52, inc: 7, partida: 45 },
-          { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
-          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2.5, partida: 8, nota: 'Sobe para 12,5 quando as quatro séries chegarem às 20' },
-          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 27, inc: 4.5, partida: 27, nota: 'Barra em V ou barra direita: escolhe uma e mantém-na' },
-          { ex: 'triceps-acima-cabeca', series: 3, reps: [10, 15], kg: 22.5, inc: 2, nota: 'Carga da sessão de 21 de Setembro. Se o ombro der sinal, pára e diz na revisão' }
+          { ex: 'crucifixo-halteres', series: 3, reps: [10, 15], kg: 17.5, inc: 2.5, partida: 15, nota: 'Desce devagar até sentires o peito a esticar, sem passar a linha do ombro' },
+          { ex: 'elevacoes-laterais-polia', series: 3, reps: [12, 20], kg: 9, inc: 2.5, nota: 'Na polia, sempre a mesma — escolhe-a no chip' },
+          { ex: 'triceps-polia-barra', series: 3, reps: [8, 12], kg: 32, inc: 4.5, partida: 27, nota: 'O pino a seguir aos 27. Barra em V ou barra direita: escolhe uma e mantém-na' },
+          { ex: 'triceps-acima-cabeca', series: 3, reps: [10, 15], kg: 24.8, inc: 2.3, partida: 22.5, nota: 'O pino a seguir aos 22,5 na polia. Se o ombro der sinal, pára e diz na revisão' }
         ]
       },
       {
@@ -163,12 +164,12 @@
         nome: 'Pernas e core',
         aquecimento: 'Prensa de pernas 79 × 15.',
         exercicios: [
-          { ex: 'agachamento-barra', series: 3, reps: [6, 10], kg: 95, inc: 5, partida: 75, nota: 'Barra de 20 kg incluída — 95 kg são a barra mais 37,5 de cada lado' },
+          { ex: 'agachamento-barra', series: 3, reps: [6, 10], kg: 100, inc: 5, partida: 75, nota: 'Barra de 20 kg incluída — 100 kg são a barra mais 40 de cada lado' },
           { ex: 'prensa-pernas', series: 3, reps: [10, 12], kg: 134, inc: 7, partida: 127, nota: 'Sobe outra vez quando as três séries saírem a 12 com 1 a 2 repetições ainda no bolso' },
           { ex: 'flexao-pernas-sentado', series: 4, reps: [10, 12], kg: 59, inc: 7, partida: 66 },
           { ex: 'extensao-pernas', series: 3, reps: [12, 15], kg: 52, inc: 7, partida: 66 },
           { ex: 'gemeos-prensa', series: 4, reps: [12, 20], kg: 86, inc: 7, partida: 79 },
-          { ex: 'crunch', series: 3, reps: [15, 20], kg: 15, inc: 5, partida: 20, nota: 'Banco inclinado, com peso. Faz-se antes dos gémeos se o tempo estiver a acabar' }
+          { ex: 'crunch', series: 3, reps: [15, 20], kg: 15, inc: 5, partida: 20, nota: 'Banco inclinado, com peso. Não é feito desde 13 de Setembro — se for preciso, fá-lo logo a seguir ao agachamento' }
         ]
       },
       {
@@ -177,11 +178,11 @@
         aquecimento: 'Elevações laterais 5 × 15 para aquecer o ombro.',
         nota: 'A segunda dose de peito da semana. Três séries chegam — o trabalho grande foi no dia B.',
         exercicios: [
-          { ex: 'press-ombros-halteres', series: 4, reps: [6, 10], kg: 25, inc: 2.5, partida: 22, nota: 'Se a primeira série não chegar às 6, faz o resto a 22,5' },
-          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 10, inc: 2.5, partida: 8, nota: 'Sobe para 12,5 quando as quatro séries chegarem às 20' },
-          { ex: 'puxada-supinada', series: 3, reps: [8, 12], kg: 45, inc: 7, partida: 52 },
+          { ex: 'press-ombros-halteres', series: 4, reps: [6, 10], kg: 27.5, inc: 2.5, partida: 22, nota: 'Se a primeira série não chegar às 6, faz o resto a 25' },
+          { ex: 'elevacoes-laterais', series: 4, reps: [12, 20], kg: 12.5, inc: 2.5, partida: 8, nota: 'Primeira vez a 12,5. Se a primeira série não passar das 12, faz o resto a 10' },
+          { ex: 'puxada-supinada', series: 3, reps: [8, 12], kg: 52, inc: 7 },
           {
-            ex: 'remada-polia-uni', series: 3, reps: [10, 12], kg: 14, inc: 2.5, partida: 14,
+            ex: 'remada-polia-uni', series: 3, reps: [10, 12], kg: 18, inc: 2.5, partida: 14,
             nota: 'Na polia, sempre a mesma — escolhe-a no chip. Acerta a carga na primeira sessão e depois mantém-na. Com a polia ocupada, vale a máquina a 20,5 kg',
             troca: {
               ex: 'remada-maquina-uni', kg: 20.5, inc: 2.5, partida: 18,
@@ -189,8 +190,8 @@
               nota: 'Substitui a remada na polia a um braço. 20,5 kg, e os números das duas não se comparam'
             }
           },
-          { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 12.5, inc: 2.5 },
-          { ex: 'crucifixo-invertido', series: 3, reps: [12, 20], kg: 5, inc: 2.5, partida: 8, nota: 'Sobe para 7,5 quando as três séries chegarem às 20' }
+          { ex: 'peck-deck', series: 3, reps: [10, 15], kg: 15, inc: 2.5, partida: 12.5 },
+          { ex: 'crucifixo-invertido', series: 3, reps: [12, 20], kg: 7.5, inc: 2.5, partida: 8 }
         ]
       }
     ]
